@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1114" />
+  <title>Vấn Đạo · Mini Client</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1213'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='40' text-anchor='middle' fill='%23e8c579'%3E%E9%81%93%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-overview" viewBox="0 0 24 24"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M4 21h16"/><circle cx="12" cy="13" r="1.5"/></symbol>
+    <symbol id="i-items" viewBox="0 0 24 24"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M4 7.5 12 12l8-4.5"/><path d="M12 12v9"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-logs" viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4"/><path d="M18 12H9"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 9v5M12 18h.01"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2v5M12 17v5M2 12h5M17 12h5M4.9 4.9l3.5 3.5M15.6 15.6l3.5 3.5M19.1 4.9l-3.5 3.5M8.4 15.6l-3.5 3.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9 8.5h4.2a2.2 2.2 0 0 1 0 4.4H9m0 0h4.6a2.3 2.3 0 0 1 0 4.6H9M12 6v2M12 18v-2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3z"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M12 7v6M9 10h6"/></symbol>
+    <symbol id="i-sword" viewBox="0 0 24 24"><path d="m14 5 5-2-2 5-8 8-3 1 1-3z"/><path d="m5 19 2-2M3 21l2-2M14 5l5 5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+  </svg>
+
+  <div id="app">
+    <div id="boot-view" class="boot-view">
+      <div class="boot-mark">道</div>
+      <div class="spinner"></div>
+      <p>Đang kết nối Vấn Đạo…</p>
+    </div>
+
+    <section id="login-view" class="login-view" hidden>
+      <div class="login-art" aria-hidden="true"></div>
+      <div class="login-inner">
+        <div class="login-brand">
+          <div class="brand-mark">道</div>
+          <div>
+            <h1>Vấn Đạo</h1>
+            <p>MINI CLIENT · NGHỊCH MỆNH</p>
+          </div>
+        </div>
+
+        <div class="login-copy">
+          <span class="eyebrow">Bảng điều khiển tu hành</span>
+          <h2>Tu hành không gián đoạn.</h2>
+          <p>Theo dõi chỉ số, tóm tắt vật phẩm và bật trợ lý tự động cho nhân vật của bạn. Mọi thao tác đi qua máy chủ game, không can thiệp dữ liệu.</p>
+          <ul class="feature-list">
+            <li><span class="tick"><svg><use href="#i-check"/></svg></span> Bảng chỉ số &amp; tiến độ cảnh giới</li>
+            <li><span class="tick"><svg><use href="#i-check"/></svg></span> Tóm tắt vật liệu, trang bị, túi đồ</li>
+            <li><span class="tick"><svg><use href="#i-check"/></svg></span> Tự kết toán, tự nhận thưởng, tự chọn hoạt động</li>
+          </ul>
+        </div>
+
+        <div class="login-panel">
+          <form id="login-form" class="login-form" autocomplete="on">
+            <div class="form-head">
+              <h3>Đăng nhập game</h3>
+              <span class="secure-pill">Local · 127.0.0.1</span>
+            </div>
+            <label>
+              <span>Tên đăng nhập</span>
+              <input id="username" name="username" type="text" autocomplete="username" maxlength="24" placeholder="Tên tài khoản game" required />
+            </label>
+            <label>
+              <span>Mật khẩu</span>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ít nhất 8 ký tự" required />
+            </label>
+            <label class="check-row">
+              <input id="remember" type="checkbox" checked />
+              <span>Lưu phiên đăng nhập trên máy này</span>
+            </label>
+            <p id="login-error" class="form-error" hidden></p>
+            <button id="login-btn" class="btn primary wide" type="submit">
+              <svg><use href="#i-spark"/></svg>
+              <span>Vào bảng điều khiển</span>
+            </button>
+            <p class="fineprint">Không lưu mật khẩu. Chỉ cookie phiên được lưu cục bộ nếu bạn chọn ghi nhớ.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="main-view" class="main-view" hidden>
+      <aside class="sidebar">
+        <div class="side-brand">
+          <div class="brand-mark small">道</div>
+          <div>
+            <b>Vấn Đạo</b>
+            <span>Mini Client</span>
+          </div>
+        </div>
+
+        <nav class="side-nav" aria-label="Điều hướng">
+          <button class="nav-btn on" data-action="nav" data-view="overview">
+            <svg><use href="#i-overview"/></svg><span>Tổng quan</span>
+          </button>
+          <button class="nav-btn" data-action="nav" data-view="items">
+            <svg><use href="#i-items"/></svg><span>Vật phẩm</span>
+          </button>
+          <button class="nav-btn" data-action="nav" data-view="auto">
+            <svg><use href="#i-auto"/></svg><span>Tự động</span>
+            <i id="auto-dot" class="nav-dot" hidden></i>
+          </button>
+          <button class="nav-btn" data-action="nav" data-view="logs">
+            <svg><use href="#i-logs"/></svg><span>Nhật ký</span>
+          </button>
+        </nav>
+
+        <div class="side-foot">
+          <div class="connection">
+            <i id="conn-dot" class="dot"></i>
+            <span id="conn-text">Đang kết nối…</span>
+          </div>
+          <button class="nav-btn subtle" data-action="logout">
+            <svg><use href="#i-logout"/></svg><span>Đăng xuất</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <div class="page-title">
+            <span id="page-kicker" class="eyebrow">Bảng điều khiển</span>
+            <h1 id="page-title">Tổng quan</h1>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn" data-action="refresh" title="Làm mới trạng thái" aria-label="Làm mới">
+              <svg><use href="#i-refresh"/></svg>
+            </button>
+            <button class="char-chip" data-action="nav" data-view="overview" title="Xem tổng quan">
+              <img id="top-portrait" alt="" />
+              <span>
+                <b id="top-name">—</b>
+                <small id="top-realm">—</small>
+              </span>
+            </button>
+          </div>
+        </header>
+
+        <main id="content" class="content"></main>
+      </div>
+    </section>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

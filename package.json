@@ -1,0 +1,14 @@
+{
+  "name": "van-dao-mini-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mini client cục bộ cho Vấn Đạo: Nghịch Mệnh — bảng chỉ số, tóm tắt vật phẩm và trợ lý tự động.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
