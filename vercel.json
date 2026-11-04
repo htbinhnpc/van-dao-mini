@@ -19,12 +19,6 @@
       "outputDirectory": "dist"
     }
   },
-  "crons": [
-    {
-      "path": "/api/v1/cron/automation",
-      "schedule": "0 0 * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
