@@ -1,18 +1,42 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm --prefix frontend install",
-  "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 60,
-      "includeFiles": "data/meta.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "fastapi",
+      "entrypoint": "api.index:app",
+      "functions": {
+        "api/**/*.py": {
+          "maxDuration": 60,
+          "includeFiles": "data/meta.json"
+        }
+      }
+    },
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
     }
   },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "crons": [
-    { "path": "/api/cron/automation", "schedule": "* * * * *" }
+    {
+      "path": "/api/v1/cron/automation",
+      "schedule": "* * * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "app"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
   ]
 }
