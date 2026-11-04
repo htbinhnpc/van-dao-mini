@@ -22,7 +22,7 @@
   "crons": [
     {
       "path": "/api/v1/cron/automation",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "rewrites": [
