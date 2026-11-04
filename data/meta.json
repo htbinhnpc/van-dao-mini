@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-04T01:18:52.333Z",
+ "generatedAt": "2026-11-04T04:07:51.925Z",
  "source": "Vấn Đạo: Nghịch Mệnh client bundle",
  "stats": {
   "hp": {
@@ -80150,7 +80150,7 @@
  "habitats": {
   "han": {
    "id": "han",
-   "name": "Han",
+   "name": "Hàn tuyền",
    "order": 1,
    "reqLevel": 24,
    "plotStart": 101,
@@ -80164,7 +80164,7 @@
   },
   "loi": {
    "id": "loi",
-   "name": "Loi",
+   "name": "Lôi trì",
    "order": 2,
    "reqLevel": 28,
    "plotStart": 201,
@@ -80178,7 +80178,7 @@
   },
   "am": {
    "id": "am",
-   "name": "Am",
+   "name": "Âm viên",
    "order": 3,
    "reqLevel": 32,
    "plotStart": 301,
@@ -80192,7 +80192,7 @@
   },
   "duong": {
    "id": "duong",
-   "name": "Duong",
+   "name": "Dương viên",
    "order": 4,
    "reqLevel": 24,
    "plotStart": 401,
@@ -80206,7 +80206,7 @@
   },
   "hu": {
    "id": "hu",
-   "name": "Hu",
+   "name": "Hư viên",
    "order": 5,
    "reqLevel": 42,
    "plotStart": 501,

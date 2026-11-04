@@ -1,0 +1,20 @@
+{
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60,
+      "includeFiles": "data/meta.json"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/game-assets/:path*",
+      "destination": "/api/assets/:path*"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "* * * * *"
+    }
+  ]
+}

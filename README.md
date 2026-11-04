@@ -1,6 +1,6 @@
 # Vấn Đạo · Mini Client
 
-Mini client cục bộ cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ số nhân vật, tóm tắt vật phẩm và tab trợ lý tự động. Giao diện chạy trong trình duyệt, mọi lệnh game được gửi qua một server Node nhỏ trên máy bạn để tránh CORS và giữ phiên đăng nhập an toàn.
+Mini client cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ số nhân vật, tóm tắt vật phẩm, quản lý nhiều tài khoản và trợ lý tự động. Giao diện và API chạy trên Vercel; Supabase lưu dữ liệu cloud, Vercel Cron chạy automation nền.
 
 ## Tính năng
 
@@ -15,7 +15,7 @@ Mini client cục bộ cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ s�
   - Danh sách vật liệu, tiền tệ và trang bị kèm icon, phẩm cấp, cường hóa, vị trí.
   - Tìm kiếm và lọc theo loại.
 - **Tự động**
-  - Bật/tắt trợ lý, chọn nhịp chạy 5 giây – 5 phút.
+  - Bật/tắt trợ lý, chọn nhịp chạy 1 – 5 phút khi chạy trên Vercel.
   - Tự kết toán tu vi, tự lên tiểu tầng, giữ hoạt động và điểm săn.
   - Tự lùi điểm săn khi thua, hoặc về bế quan nếu không còn điểm phù hợp.
   - Tự nhận nhiệm vụ, thưởng ngày/tuần, thành tựu, thư có quà và gói mở rộng ngày.
@@ -23,8 +23,40 @@ Mini client cục bộ cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ s�
   - **Tự luyện đan:** chọn một công thức cụ thể hoặc để hệ thống tự chọn đan tốt nhất có thể luyện; tôn trọng cấp, nguyên liệu, linh thạch, số lò trống và giới hạn tuần. Có thể đặt số lượng muốn giữ để tránh luyện thừa.
   - **Tự dùng đan:** ưu tiên đan tăng tốc tu vi tốt nhất đang có, chỉ dùng khi buff sắp hết và không vượt thời lượng tối đa của game. Có thể bật thêm đan tu vi trực tiếp và chế độ chỉ dùng loại tốt nhất.
   - **Tự đánh boss khu vực:** đánh lần lượt tất cả boss của vùng đã hạ lần đầu khi hồi chiêu kết thúc và đủ cấp. Mỗi boss có nhịp cục bộ riêng (mặc định 10 phút, đặt 0 để chỉ theo hồi chiêu game); có thể ghim một boss nếu muốn tập trung.
+  - **Tự gieo/thu hoạch:** thu ô chín trước, sau đó gieo giống hợp lệ trong Linh Điền và các Sinh cảnh đã mở; có thể đặt giống ưu tiên và khoản linh thạch dự phòng.
   - Nút chạy ngay, kết toán thủ công và áp dụng hoạt động.
+- **Tài khoản & tiến độ:** liên kết nhiều tài khoản game, xem cấp nhân vật, hoạt động, tình trạng ô trồng, lượt tự động gần nhất và lỗi theo từng tài khoản.
 - **Nhật ký** — ghi lại kết toán, đổi hoạt động, nhận thưởng, luyện/dùng đan và lỗi; lọc theo mức độ.
+
+## Deploy lên Vercel (cloud, nhiều tài khoản)
+
+Vercel Functions là serverless nên không giữ tiến trình chạy nền. Dự án dùng **Vercel Cron mỗi phút**; tài khoản có trợ lý bật được xử lý tuần tự, kể cả khi website đã đóng. Muốn Cron mỗi phút, cần gói Vercel hỗ trợ lịch chạy theo phút (hiện là **Pro**; Vercel Hobby giới hạn Cron).
+
+1. Tạo project Supabase và bật **Authentication → Email**. Nếu muốn đăng ký/đăng nhập ngay không cần xác nhận email, tắt Email confirmation trong cấu hình Auth.
+2. Chạy migration `supabase/migrations/202611040001_cloud_accounts.sql` trong Supabase SQL Editor.
+3. Import repository vào Vercel. Thêm các biến môi trường cho Production (và Preview nếu cần):
+
+   | Biến | Giá trị |
+   |---|---|
+   | `SUPABASE_URL` | Project URL của Supabase |
+   | `SUPABASE_ANON_KEY` | Publishable/anon key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Secret/service-role key — **chỉ server-side** |
+   | `APP_ENCRYPTION_KEY` | Khóa AES 32 byte, mã hex 64 ký tự |
+   | `CRON_SECRET` | Secret dài, ngẫu nhiên để bảo vệ Cron endpoint |
+
+   Tạo secret cục bộ bằng Node.js (không commit kết quả):
+
+   ```powershell
+   node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+   ```
+
+   Chạy lệnh hai lần để tạo riêng `APP_ENCRYPTION_KEY` và `CRON_SECRET`. Không gửi các giá trị này vào chat hoặc commit chúng.
+4. Deploy. Đăng ký tài khoản mini client bằng email, sau đó vào **Tài khoản & tiến độ** để liên kết một hoặc nhiều tài khoản game.
+5. Mở **Tự động** trong từng tài khoản, kiểm tra cấu hình rồi bật công tắc chính. Trang **Tài khoản & tiến độ** hiển thị tình trạng và lượt chạy cuối.
+
+Cron gọi `/api/cron` theo lịch trong `vercel.json`; endpoint yêu cầu `Authorization: Bearer <CRON_SECRET>`. **Không cần mở website** để automation tiếp tục. Nếu đổi `APP_ENCRYPTION_KEY`, các phiên game cũ không giải mã được và cần liên kết lại tài khoản.
+
+Phiên đăng nhập game được mã hóa AES-256-GCM trước khi lưu. Mật khẩu game chỉ được chuyển tiếp tới API đăng nhập chính thức, không lưu vào database. Dữ liệu mỗi người dùng được giới hạn theo `owner_id` và RLS; service-role key chỉ dùng trong API server-side.
 
 ## Yêu cầu
 
@@ -32,32 +64,32 @@ Mini client cục bộ cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ s�
 - Tài khoản game Vấn Đạo đang hoạt động.
 - Kết nối tới `https://vandaonghichmenh.hongvan.net:60010`.
 
-## Chạy
+## Chạy Vercel Functions cục bộ
 
 ```powershell
 cd D:\Binh_Dev\van-dao-mini
-npm start
+Copy-Item .env.example .env.local
+# Điền biến môi trường Supabase/secret trong .env.local
+npm run dev
 ```
 
 Mở trình duyệt tại:
 
 ```text
-http://127.0.0.1:3010
+http://localhost:3000
 ```
 
-Đăng nhập bằng tài khoản game. Mật khẩu chỉ được gửi tới API đăng nhập của game qua server cục bộ, **không được lưu** trong project. Nếu chọn “Lưu phiên đăng nhập”, server chỉ lưu cookie phiên `vd_sid` trong `.session.json` (đã nằm trong `.gitignore`).
-
-Đổi cổng nếu 3010 đang bận:
-
-```powershell
-$env:PORT=3011; npm start
-```
+`npm start` / `npm run dev` chạy Vercel CLI để mô phỏng Functions. `npm run start:local` chỉ khởi động backend Node đơn tài khoản cũ, không dùng cho giao diện cloud. Luồng multi-account dùng các Vercel Functions trong `api/`, không dùng `.session.json` hoặc `.config.json` cục bộ.
 
 ## Cấu trúc
 
 ```text
 van-dao-mini/
-├─ server.js              # server cục bộ, proxy API game, vòng tự động, SSE
+├─ server.js              # backend cục bộ để phát triển
+├─ api/                   # Vercel Functions: Auth, tài khoản, lệnh game, Cron
+├─ lib/                   # Supabase, mã hóa phiên và automation worker
+├─ supabase/migrations/   # schema cloud nhiều tài khoản + RLS
+├─ vercel.json            # cấu hình Vercel và Cron mỗi phút
 ├─ public/
 │  ├─ index.html          # khung giao diện
 │  ├─ styles.css          # giao diện ink/jade/gold
@@ -87,9 +119,12 @@ x2.daily.claim
 craft.start
 item.use
 boss.fight
+field.plant
+field.harvest
+field.rush
 ```
 
-Không chỉnh sửa dữ liệu, không gửi request giả, không vượt qua giới hạn của game. Vòng tự động chạy trên server Node cục bộ nên vẫn tiếp tục khi đóng tab, miễn là server còn chạy. Nhịp mặc định là 15 giây; không nên đặt quá thấp.
+Không chỉnh sửa dữ liệu, không gửi request giả, không vượt qua giới hạn của game. Trên Vercel, Cron xử lý theo phút và lần lượt từng tài khoản đến khi gần hết thời lượng Function; các tài khoản còn lại tiếp tục ở lượt Cron sau.
 
 ### Cơ chế luyện/dùng đan
 

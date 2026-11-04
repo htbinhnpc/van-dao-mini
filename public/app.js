@@ -1,11 +1,12 @@
 /* Vấn Đạo · Mini Client
- * Giao diện cục bộ, gọi API chính thức của game qua server Node đi kèm.
+ * Giao diện Vercel, gọi API serverless và Supabase Auth.
  */
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 const VIEW_META = {
+  accounts: { kicker: 'Tài khoản cloud', title: 'Tài khoản & tiến độ' },
   overview: { kicker: 'Bảng điều khiển', title: 'Tổng quan' },
   items: { kicker: 'Túi đồ', title: 'Vật phẩm' },
   auto: { kicker: 'Trợ lý', title: 'Tự động' },
@@ -50,6 +51,10 @@ const app = {
   dailyMap: {},
   weeklyMap: {},
   achvMap: {},
+  authToken: localStorage.getItem('vd_cloud_access_token') || '',
+  authRefreshToken: localStorage.getItem('vd_cloud_refresh_token') || '',
+  accounts: [],
+  selectedAccountId: localStorage.getItem('vd_selected_game_account') || '',
 };
 
 /* ------------------------------------------------------------------ */
@@ -449,16 +454,32 @@ function statusTagClass(status) {
 
 async function boot() {
   try {
-    const [meta, session] = await Promise.all([
+    const [meta] = await Promise.all([
       api('/api/meta?v=2026-11-04-boss-sequential'),
-      api('/api/session'),
     ]);
     app.meta = meta;
     app.dailyMap = Object.fromEntries((meta.daily || []).map((task) => [task.id, task]));
     app.weeklyMap = Object.fromEntries((meta.weekly || []).map((task) => [task.id, task]));
     app.achvMap = meta.achievements || {};
-    applySnapshot(session, { initial: true });
-    connectSSE();
+    if (app.authToken) {
+      try {
+        const session = await api(`/api/session${app.selectedAccountId ? `?accountId=${encodeURIComponent(app.selectedAccountId)}` : ''}`);
+        applySnapshot(session, { initial: true });
+        app.accounts = session.accounts || [];
+        app.selectedAccountId = session.selectedAccountId || '';
+        if (app.selectedAccountId) localStorage.setItem('vd_selected_game_account', app.selectedAccountId);
+      } catch {
+        app.authToken = '';
+        app.authRefreshToken = '';
+        localStorage.removeItem('vd_cloud_access_token');
+        localStorage.removeItem('vd_cloud_refresh_token');
+        applySnapshot({ authenticated: false, user: null, state: null, logs: [] }, { initial: true });
+      }
+    } else {
+      applySnapshot({ authenticated: false, user: null, state: null, logs: [] }, { initial: true });
+    }
+    if (app.snapshot.authenticated && app.selectedAccountId) await refreshCloudSnapshot();
+    if (app.snapshot.authenticated) startCloudPolling();
     startTicker();
   } catch (err) {
     const bootView = $('#boot-view');
@@ -480,6 +501,8 @@ function applySnapshot(snapshot, { initial = false } = {}) {
     ...snapshot,
     logs: Array.isArray(snapshot.logs) ? snapshot.logs : (previous?.logs || []),
   };
+  if (Array.isArray(snapshot.accounts)) app.accounts = snapshot.accounts;
+  if (snapshot.selectedAccountId !== undefined) app.selectedAccountId = snapshot.selectedAccountId || '';
   if (snapshot.state) app.stateAt = Date.now();
   if (snapshot.config && (!app.autoDirty || !app.autoDraft)) {
     app.autoDraft = { ...snapshot.config };
@@ -612,6 +635,13 @@ function renderChrome() {
     topPortrait.alt = name;
     topPortrait.style.visibility = char ? 'visible' : 'hidden';
   }
+  const accountSelect = $('#account-select');
+  if (accountSelect) {
+    accountSelect.hidden = !app.accounts.length;
+    accountSelect.innerHTML = app.accounts.map((account) =>
+      `<option value="${esc(account.id)}" ${account.id === app.selectedAccountId ? 'selected' : ''}>${esc(account.label)} · ${esc(account.game_username)}</option>`,
+    ).join('');
+  }
 
   const meta = VIEW_META[app.view] || VIEW_META.overview;
   const pageKicker = $('#page-kicker');
@@ -641,7 +671,8 @@ function renderView() {
   if (!content) return;
   let html = '';
   try {
-    if (app.view === 'items') html = renderItems();
+    if (app.view === 'accounts' || !app.selectedAccountId) html = renderAccountsPage();
+    else if (app.view === 'items') html = renderItems();
     else if (app.view === 'auto') html = renderAuto();
     else if (app.view === 'logs') html = renderLogs();
     else html = renderOverview();
@@ -1195,7 +1226,6 @@ function renderAuto() {
   if (currentSpot && !spotMap.has(currentSpot.id)) spotMap.set(currentSpot.id, currentSpot);
   const spotOptions = [['', 'Tự động chọn điểm tốt nhất'], ...[...spotMap.values()].map((spot) => [spot.id, `${spot.name} · cấp ${spot.reqLevel}`])];
   const intervalOptions = [
-    [5000, '5 giây'], [10000, '10 giây'], [15000, '15 giây'], [30000, '30 giây'],
     [60000, '1 phút'], [120000, '2 phút'], [300000, '5 phút'],
   ];
   const activityOptions = ACTIVITY_ORDER
@@ -1264,6 +1294,14 @@ function renderAuto() {
     : '<span class="pill-mat ok">Không cần nguyên liệu</span>';
 
   const bossEntries = clearedBossEntries();
+  const farmSeedOptions = [['', 'Tự chọn giống phù hợp'], ...Object.values(app.meta?.seeds || {}).map((seed) => [seed.id, `${seed.name} · ${duration(seed.durationMs)} · ${fmt(seed.stones)} LT`])];
+  const farmFields = st?.cave?.fields || [];
+  const farmOpenPlots = Math.max(0, toNumber(st?.cave?.plots)) + (cfg.farmIncludeHabitats
+    ? Object.values(st?.x2?.habitats || {}).reduce((sum, habitat) => sum + Math.max(0, toNumber(habitat.plots)), 0)
+    : 0);
+  const farmRipe = farmFields.filter((field) => toNumber(field.finishAt) <= (toNumber(st?.serverNow) || Date.now())).length;
+  const farmGrowing = farmFields.length - farmRipe;
+  const farmEmpty = Math.max(0, farmOpenPlots - farmFields.length);
   const bossOptions = [
     ['', 'Đánh tuần tự tất cả boss đã vượt'],
     ...bossEntries.map((entry) => [
@@ -1330,7 +1368,7 @@ function renderAuto() {
           <label class="field">
             <span>Chu kỳ tự động</span>
             <select data-config="intervalMs">${selectOptions(intervalOptions, interval)}</select>
-            <small>Tối thiểu 5 giây. Nhịp ngắn hơn sẽ gửi lệnh thường xuyên hơn tới máy chủ game.</small>
+            <small>Vercel Cron chạy theo phút; không cần mở website. Tối thiểu 1 phút.</small>
           </label>
           <label class="field">
             <span>Hoạt động chính</span>
@@ -1482,6 +1520,25 @@ function renderAuto() {
 
       <section class="card span-3">
         <div class="card-head">
+          <div><span class="eyebrow">Động phủ</span><h3>Linh điền &amp; Sinh cảnh</h3></div>
+          <span class="tag ${cfg.autoFarm ? 'jade' : ''}">${cfg.autoFarm ? 'Đang bật' : 'Đang tắt'}</span>
+        </div>
+        ${switchRow('autoFarm', 'Tự gieo và thu hoạch', 'Thu ô chín trước, sau đó gieo vào ô trống; không dùng lệnh tua thời gian hay tiêu linh thạch ngoài tiền gieo.', cfg.autoFarm)}
+        <div class="switch-list" style="margin-top:6px">
+          ${switchRow('farmHarvest', 'Tự thu hoạch ô chín', 'Thu hoạch cả linh điền và các sinh cảnh đã mở.', cfg.farmHarvest !== false, !cfg.autoFarm)}
+          ${switchRow('farmPlant', 'Tự gieo ô trống', 'Chỉ gieo giống đủ cấp, đúng khu vực và đủ linh thạch.', cfg.farmPlant !== false, !cfg.autoFarm)}
+          ${switchRow('farmIncludeHabitats', 'Bao gồm Sinh cảnh', 'Tự xử lý các ô đã mở trong Hàn Tuyền, Lôi Trì, Âm Viên, Dương Viên và Hư Viên.', cfg.farmIncludeHabitats !== false, !cfg.autoFarm)}
+        </div>
+        <div class="form-grid" style="margin-top:12px">
+          <label class="field"><span>Ưu tiên giống</span><select data-config="farmSeedId">${selectOptions(farmSeedOptions, cfg.farmSeedId || '')}</select><small>Để tự chọn để gieo giống phù hợp vị trí/cấp và linh thạch còn lại.</small></label>
+          <label class="field"><span>Linh thạch dự phòng</span><input type="number" min="0" max="999999999" step="100" data-config="farmReserveStones" value="${esc(cfg.farmReserveStones ?? 0)}"/><small>Không dùng khoản dự phòng này cho việc gieo.</small></label>
+        </div>
+        <div class="pill-status"><div class="pill-status-line"><span>Ô trống <b>${fmt(farmEmpty)}</b></span><span>Đang trồng <b>${fmt(farmGrowing)}</b></span><span>Đã chín <b>${fmt(farmRipe)}</b></span><span>Linh điền <b>${st?.cave?.unlocked ? `${fmt(st.cave.plots)} ô` : 'Chưa mở'}</b></span></div></div>
+        <p class="small muted">Lượt tự động chạy theo lịch Vercel mỗi phút; cần mở Động phủ và tự mở ô Sinh cảnh trong game trước.</p>
+      </section>
+
+      <section class="card span-3">
+        <div class="card-head">
           <div><span class="eyebrow">Boss khu vực</span><h3>Tự đánh boss đã vượt</h3></div>
           <span class="tag ${cfg.autoBoss ? 'jade' : ''}">${cfg.autoBoss ? 'Đang bật' : 'Đang tắt'}</span>
         </div>
@@ -1591,11 +1648,38 @@ function updateLiveBits() {
 /* ------------------------------------------------------------------ */
 
 async function api(path, { method = 'GET', body } = {}) {
-  const response = await fetch(path, {
-    method,
-    headers: body !== undefined ? { 'content-type': 'application/json' } : undefined,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const request = (token) => {
+    const headers = {};
+    if (body !== undefined) headers['content-type'] = 'application/json';
+    if (token) headers.authorization = `Bearer ${token}`;
+    if (app.selectedAccountId) headers['x-game-account'] = app.selectedAccountId;
+    return fetch(path, {
+      method,
+      headers: Object.keys(headers).length ? headers : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  };
+  let response = await request(app.authToken);
+  if (response.status === 401 && app.authRefreshToken && path !== '/api/auth') {
+    const refreshed = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'refresh', refresh_token: app.authRefreshToken }),
+    });
+    const refreshData = await refreshed.json().catch(() => ({}));
+    if (refreshed.ok && refreshData.session?.access_token) {
+      app.authToken = refreshData.session.access_token;
+      app.authRefreshToken = refreshData.session.refresh_token || app.authRefreshToken;
+      localStorage.setItem('vd_cloud_access_token', app.authToken);
+      localStorage.setItem('vd_cloud_refresh_token', app.authRefreshToken);
+      response = await request(app.authToken);
+    } else {
+      app.authToken = '';
+      app.authRefreshToken = '';
+      localStorage.removeItem('vd_cloud_access_token');
+      localStorage.removeItem('vd_cloud_refresh_token');
+    }
+  }
   let data = null;
   try { data = await response.json(); } catch { /* ignore */ }
   if (!response.ok || data?.ok === false) {
@@ -1606,6 +1690,118 @@ async function api(path, { method = 'GET', body } = {}) {
     throw err;
   }
   return data || {};
+}
+
+function renderAccountsPage() {
+  const cards = app.accounts.map((account) => {
+    const progress = account.progress;
+    const char = progress?.character || {};
+    const activity = progress?.activity || {};
+    const cycleMs = toNumber(activity.cycleMs);
+    const cycleProgress = cycleMs > 0
+      ? Math.min(100, Math.max(0, ((toNumber(activity.cycleProgressMs)
+        + Math.max(0, Date.now() - toNumber(progress?.serverNow))) % cycleMs) / cycleMs * 100))
+      : 0;
+    const cave = progress?.cave;
+    const fields = cave?.fields || [];
+    const ripe = fields.filter((field) => toNumber(field.finishAt) <= Date.now()).length;
+    const running = fields.length - ripe;
+    const selected = account.id === app.selectedAccountId;
+    const lastTick = account.last_tick_at ? new Date(account.last_tick_at).toLocaleString('vi-VN') : 'Chưa chạy';
+    return `<article class="cloud-account-card ${selected ? 'selected' : ''}">
+      <div class="cloud-account-head">
+        <div><span class="eyebrow">${account.enabled ? 'Tự động bật' : 'Đang tạm dừng'}</span><h3>${esc(account.label)}</h3><p>${esc(account.game_username)}${char.name ? ` · ${esc(char.name)}` : ''}</p></div>
+        <span class="tag ${account.enabled ? 'jade' : ''}">${account.enabled ? 'Đang chạy' : 'Đã dừng'}</span>
+      </div>
+      <div class="cloud-progress-grid">
+        <div><small>Nhân vật</small><b>${char.level ? `Cấp ${fmt(char.level)}` : 'Chưa tải trạng thái'}</b></div>
+        <div><small>Hoạt động</small><b>${esc(activity.type || '—')}${activity.targetId ? ` · ${esc(activity.targetId)}` : ''}</b></div>
+        <div><small>Linh điền</small><b>${cave?.unlocked ? `${fields.length}/${fmt(cave.plots)} ô · ${ripe} chín · ${running} đang trồng` : 'Chưa mở'}</b></div>
+        <div><small>Lượt tự động gần nhất</small><b>${esc(lastTick)}</b></div>
+      </div>
+      ${cycleMs ? `<div class="cloud-cycle"><div class="progress-track"><i style="width:${cycleProgress.toFixed(1)}%"></i></div><small>Chu kỳ hoạt động ${cycleProgress.toFixed(0)}%</small></div>` : ''}
+      ${account.last_error ? `<p class="warn-text cloud-error">${esc(account.last_error)}</p>` : ''}
+      <div class="row wrap"><button class="btn ${selected ? 'primary' : 'ghost'}" data-action="select-account" data-id="${esc(account.id)}">${selected ? 'Đang xem' : 'Theo dõi tài khoản'}</button><button class="btn ghost" data-action="account-tick" data-id="${esc(account.id)}">Chạy ngay</button><button class="btn ghost" data-action="remove-account" data-id="${esc(account.id)}">Xóa liên kết</button></div>
+    </article>`;
+  }).join('');
+
+  return `<div class="cloud-accounts-view">
+    <section class="card span-3">
+      <div class="card-head"><div><span class="eyebrow">Cloud worker</span><h3>Tiến độ tự động</h3></div><span class="tag jade">Cron mỗi phút</span></div>
+      <p class="small muted">Các tài khoản bật tự động được xử lý tuần tự ở server, kể cả khi bạn đóng trình duyệt. Trang này tự làm mới để theo dõi tiến độ.</p>
+      <div class="cloud-account-list">${cards || '<div class="empty"><b>Chưa liên kết tài khoản game</b><p>Thêm tài khoản bên dưới để bắt đầu theo dõi.</p></div>'}</div>
+    </section>
+    <section class="card span-3">
+      <div class="card-head"><div><span class="eyebrow">Thêm nhân vật</span><h3>Liên kết tài khoản game</h3></div></div>
+      <form id="cloud-account-form" class="form-grid">
+        <label class="field"><span>Tên hiển thị</span><input name="label" maxlength="48" placeholder="Ví dụ: Nhân vật chính" /></label>
+        <label class="field"><span>Tên đăng nhập game</span><input name="username" autocomplete="username" maxlength="24" required /></label>
+        <label class="field"><span>Mật khẩu game</span><input name="password" type="password" autocomplete="new-password" required /></label>
+        <div class="field"><span>&nbsp;</span><button class="btn primary wide" type="submit">Đăng nhập game &amp; liên kết</button></div>
+      </form>
+      <p class="fineprint">Mật khẩu chỉ được gửi tới API game và không lưu lại. Cookie phiên được mã hóa trước khi lưu. Mỗi người dùng chỉ thấy tài khoản của mình.</p>
+    </section>
+  </div>`;
+}
+
+async function refreshCloudSnapshot() {
+  const suffix = app.selectedAccountId ? `?accountId=${encodeURIComponent(app.selectedAccountId)}` : '';
+  const snapshot = await api(`/api/session${suffix}`);
+  applySnapshot(snapshot);
+  app.accounts = snapshot.accounts || [];
+  app.selectedAccountId = snapshot.selectedAccountId || '';
+  app.online = true;
+  renderChrome();
+  renderView();
+  return snapshot;
+}
+
+let cloudPollTimer = null;
+function startCloudPolling() {
+  stopCloudPolling();
+  cloudPollTimer = setInterval(() => {
+    if (app.authToken && document.visibilityState !== 'hidden') {
+      refreshCloudSnapshot().catch(() => { app.online = false; updateConnection(); });
+    }
+  }, 60000);
+}
+function stopCloudPolling() {
+  if (cloudPollTimer) clearInterval(cloudPollTimer);
+  cloudPollTimer = null;
+}
+
+async function selectCloudAccount(accountId) {
+  app.selectedAccountId = accountId;
+  localStorage.setItem('vd_selected_game_account', accountId);
+  await refreshCloudSnapshot();
+  if (app.view === 'accounts') app.view = 'overview';
+  app.autoDraft = app.snapshot.config ? { ...app.snapshot.config } : null;
+  app.autoDirty = false;
+  renderView();
+}
+
+async function addCloudAccount(form) {
+  const values = Object.fromEntries(new FormData(form).entries());
+  const button = form.querySelector('button[type="submit"]');
+  await withBusy(button, async () => {
+    const response = await api('/api/accounts', { method: 'POST', body: values });
+    app.selectedAccountId = response.account?.id || '';
+    if (app.selectedAccountId) localStorage.setItem('vd_selected_game_account', app.selectedAccountId);
+    form.reset();
+    await refreshCloudSnapshot();
+    app.view = 'overview';
+    app.autoDraft = { ...app.snapshot.config };
+    app.autoDirty = false;
+    renderView();
+    toast('success', 'Đã liên kết tài khoản game', response.account?.label || values.username);
+  });
+}
+
+async function accountTick(accountId) {
+  const data = await api('/api/tick', { method: 'POST', body: { accountId } });
+  await refreshCloudSnapshot();
+  toast('success', 'Đã chạy một lượt tự động', app.accounts.find((entry) => entry.id === accountId)?.label || '');
+  return data;
 }
 
 async function withBusy(element, fn) {
@@ -1781,18 +1977,18 @@ function scheduleSave() {
 
 async function handleLogin(event) {
   event.preventDefault();
-  const username = $('#username')?.value.trim() || '';
+  const email = $('#username')?.value.trim() || '';
   const password = $('#password')?.value || '';
-  const remember = !!$('#remember')?.checked;
+  const signUp = !!$('#remember')?.checked;
   const errorEl = $('#login-error');
   const button = $('#login-btn');
   if (errorEl) {
     errorEl.hidden = true;
     errorEl.textContent = '';
   }
-  if (!username || password.length < 8) {
+  if (!email || password.length < 8) {
     if (errorEl) {
-      errorEl.textContent = !username ? 'Nhập tên đăng nhập game.' : 'Mật khẩu cần ít nhất 8 ký tự.';
+      errorEl.textContent = !email ? 'Nhập email.' : 'Mật khẩu cần ít nhất 8 ký tự.';
       errorEl.hidden = false;
     }
     return;
@@ -1802,27 +1998,32 @@ async function handleLogin(event) {
     const oldLabel = label?.textContent;
     if (label) label.textContent = 'Đang đăng nhập…';
     try {
-      const data = await api('/api/login', { method: 'POST', body: { username, password, remember } });
-      app.snapshot = {
-        authenticated: true,
-        user: data.user,
-        state: data.state,
-        config: data.config,
-        logs: data.logs || [],
-        serverTime: Date.now(),
-      };
-      app.autoDraft = { ...(data.config || {}) };
+      const data = await api('/api/auth', { method: 'POST', body: { action: signUp ? 'signup' : 'login', email, password } });
+      if (!data.session?.access_token) {
+        if (errorEl) {
+          errorEl.textContent = 'Đã tạo tài khoản. Hãy xác nhận email rồi đăng nhập.';
+          errorEl.hidden = false;
+        }
+        return;
+      }
+      app.authToken = data.session.access_token;
+      localStorage.setItem('vd_cloud_access_token', app.authToken);
+      app.authRefreshToken = data.session.refresh_token || '';
+      if (app.authRefreshToken) localStorage.setItem('vd_cloud_refresh_token', app.authRefreshToken);
+      app.snapshot = { authenticated: true, user: data.session.user, state: null, config: null, logs: [], serverTime: Date.now() };
+      const session = await refreshCloudSnapshot();
+      app.view = session.selectedAccountId ? 'overview' : 'accounts';
+      app.autoDraft = session.config ? { ...session.config } : null;
       app.autoDirty = false;
       app.stateAt = Date.now();
       app.booted = true;
-      app.view = 'overview';
       const passwordInput = $('#password');
       if (passwordInput) passwordInput.value = '';
       disconnectSSE();
-      connectSSE();
+      startCloudPolling();
       renderChrome();
       renderView();
-      toast('success', 'Đăng nhập thành công', data.user?.username || username);
+      toast('success', 'Đăng nhập mini client thành công', email);
     } catch (err) {
       if (errorEl) {
         errorEl.textContent = err.message || 'Đăng nhập thất bại.';
@@ -1835,10 +2036,13 @@ async function handleLogin(event) {
 }
 
 async function logout() {
-  if (!window.confirm('Đăng xuất khỏi phiên game trên máy này?')) return;
-  try {
-    await api('/api/logout', { method: 'POST', body: {} });
-  } catch { /* vẫn xoá phiên cục bộ */ }
+  if (!window.confirm('Đăng xuất khỏi mini client trên thiết bị này?')) return;
+  stopCloudPolling();
+  try { await fetch(`${location.origin}/api/auth`, { method: 'DELETE', headers: { authorization: `Bearer ${app.authToken}` } }); } catch {}
+  app.authToken = '';
+  app.authRefreshToken = '';
+  localStorage.removeItem('vd_cloud_access_token');
+  localStorage.removeItem('vd_cloud_refresh_token');
   disconnectSSE();
   app.snapshot = {
     authenticated: false,
@@ -1850,6 +2054,8 @@ async function logout() {
   };
   app.autoDraft = null;
   app.autoDirty = false;
+  app.accounts = [];
+  app.selectedAccountId = '';
   app.view = 'overview';
   renderChrome();
   toast('info', 'Đã đăng xuất');
@@ -1878,6 +2084,22 @@ async function handleAction(action, element) {
       break;
     case 'goto-items':
       setView('items');
+      break;
+    case 'select-account':
+      await selectCloudAccount(element.dataset.id);
+      break;
+    case 'account-tick':
+      await accountTick(element.dataset.id);
+      break;
+    case 'remove-account':
+      if (window.confirm('Gỡ liên kết tài khoản game này? Tự động nền sẽ dừng cho tài khoản này.')) {
+        await api(`/api/account?accountId=${encodeURIComponent(element.dataset.id)}`, { method: 'DELETE', body: {} });
+        if (app.selectedAccountId === element.dataset.id) app.selectedAccountId = '';
+        await refreshCloudSnapshot();
+        app.view = 'accounts';
+        renderView();
+        toast('info', 'Đã gỡ liên kết tài khoản');
+      }
       break;
     case 'item-filter':
       app.itemFilter = element.dataset.filter || 'all';
@@ -1973,12 +2195,13 @@ function rerenderPreservingFocus() {
 }
 
 const CONFIG_NUMBER_KEYS = new Set([
-  'intervalMs', 'autoSalvageTier', 'craftKeepQty', 'useThresholdMin', 'bossIntervalMin',
+  'intervalMs', 'autoSalvageTier', 'craftKeepQty', 'useThresholdMin', 'bossIntervalMin', 'farmReserveStones',
 ]);
 
 const AUTO_LAYOUT_KEYS = new Set([
   'enabled', 'intervalMs', 'autoSalvage', 'autoSalvageTier', 'activityType', 'huntSpotId',
   'autoCraft', 'craftRecipeId', 'autoUse', 'autoUseBuffs', 'autoUseExp', 'autoBoss', 'bossRegionId',
+  'autoFarm', 'farmIncludeHabitats', 'farmSeedId',
 ]);
 
 function handleConfigChange(element) {
@@ -2042,9 +2265,19 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('change', (event) => {
+  if (event.target.id === 'account-select') {
+    selectCloudAccount(event.target.value).catch((error) => toast('error', 'Không chuyển được tài khoản', error.message));
+    return;
+  }
   const target = event.target.closest('[data-config]');
   if (!target) return;
   handleConfigChange(target);
+});
+
+document.addEventListener('submit', (event) => {
+  if (event.target.id !== 'cloud-account-form') return;
+  event.preventDefault();
+  addCloudAccount(event.target).catch((error) => toast('error', 'Không liên kết được tài khoản', error.message));
 });
 
 document.addEventListener('input', (event) => {

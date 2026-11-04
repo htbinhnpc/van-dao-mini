@@ -55,7 +55,7 @@
         <div class="login-copy">
           <span class="eyebrow">Bảng điều khiển tu hành</span>
           <h2>Tu hành không gián đoạn.</h2>
-          <p>Theo dõi chỉ số, tóm tắt vật phẩm và bật trợ lý tự động cho nhân vật của bạn. Mọi thao tác đi qua máy chủ game, không can thiệp dữ liệu.</p>
+            <p>Theo dõi nhiều tài khoản, xem tiến độ và bật trợ lý tự động chạy nền mỗi phút. Mọi thao tác đi qua lệnh chính thức của game.</p>
           <ul class="feature-list">
             <li><span class="tick"><svg><use href="#i-check"/></svg></span> Bảng chỉ số &amp; tiến độ cảnh giới</li>
             <li><span class="tick"><svg><use href="#i-check"/></svg></span> Tóm tắt vật liệu, trang bị, túi đồ</li>
@@ -66,27 +66,27 @@
         <div class="login-panel">
           <form id="login-form" class="login-form" autocomplete="on">
             <div class="form-head">
-              <h3>Đăng nhập game</h3>
-              <span class="secure-pill">Local · 127.0.0.1</span>
+              <h3>Đăng nhập mini client</h3>
+              <span class="secure-pill">Vercel · Supabase</span>
             </div>
             <label>
-              <span>Tên đăng nhập</span>
-              <input id="username" name="username" type="text" autocomplete="username" maxlength="24" placeholder="Tên tài khoản game" required />
+              <span>Email</span>
+              <input id="username" name="username" type="email" autocomplete="username" placeholder="Email của bạn" required />
             </label>
             <label>
-              <span>Mật khẩu</span>
+              <span>Mật khẩu mini client</span>
               <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Ít nhất 8 ký tự" required />
             </label>
             <label class="check-row">
-              <input id="remember" type="checkbox" checked />
-              <span>Lưu phiên đăng nhập trên máy này</span>
+              <input id="remember" type="checkbox" />
+              <span>Tạo tài khoản mini client mới (nếu chưa có)</span>
             </label>
             <p id="login-error" class="form-error" hidden></p>
             <button id="login-btn" class="btn primary wide" type="submit">
               <svg><use href="#i-spark"/></svg>
-              <span>Vào bảng điều khiển</span>
+              <span>Đăng nhập</span>
             </button>
-            <p class="fineprint">Không lưu mật khẩu. Chỉ cookie phiên được lưu cục bộ nếu bạn chọn ghi nhớ.</p>
+            <p class="fineprint">Mật khẩu game chỉ dùng để kết nối tài khoản game và không được lưu. Phiên game được mã hóa trong Supabase.</p>
           </form>
         </div>
       </div>
@@ -103,6 +103,9 @@
         </div>
 
         <nav class="side-nav" aria-label="Điều hướng">
+          <button class="nav-btn" data-action="nav" data-view="accounts">
+            <svg><use href="#i-items"/></svg><span>Tài khoản &amp; tiến độ</span>
+          </button>
           <button class="nav-btn on" data-action="nav" data-view="overview">
             <svg><use href="#i-overview"/></svg><span>Tổng quan</span>
           </button>
@@ -136,6 +139,7 @@
             <h1 id="page-title">Tổng quan</h1>
           </div>
           <div class="top-actions">
+            <select id="account-select" class="account-select" aria-label="Chọn tài khoản game" hidden></select>
             <button class="icon-btn" data-action="refresh" title="Làm mới trạng thái" aria-label="Làm mới">
               <svg><use href="#i-refresh"/></svg>
             </button>
