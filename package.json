@@ -1,0 +1,11 @@
+{
+  "name": "vandao-mini",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "supabase": "^3.0.0"
+  }
+}
