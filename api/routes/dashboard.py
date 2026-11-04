@@ -74,6 +74,19 @@ async def overview(user: dict = Depends(current_user)) -> dict:
     return {"ok": True, "accounts": accounts, "selectedAccountId": accounts[0]["id"] if accounts else None}
 
 
+@router.get("/meta")
+async def game_metadata() -> dict:
+    """Return the small, public subset of bundled game metadata used by the UI."""
+    from api.services.automation import META
+
+    return {
+        "ok": True,
+        "realms": META.get("realms", {}),
+        "activities": META.get("activities", {}),
+        "spots": META.get("spots", {}),
+    }
+
+
 @router.get("/game/server-status")
 async def game_server_status() -> dict:
     """Public game maintenance indicator; never infer Active from a failed request."""
@@ -95,7 +108,7 @@ async def game_server_status() -> dict:
 
 @router.get("/accounts/{account_id}/state")
 async def get_state(account_id: str, refresh: bool = True, user: dict = Depends(current_user)) -> dict:
-    await owned_account(user["id"], account_id)
+    account = await owned_account(user["id"], account_id)
     state = await _account_state(account) if refresh else account.get("state_snapshot")
     return {"ok": True, "state": state, "config": await account_config(account_id)}
 

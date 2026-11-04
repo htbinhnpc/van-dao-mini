@@ -6,6 +6,11 @@ type Account = {
 };
 type LogEntry = { id: number; level: string; action: string; message: string; created_at: string };
 type ServerStatus = { status: "active" | "maintenance" | "unknown"; checkedAt?: string; maintenance?: { message?: string; from?: number; until?: number } | null };
+type GameMeta = {
+  realms: Record<string, { id: string; name: string; stageModel?: string }>;
+  activities: Record<string, { id: string; name: string }>;
+  spots: Record<string, { id: string; name: string }>;
+};
 const sections = ["Tổng quan", "Vật phẩm", "Tự động", "Tài khoản", "Nhật ký"];
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -28,6 +33,7 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState<ServerStatus>({ status: "unknown" });
+  const [meta, setMeta] = useState<GameMeta>({ realms: {}, activities: {}, spots: {} });
   const selected = accounts.find((account) => account.id === selectedId) || accounts[0];
 
   const refresh = useCallback(async (accountId?: string) => {
@@ -50,6 +56,10 @@ export default function App() {
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, [refresh]);
+
+  useEffect(() => {
+    api<GameMeta>("/api/v1/meta").then(setMeta).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!user) { setServerStatus({ status: "unknown" }); return; }
@@ -102,7 +112,7 @@ export default function App() {
         </header>
         {notice && <div className="notice" role="status">{notice}</div>}
         {!selected && active !== "Tài khoản" && <AddAccount onAdded={(account) => { setAccounts((rows) => [...rows, account]); setSelectedId(account.id); }} />}
-        {selected && active === "Tổng quan" && <Overview account={selected} busy={busy} onTick={() => run(() => api(`/api/v1/accounts/${selected.id}/tick`, { method: "POST" }), "Đã chạy một vòng thủ công.")} />}
+        {selected && active === "Tổng quan" && <Overview account={selected} meta={meta} busy={busy} onTick={() => run(() => api(`/api/v1/accounts/${selected.id}/tick`, { method: "POST" }), "Đã chạy một vòng thủ công.")} />}
         {selected && active === "Vật phẩm" && <Inventory accountId={selected.id} />}
         {selected && active === "Tự động" && <Automation account={selected} busy={busy} onSave={(config) => run(() => api(`/api/v1/accounts/${selected.id}/config`, { method: "PATCH", body: JSON.stringify({ config }) }), "Đã lưu cấu hình.")} />}
         {active === "Tài khoản" && <Accounts accounts={accounts} busy={busy} onAdd={(account) => { setAccounts((rows) => [...rows, account]); setSelectedId(account.id); }} onDelete={(id) => run(() => api(`/api/v1/accounts/${id}`, { method: "DELETE" }), "Đã gỡ tài khoản.", false)} />}
@@ -156,36 +166,72 @@ function AddAccount({ onAdded }: { onAdded: (account: Account) => void }) {
   </form>;
 }
 
-function Overview({ account, busy, onTick }: { account: Account; busy: boolean; onTick: () => void }) {
+function Overview({ account, meta, busy, onTick }: { account: Account; meta: GameMeta; busy: boolean; onTick: () => void }) {
   const state = account.state || {}; const character = state.character || {}; const activity = state.activity || {};
   const stats = character.stats || character.derived || {};
-  const activityNames: Record<string, string> = {
-    seclusion: "Bế quan", farm: "Săn yêu thú", gather_herb: "Hái dược",
-    mine_ore: "Đào khoáng", body_training: "Luyện thể",
-  };
-  const activityName = activityNames[activity.type] || activity.type || "Chưa có dữ liệu";
+  const activityKey = typeof activity.type === "string" ? activity.type : "";
+  const activityName = meta.activities[activityKey]?.name || (activity.type == null ? "Chưa có dữ liệu" : displayValue(activity.type));
+  const targetName = typeof activity.targetId === "string"
+    ? meta.spots[activity.targetId]?.name || activity.targetId
+    : displayValue(activity.targetId);
   return <>
     <div className="notice">Tài khoản: <b>{account.label}</b> · Lượt tự động gần nhất: {account.lastTickAt ? new Date(account.lastTickAt).toLocaleString("vi-VN") : "chưa chạy"}</div>
     <div className="state-tags" aria-label="State hiện tại của game">
       <span className={`state-tag ${account.status === "active" ? "online" : "offline"}`}>
         Phiên game · {account.status === "active" ? "Đã liên kết" : account.status}
       </span>
-      <span className="state-tag">Hoạt động · {activityName}{activity.targetId ? ` · ${activity.targetId}` : ""}</span>
+      <span className="state-tag">Hoạt động · {activityName}{activity.targetId ? ` · ${targetName}` : ""}</span>
       {activity.win != null && <span className={`state-tag ${activity.win ? "online" : "offline"}`}>Kết quả · {activity.win ? "Thắng" : "Thua"}</span>}
       {state.stateVersion != null && <span className="state-tag">State v{state.stateVersion}</span>}
     </div>
     {account.lastError && <div className="error-banner">Lỗi gần nhất: {account.lastError}</div>}
     <div className="grid stats-grid">
-      <Metric label="Cảnh giới" value={character.realmName || character.realm || "—"} detail={`Cấp ${character.level ?? "—"}`} />
+      <Metric label="Cảnh giới" value={typeof character.realmName === "string" ? character.realmName : realmDisplay(character.realm, meta.realms)} detail={`Cấp ${character.level ?? "—"}`} />
       <Metric label="Tu vi" value={character.exp != null ? `${character.exp} / ${character.expNeed ?? "—"}` : "—"} detail={character.rateMilli ? `Tốc độ ${character.rateMilli}` : ""} />
-      <Metric label="Hoạt động" value={activity.type || "—"} detail={activity.targetId || ""} />
+      <Metric label="Hoạt động" value={activityName} detail={targetName === "—" ? "" : targetName} />
     </div>
     <div className="grid content-grid"><article className="card"><h2>Chỉ số nhân vật</h2><div className="stats-list">{Object.entries(stats).slice(0, 16).map(([key, value]) => <div key={key}><span>{key}</span><b>{String(value)}</b></div>)}{!Object.keys(stats).length && <p className="muted">State chưa có trường chỉ số đã chuẩn hóa.</p>}</div></article>
       <article className="card"><h2>Điều khiển</h2><p className="muted">Tự động: {account.enabled ? "đang bật" : "đang tắt"}</p><button className="button primary" disabled={busy} onClick={onTick}>Chạy một vòng ngay</button><p className="small muted">Một vòng có thể gửi lệnh game theo config đã bật.</p></article></div>
   </>;
 }
 
-function Metric({ label, value, detail }: { label: string; value: string; detail: string }) { return <article className="card"><p className="muted">{label}</p><strong>{value}</strong><small>{detail}</small></article>; }
+function displayValue(value: unknown): string {
+  if (value == null || value === "") return "—";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    if (record.realmId != null) {
+      return `${displayValue(record.realmId)}${record.stage != null ? ` · Tầng ${displayValue(record.stage)}` : ""}`;
+    }
+    return Object.entries(record).map(([key, item]) => `${key}: ${displayValue(item)}`).join(" · ");
+  }
+  if (Array.isArray(value)) return value.map(displayValue).join(", ");
+  return String(value);
+}
+
+function realmDisplay(value: unknown, realms: GameMeta["realms"]): string {
+  if (!value) return "—";
+  const realmId = typeof value === "string"
+    ? value
+    : typeof value === "object" && !Array.isArray(value)
+      ? String((value as Record<string, unknown>).realmId || "")
+      : "";
+  if (!realmId) return displayValue(value);
+  const realm = realms[realmId];
+  const name = realm?.name || realmId.replace(/_/g, " ").replace(/\b\w/g, (letter: string) => letter.toUpperCase());
+  const stage = typeof value === "object" && value !== null && !Array.isArray(value)
+    ? Number((value as Record<string, unknown>).stage || 0)
+    : 0;
+  if (!stage || !realm?.stageModel) return name;
+  if (realm.stageModel === "layers") return `${name} · Tầng ${stage}`;
+  if (realm.stageModel === "four_stage") return `${name} · ${["Sơ kỳ", "Trung kỳ", "Hậu kỳ", "Viên mãn"][stage - 1] || `Tầng ${stage}`}`;
+  if (realm.stageModel === "gate") return `${name} · Cửa ${stage}`;
+  return name;
+}
+
+function Metric({ label, value, detail }: { label: string; value: unknown; detail: string }) {
+  return <article className="card"><p className="muted">{label}</p><strong>{displayValue(value)}</strong><small>{detail}</small></article>;
+}
 
 function Automation({ account, busy, onSave }: { account: Account; busy: boolean; onSave: (config: Record<string, any>) => void }) {
   const [config, setConfig] = useState(account.config);

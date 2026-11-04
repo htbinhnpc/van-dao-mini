@@ -1,6 +1,7 @@
 import os
 import unittest
-from unittest.mock import patch
+import asyncio
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -8,6 +9,7 @@ from api.index import app
 from api.security import hash_password, verify_password
 from api.services.game_client import ALLOWED_COMMANDS, GameClient
 from api.services.session_crypto import decrypt_session, encrypt_session
+from api.routes.dashboard import get_state
 
 
 class SecurityTests(unittest.TestCase):
@@ -41,8 +43,17 @@ class ApiTests(unittest.TestCase):
     def test_non_allowlisted_command_is_rejected_before_network(self):
         client = GameClient(cookie="vd_sid=mock")
         with self.assertRaises(ValueError):
-            import asyncio
             asyncio.run(client.command("admin.delete", {}))
+
+    def test_cached_state_endpoint_uses_owned_account_snapshot(self):
+        account = {"state_snapshot": {"stateVersion": 17}}
+        with (
+            patch("api.routes.dashboard.owned_account", new=AsyncMock(return_value=account)),
+            patch("api.routes.dashboard.account_config", new=AsyncMock(return_value={"enabled": False})),
+        ):
+            result = asyncio.run(get_state("account-1", False, {"id": "user-1"}))
+        self.assertEqual(result["state"]["stateVersion"], 17)
+        self.assertEqual(result["config"], {"enabled": False})
 
 
 if __name__ == "__main__":
