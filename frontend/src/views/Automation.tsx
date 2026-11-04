@@ -1,0 +1,76 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { activeAutos, AUTO_GROUPS, configEqual, FLAGS, type AutoFlag } from "../automation-config";
+import { ConfirmDialog, EmptyState, Icon, Spinner } from "../components";
+import { dateTime, normalize } from "../lib";
+import type { Account, Config, GameMeta } from "../types";
+
+function Toggle({ flag, value, disabled, onChange }: { flag: AutoFlag; value: boolean; disabled?: boolean; onChange: (value: boolean) => void }) {
+  return <label className={`toggle-row ${disabled ? "disabled" : ""}`}><span className="toggle-copy"><span className="toggle-title">{flag.label}{flag.risk && <span className="risk-label">Tác động game</span>}</span><span className="toggle-description">{flag.description}</span></span><span className="switch"><input type="checkbox" role="switch" aria-label={flag.label} checked={value} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span className="switch-track" /></span></label>;
+}
+function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+  return <label className="field">{label}{children}{hint && <small>{hint}</small>}</label>;
+}
+
+export function Automation({ account, meta, busy, onSave, onDirtyChange }: { account: Account; meta: GameMeta; busy: boolean; onSave: (config: Config) => Promise<Config | null>; onDirtyChange: (dirty: boolean) => void }) {
+  const [config, setConfig] = useState<Config>({ ...account.config });
+  const [baseline, setBaseline] = useState<Config>({ ...account.config });
+  const [query, setQuery] = useState(""), [category, setCategory] = useState("all");
+  const [dialog, setDialog] = useState<"save" | "reset" | null>(null);
+  const saving = useRef(false);
+  const dirty = !configEqual(config, baseline);
+  const enabled = activeAutos(config);
+  const invalidHunt = !!config.autoHunt && !config.huntPetId;
+  useEffect(() => { setConfig({ ...account.config }); setBaseline({ ...account.config }); }, [account.config]);
+  useEffect(() => { onDirtyChange(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
+  useEffect(() => {
+    if (!dirty) return;
+    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
+  }, [dirty]);
+  const change = (key: string, value: unknown) => setConfig((current) => ({ ...current, [key]: value }));
+  const numeric = (key: string, fallback: number, min = 0, max?: number) => <input type="number" inputMode="numeric" step={1} min={min} max={max} required value={config[key] ?? fallback} onChange={(event) => change(key, event.target.value === "" ? "" : Number(event.target.value))} />;
+  const riskFlags = FLAGS.filter((flag) => flag.risk && config[flag.key]
+    && (flag.key !== "farmPlant" || config.autoFarm) && (flag.key !== "autoUseExp" || config.autoUse)
+    && (!baseline[flag.key] || (config.enabled && !baseline.enabled)));
+  const persist = async () => {
+    if (saving.current || invalidHunt) return;
+    saving.current = true;
+    try {
+      const result = await onSave(config);
+      if (result) { setConfig({ ...result }); setBaseline({ ...result }); }
+      setDialog(null);
+    } finally { saving.current = false; }
+  };
+  const subordinate: Record<string, boolean> = {
+    autoFallbackHunt: !config.autoActivity, autoUseBuffs: !config.autoUse,
+    autoUseOnlyBest: !config.autoUse, autoUseExp: !config.autoUse,
+    farmHarvest: !config.autoFarm, farmPlant: !config.autoFarm, farmIncludeHabitats: !config.autoFarm,
+  };
+  const needle = normalize(query.trim());
+  const groups = AUTO_GROUPS.filter((group) => category === "all" || category === group.id).map((group) => ({ ...group, flags: group.flags.filter((flag) => !needle || normalize(`${group.name} ${flag.label} ${flag.description}`).includes(needle)) })).filter((group) => group.flags.length);
+
+  return <form className="automation-form" onSubmit={(event) => { event.preventDefault(); if (dirty && !busy && !invalidHunt) { if (riskFlags.length) setDialog("save"); else void persist(); } }}>
+    <fieldset disabled={busy}>
+      <section className={`automation-master ${config.enabled ? "enabled" : ""}`}><span className="master-emblem"><Icon name="spark" size={27} /></span><div><h2>Trợ lý tự động</h2><p>{config.enabled ? "Sẽ xử lý theo lịch định kỳ sau khi lưu cấu hình." : "Đang nghỉ ngơi. Các tùy chọn vẫn được giữ cho lần chạy thủ công."}</p></div><span className="switch large"><input type="checkbox" role="switch" aria-label="Bật trợ lý tự động" checked={!!config.enabled} onChange={(event) => change("enabled", event.target.checked)} /><span className="switch-track" /></span></section>
+      <div className="automation-layout"><div className="automation-main"><div className="automation-search search-input"><Icon name="search" size={18} /><input aria-label="Tìm tính năng tự động" placeholder="Tìm tính năng, ví dụ: luyện đan…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button className="icon-button" type="button" aria-label="Xóa tìm kiếm" onClick={() => setQuery("")}><Icon name="close" size={16} /></button>}</div>
+        <div className="category-filters" aria-label="Nhóm tự động"><button type="button" className={category === "all" ? "active" : ""} aria-pressed={category === "all"} onClick={() => setCategory("all")}>Tất cả</button>{AUTO_GROUPS.map((group) => <button type="button" key={group.id} className={category === group.id ? "active" : ""} aria-pressed={category === group.id} onClick={() => setCategory(group.id)}>{group.name.split(" & ")[0]}</button>)}</div>
+        {!groups.length && <EmptyState icon="search" title="Chưa tìm thấy tính năng">Thử từ khóa khác, hoặc chọn nhóm Tất cả.</EmptyState>}
+        {groups.map((group) => <section className="panel auto-group" key={group.id} aria-label={group.name}><header className="auto-group-head"><span className="group-emblem"><Icon name={group.icon} size={23} /></span><div><h2>{group.name}</h2><p>{group.description}</p></div><span className="group-count">{group.flags.filter((flag) => config[flag.key]).length}/{group.flags.length}</span></header><div className="toggle-list">{group.flags.map((flag) => <Toggle key={flag.key} flag={flag} value={!!config[flag.key]} disabled={subordinate[flag.key]} onChange={(value) => change(flag.key, value)} />)}</div>
+          {!needle && <div className="group-settings">
+            {group.id === "cultivation" && <div className="field-grid"><Field label="Hoạt động chính"><select value={config.activityType || "seclusion"} onChange={(event) => change("activityType", event.target.value)}>{Object.values(meta.activities).length ? Object.values(meta.activities).map((activity) => <option key={activity.id} value={activity.id}>{activity.name}</option>) : <option value={config.activityType || "seclusion"}>{config.activityType || "Bế quan"}</option>}</select></Field><Field label="Điểm săn" hint="Để tự chọn: ưu tiên điểm phù hợp đã mở."><select value={config.huntSpotId || ""} onChange={(event) => change("huntSpotId", event.target.value)}><option value="">Tự chọn điểm phù hợp</option>{Object.values(meta.spots).map((spot) => <option key={spot.id} value={spot.id}>{spot.name} · cấp {spot.reqLevel ?? "—"}</option>)}</select></Field><Field label="Nhịp đánh mỗi boss (phút)" hint="0: chỉ dựa vào hồi chiêu trong game.">{numeric("bossIntervalMin", 10, 0, 1440)}</Field><Field label="Vùng boss ưu tiên"><select value={config.bossRegionId || ""} onChange={(event) => change("bossRegionId", event.target.value)}><option value="">Tất cả vùng đã vượt</option>{Object.values(meta.regions).map((region) => <option key={region.id} value={region.id}>{region.name}</option>)}</select></Field></div>}
+            {group.id === "rewards" && <p className="settings-note"><Icon name="shield" size={16} />Chỉ nhận phần thưởng đủ điều kiện. Không tự mua hay quyên góp.</p>}
+            {group.id === "equipment" && <div className="field-grid"><Field label="Ngưỡng phẩm cấp dọn" hint="Dùng ngưỡng cấp phẩm của game (0–7).">{numeric("autoSalvageTier", 0, 0, 7)}</Field><Field label="Chế độ dọn"><select value={config.autoSalvageMode || "salvage"} onChange={(event) => change("autoSalvageMode", event.target.value)}><option value="salvage">Phân giải</option><option value="sell">Bán lấy linh thạch</option></select></Field></div>}
+            {group.id === "alchemy" && <div className="field-grid"><Field label="Công thức luyện đan"><select value={config.craftRecipeId || ""} onChange={(event) => change("craftRecipeId", event.target.value)}><option value="">Tự chọn đan tu luyện tốt nhất</option>{Object.values(meta.recipes).map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}</select></Field><Field label="Số lượng đan muốn giữ" hint="0: không đặt mục tiêu tồn kho.">{numeric("craftKeepQty", 10, 0, 9999)}</Field><Field label="Ngưỡng buff còn lại (phút)">{numeric("useThresholdMin", 15, 0, 240)}</Field></div>}
+            {group.id === "companions" && <><div className="field-grid"><Field label="Linh thú mục tiêu săn khế ấn" hint="Săn tối đa một lượt/vòng, dừng khi đủ khế ấn."><select value={config.huntPetId || ""} aria-invalid={invalidHunt || undefined} required={!!config.autoHunt} onChange={(event) => change("huntPetId", event.target.value)}><option value="">Chọn linh thú mục tiêu</option>{Object.values(meta.huntTargets).map((pet) => <option key={pet.id} value={pet.id}>{pet.name} · cấp {pet.reqLevel} · {pet.contractSeals} khế ấn</option>)}</select></Field><Field label="Giữ lại lượt săn">{numeric("huntReserveRuns", 0, 0, 12)}</Field><Field label="Khoảng chờ săn (phút)" hint="Vẫn chờ đủ khoảng nghỉ khi thua.">{numeric("huntIntervalMin", 10, 1, 1440)}</Field></div><p className="settings-note"><Icon name="shield" size={16} />Không mua lượt săn, không tự nuôi, xuất chiến hoặc tiến hóa linh thú.</p></>}
+            {group.id === "cave" && <div className="field-grid"><Field label="Chọn giống theo"><select value={config.farmSeedMode || "best"} onChange={(event) => change("farmSeedMode", event.target.value)}><option value="best">Hiệu suất thu hoạch</option><option value="fast">Thời gian ngắn nhất</option></select></Field><Field label="Giống ưu tiên"><select value={config.farmSeedId || ""} onChange={(event) => change("farmSeedId", event.target.value)}><option value="">Tự chọn giống hợp lệ</option>{Object.values(meta.seeds).map((seed) => <option key={seed.id} value={seed.id}>{seed.name}</option>)}</select></Field><Field label="Linh thạch dự phòng">{numeric("farmReserveStones", 0, 0, 1e18)}</Field></div>}
+          </div>}
+        </section>)}
+      </div><aside className="automation-summary"><section className="panel"><p className="eyebrow">NHỊP TU HÀNH</p><h2>Cấu hình của bạn</h2><Field label="Nhịp yêu cầu chạy"><select value={config.intervalMs ?? 60000} onChange={(event) => change("intervalMs", Number(event.target.value))}>{[1, 2, 3, 4, 5].map((minute) => <option key={minute} value={minute * 60000}>{minute} phút</option>)}</select></Field><p className="field-hint">Nhịp thực tế phụ thuộc lịch Cron triển khai. Đặt 1 phút ở đây không tự thay đổi lịch Cron.</p><div className="summary-count"><strong>{enabled.length}</strong><span>tính năng đã chọn</span></div><ul className="summary-features">{enabled.slice(0, 6).map((flag) => <li key={flag.key}><Icon name="check" size={14} />{flag.label}</li>)}{enabled.length > 6 && <li className="muted">và {enabled.length - 6} tính năng khác</li>}{!enabled.length && <li className="muted">Chọn tính năng phù hợp ở bên trái.</li>}</ul><div className="summary-limit"><Icon name="shield" size={18} /><div><b>Giới hạn an toàn</b><p>Tối đa 12 lệnh mỗi vòng. Dừng khi lỗi hoặc state không chắc chắn.</p></div></div><p className="summary-updated">Lần chạy gần nhất<br /><b>{dateTime(account.lastTickAt)}</b></p></section><p className="summary-warning"><Icon name="warning" size={16} />Các mục “Tác động game” có thể thay đổi trang bị, tiêu vật phẩm hoặc lượt chơi.</p></aside></div>
+      {invalidHunt && <div className="alert alert-warning" role="alert"><Icon name="warning" /><span>Hãy chọn linh thú mục tiêu trước khi lưu auto săn khế ấn.</span><button className="text-button" type="button" onClick={() => { setCategory("companions"); setQuery(""); }}>Chọn mục tiêu</button></div>}
+      <div className={`save-dock ${dirty ? "dirty" : ""}`}><div><span className={`save-state ${dirty ? "pending" : ""}`}><Icon name={dirty ? "clock" : "check"} size={17} />{dirty ? "Có thay đổi chưa lưu" : "Đã đồng bộ cấu hình"}</span><small>Chỉ áp dụng sau khi bạn lưu.</small></div><div className="row"><button className="button ghost" type="button" disabled={!dirty || busy} onClick={() => setDialog("reset")}>Hoàn tác</button><button className="button primary" type="submit" disabled={!dirty || busy || invalidHunt}>{busy ? <Spinner /> : <Icon name="check" size={17} />}{busy ? "Đang lưu…" : "Lưu cấu hình"}</button></div></div>
+    </fieldset>
+    <ConfirmDialog open={!!dialog} title={dialog === "reset" ? "Bỏ các thay đổi vừa chọn?" : "Xác nhận các thao tác game"} confirmLabel={dialog === "reset" ? "Hoàn tác thay đổi" : "Xác nhận & lưu"} busy={busy} onCancel={() => setDialog(null)} onConfirm={() => { if (dialog === "reset") { setConfig({ ...baseline }); setDialog(null); } else void persist(); }}>{dialog === "reset" ? <p>Cấu hình sẽ trở về bản đã lưu. Không thay đổi state hoặc tài nguyên game.</p> : <><p>Bạn đang cho phép những tính năng sau tác động đến tài khoản <b>{account.label}</b>:</p><ul className="confirm-feature-list">{riskFlags.map((flag) => <li key={flag.key}>{flag.label}</li>)}</ul><p>Kiểm tra mục tiêu, hạn mức và tài nguyên trước khi lưu. Lưu cấu hình chưa chạy ngay một vòng.</p></>}</ConfirmDialog>
+  </form>;
+}

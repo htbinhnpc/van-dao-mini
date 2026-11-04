@@ -1,7 +1,6 @@
 """Small client for the official game API documented in api_knowledge.md.
 
-This module is not called by any endpoint yet. It deliberately implements only
-login, state reads, and the documented command envelope; automation policy and
+It implements login, state reads, and the observed command envelope; automation policy and
 account ownership checks belong in the application service layer.
 """
 
@@ -34,6 +33,15 @@ ALLOWED_COMMANDS = frozenset(
         "field.plant",
         "field.harvest",
         "field.rush",
+        "equip.best",
+        "minor.trial",
+        "sect.task.claim",
+        "season.task.claim",
+        "title.claim",
+        "pet.adopt",
+        "npc.talk",
+        "npc.claim",
+        "hunt.run",
     }
 )
 

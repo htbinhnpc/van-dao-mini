@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import math
 import time
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from api.database import filter_value, insert_one, patch_rows
 from api.routes.accounts import DEFAULT_CONFIG
 from api.services.game_client import GameClient
+from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.session_crypto import decrypt_session
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
@@ -17,10 +22,44 @@ with META_PATH.open(encoding="utf-8") as meta_file:
     META = json.load(meta_file)
 
 
+@dataclass
+class TickBudget:
+    deadline: float = field(default_factory=lambda: time.monotonic() + 40)
+    attempts: int = 0
+    stopped: bool = False
+    error: str | None = None
+
+
+_tick_budget: ContextVar[TickBudget | None] = ContextVar("tick_budget", default=None)
+
+
+def _can_command() -> bool:
+    budget = _tick_budget.get()
+    return budget is None or (
+        not budget.stopped and budget.attempts < 12 and time.monotonic() < budget.deadline
+    )
+
+
+def _ready(task: dict) -> bool:
+    # Missing counters are not evidence that a task is ready (0 >= 0).
+    return bool(task.get("id")) and task.get("claimed") is False and (
+        task.get("current") is not None and task.get("target") is not None
+        and _num(task["target"]) > 0 and _num(task["current"]) >= _num(task["target"])
+    )
+
+
 def _num(value: Any, default: float = 0) -> float:
     try:
-        return float(value)
-    except (TypeError, ValueError):
+        number = float(value)
+        return number if math.isfinite(number) else default
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _integer(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (ValueError, TypeError, OverflowError):
         return default
 
 
@@ -38,13 +77,25 @@ async def log(account: dict, level: str, action: str, message: str = "") -> None
 
 
 async def _command(client: GameClient, state: dict, command: str, payload: dict, account: dict, label: str) -> dict:
-    result = await client.command(
+    if not _can_command():
+        return state
+    budget = _tick_budget.get()
+    if budget:
+        budget.attempts += 1
+    request = client.command(
         command,
         payload,
         expected_version=int(state.get("stateVersion") or 1),
     )
-    next_state = result.get("state") or state
-    await log(account, "success", command, label)
+    result = await asyncio.wait_for(request, max(0.01, budget.deadline - time.monotonic())) if budget else await request
+    next_state = result.get("state")
+    if not isinstance(next_state, dict) or not next_state.get("stateVersion"):
+        raise ValueError("Game command response thiếu state/stateVersion; dừng vòng để tránh dùng state cũ.")
+    outcome = result.get("result") or {}
+    lost = outcome.get("win") is False or outcome.get("success") is False
+    if command == "settle":
+        label = f"Kết toán tu vi: +{(result.get('settle') or {}).get('expGained', 0)}"
+    await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label)
     return next_state
 
 
@@ -52,7 +103,14 @@ async def _best_effort(client: GameClient, state: dict, command: str, payload: d
     try:
         return await _command(client, state, command, payload, account, label)
     except Exception as exc:
-        await log(account, "warning", command, f"{label}: {str(exc)[:350]}")
+        message = str(exc) or type(exc).__name__
+        budget = _tick_budget.get()
+        if budget:
+            # A timeout may have committed on the server. Never send another
+            # mutation using an uncertain version, or retry with a new key.
+            budget.stopped = True
+            budget.error = f"{command}: {message}"[:500]
+        await log(account, "warning", command, f"{label}: {message[:350]}")
         return state
 
 
@@ -66,15 +124,15 @@ async def _claim_ready(client: GameClient, state: dict, config: dict, account: d
         remaining = max(0, 4 - int(_num(periodic.get("dailyClaims"))))
         tasks += [("daily.claim", {"taskId": t["id"]}, "Nhận mốc ngày")
                   for t in (periodic.get("daily") or [])
-                  if not t.get("claimed") and _num(t.get("current")) >= _num(t.get("target"))][:remaining]
+                   if _ready(t)][:remaining]
     if config.get("autoWeekly", False):
         tasks += [("weekly.claim", {"taskId": t["id"]}, "Nhận mốc tuần")
                   for t in (periodic.get("weekly") or [])
-                  if not t.get("claimed") and _num(t.get("current")) >= _num(t.get("target"))][:3]
+                   if _ready(t)][:3]
     if config.get("autoAchievements", False):
         tasks += [("achievement.claim", {"achievementId": t["id"]}, "Nhận thành tựu")
                   for t in (periodic.get("achievements") or [])
-                  if not t.get("claimed") and _num(t.get("current")) >= _num(t.get("target"))][:6]
+                   if _ready(t)][:6]
     for command, payload, label in tasks[:3]:
         state = await _best_effort(client, state, command, payload, account, label)
     x2 = state.get("x2") or {}
@@ -83,6 +141,94 @@ async def _claim_ready(client: GameClient, state: dict, config: dict, account: d
     if config.get("autoMail", True) and _num(state.get("unreadMail", (state.get("mail") or {}).get("unreadCount"))) > 0:
         state = await _best_effort(client, state, "mail.claimAll", {}, account, "Nhận thư có quà")
     return state
+
+
+async def _extra_rewards(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    tasks: list[tuple[str, dict, str]] = []
+    if config.get("autoSectTasks") and (state.get("sect") or {}).get("id"):
+        tasks += [("sect.task.claim", {"taskId": t["id"]}, "Nhận thưởng tông môn")
+                  for t in ((state.get("sectExtra") or {}).get("tasks") or []) if _ready(t)]
+    if config.get("autoSeasonTasks"):
+        tasks += [("season.task.claim", {"taskId": t["id"]}, "Nhận thưởng lễ hội")
+                  for t in ((state.get("season") or {}).get("tasks") or []) if _ready(t)]
+    if config.get("autoTitles"):
+        tasks += [("title.claim", {"titleId": t["id"]}, "Nhận danh hiệu (không tự mang)")
+                  for t in ((state.get("ascend") or {}).get("titles") or [])
+                  if t.get("id") and t.get("earned") is True and t.get("owned") is False]
+    for command, payload, label in tasks[:3]:
+        state = await _best_effort(client, state, command, payload, account, label)
+    return state
+
+
+async def _remember_attempt(account: dict, key: str, now: int) -> None:
+    data = {**(account.get("automation_data") or {}), key: now}
+    await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"automation_data": data})
+    account["automation_data"] = data
+
+
+async def _equipment(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if config.get("autoEquipBest") and any(e.get("location") == "bag" for e in (state.get("equipment") or [])):
+        return await _best_effort(client, state, "equip.best", {}, account, "Tự trang bị theo bộ chọn của game")
+    return state
+
+
+async def _minor_trial(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    character = state.get("character") or {}
+    gate = character.get("minorGate") or {}
+    now = int(time.time() * 1000)
+    last = _num((account.get("automation_data") or {}).get("minorTrialLastAttemptAt"))
+    if (not config.get("autoMinorTrial") or character.get("next") != "minor"
+            or gate.get("kind") != "trial" or gate.get("have") is None or gate.get("need") is None
+            or _num(gate["have"]) >= _num(gate["need"]) or _num(gate["need"]) <= 0
+            or character.get("exp") is None or character.get("expNeed") is None
+            or _integer(character["expNeed"]) <= 0 or _integer(character["exp"]) < _integer(character["expNeed"])
+            or now - last < 600_000 or not _can_command()):
+        return state
+    # Persist before attempting, so losing or a network failure cannot spam a trial.
+    await _remember_attempt(account, "minorTrialLastAttemptAt", now)
+    return await _best_effort(client, state, "minor.trial", {}, account, "Thử thách tiểu cảnh giới")
+
+
+async def _npc(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if config.get("autoNpcTalk"):
+        ready = [n for n in (state.get("npcs") or [])
+                 if n.get("id") and n.get("met") is True and n.get("talked") is False
+                 and n.get("affinity") is not None and _num(n["affinity"]) < 1000]
+        for npc in ready[:2]:
+            state = await _best_effort(client, state, "npc.talk", {"npcId": npc["id"]}, account, "Trò chuyện đạo hữu (+thiện cảm ngày)")
+    if config.get("autoNpcRewards"):
+        ready = [(n["id"], tier) for n in (state.get("npcs") or [])
+                 if n.get("id") and n.get("met") is True and isinstance(n.get("claimed"), list)
+                 for tier, need in NPC_REWARD_TIERS
+                 if tier not in n["claimed"] and _num(n.get("affinity")) >= need]
+        for npc_id, tier_id in ready[:2]:
+            state = await _best_effort(client, state, "npc.claim", {"npcId": npc_id, "tierId": tier_id}, account, "Nhận quà thiện cảm đạo hữu")
+    return state
+
+
+async def _pets(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if config.get("autoPetAdopt"):
+        pet = next((p for p in (state.get("pets") or [])
+                    if p.get("id") and p.get("canAdopt") is True and p.get("owned") is False), None)
+        if pet:
+            state = await _best_effort(client, state, "pet.adopt", {"petId": pet["id"]}, account, "Thu nhận linh thú đã đủ điều kiện")
+    if not config.get("autoHunt") or not _can_command():
+        return state
+    target = HUNT_TARGETS.get(config.get("huntPetId"))
+    pet = next((p for p in (state.get("pets") or []) if target and p.get("id") == target["id"]), None)
+    hunt = (state.get("x2") or {}).get("hunt") or {}
+    now = int(time.time() * 1000)
+    last = _num((account.get("automation_data") or {}).get("huntLastAttemptAt"))
+    interval = max(1, _num(config.get("huntIntervalMin"), 10)) * 60_000
+    if (not target or not pet or pet.get("owned") is not False or pet.get("canAdopt") is not False
+            or _num((state.get("character") or {}).get("level")) < target["reqLevel"]
+            or _num(hunt.get("runs")) <= max(0, _num(config.get("huntReserveRuns")))
+            or not isinstance(hunt.get("seals"), dict)
+            or _num(hunt["seals"].get(target["id"])) >= target["contractSeals"]
+            or now - last < interval):
+        return state
+    await _remember_attempt(account, "huntLastAttemptAt", now)
+    return await _best_effort(client, state, "hunt.run", {"petId": target["id"]}, account, f"Săn khế ấn {target['name']} (1 lượt)")
 
 
 async def _settings(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -292,32 +438,45 @@ async def _farm(client: GameClient, state: dict, config: dict, account: dict) ->
     return state
 
 
-async def run_account_tick(account: dict, *, manual: bool = False) -> dict:
+async def run_account_tick(account: dict, *, manual: bool = False, time_budget: float = 40) -> dict:
     if not account.get("enabled") and not manual:
         return {"skipped": True, "state": account.get("state_snapshot")}
+    token = _tick_budget.set(TickBudget(deadline=time.monotonic() + max(0, min(40, time_budget))))
+    try:
+        return await _run_account_tick(account)
+    finally:
+        _tick_budget.reset(token)
+
+
+async def _run_account_tick(account: dict) -> dict:
     cookie = decrypt_session(account)
     client = GameClient(cookie=cookie)
-    state = await client.get_state()
+    budget = _tick_budget.get()
+    assert budget is not None
+    state = await asyncio.wait_for(client.get_state(), max(0.01, budget.deadline - time.monotonic()))
     config_row = account.get("config") or {}
     config = {**DEFAULT_CONFIG, **config_row}
-    try:
-        result = await client.command("settle", {}, expected_version=int(state.get("stateVersion") or 1))
-        state = result.get("state") or state
-        gained = (result.get("settle") or {}).get("expGained")
-        if gained:
-            await log(account, "info", "settle", f"Kết toán tu vi: +{gained}")
-    except Exception as exc:
-        await log(account, "warning", "settle", str(exc)[:500])
+    state = await _best_effort(client, state, "settle", {}, account, "Kết toán tu vi")
     state = await _settings(client, state, config, account)
     state = await _claim_ready(client, state, config, account)
+    state = await _extra_rewards(client, state, config, account)
+    state = await _equipment(client, state, config, account)
+    state = await _minor_trial(client, state, config, account)
     state = await _activity(client, state, config, account)
+    state = await _pets(client, state, config, account)
+    state = await _npc(client, state, config, account)
     state = await _use_pill(client, state, config, account)
     state = await _craft(client, state, config, account)
     state = await _boss(client, state, config, account)
     state = await _farm(client, state, config, account)
+    error = budget.error if budget else None
     await patch_rows(
         "game_accounts",
         f"id=eq.{filter_value(account['id'])}",
-        {"state_snapshot": state, "last_tick_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "last_error": None},
+        {"state_snapshot": state, "last_tick_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "last_error": error},
     )
-    return {"state": state, "completed": True}
+    return {
+        "state": state, "completed": not error, "error": error,
+        "commandsAttempted": budget.attempts if budget else 0,
+        "deferred": not error and not _can_command(),
+    }

@@ -120,3 +120,31 @@ Không lưu lại thông tin đăng nhập, cookie/session hoặc nội dung sta
 ## Thông tin đăng nhập
 
 Thông tin đăng nhập đã được cung cấp trong hội thoại và dùng cho đúng một lần thử login; không ghi lại giá trị đó trong tài liệu hay log. Nếu đây là mật khẩu đang dùng thật, nên đổi mật khẩu sau khi trao đổi trong chat.
+
+## Đối chiếu bundle công khai để mở rộng auto (2026-11-04)
+
+Người dùng yêu cầu đọc logic từ Chrome cache. File cache Chrome đang bị khóa; sau khi hỏi, người dùng chọn **tải bundle công khai**. Chỉ GET trang chủ và 3 file JS, không đăng nhập, không đọc cookie/session, không gửi lệnh game. Không thực thi bundle; dữ liệu literal được phân tích tĩnh bằng TypeScript AST rồi đối chiếu các chỗ gọi lệnh trong UI. Chỉ có logic phía client; điều kiện/phần thưởng cuối cùng vẫn do server xác thực.
+
+| File tại `/assets/` | SHA-256 nội dung lưu UTF-8 |
+|---|---|
+| `main-Bmv0z3VX.js` | `9a1c2e7872a7359b4efb8646778f6bb100e50877d44c0a17afa0202035069c22` |
+| `store-BU-hRQPl.js` | `ce52559fee916436fe73fb66f28989ddbacec6b159c673c36d65a003bba87286` |
+| `i18n-DxMaxujG.js` | `1c1904461bc7e9141e43480b6ef5e53eff279ce92666c5db1be6404add3df770` |
+
+Tất cả lệnh mới dùng `POST /api/cmd/{command}` như wrapper `rt` trong store; không dùng `/api/cm/cmd` của nhánh Cầu Ma.
+
+| Lệnh | Payload quan sát được | Điều kiện UI / vị trí logic |
+|---|---|---|
+| `equip.best` | `{}` (guard version) | Túi đồ / nhân vật: mô tả game chọn mỗi ô tốt nhất, không thay đồ đang khóa và không đổi loại vũ khí. Không tự triển khai lại thuật toán chấm điểm. |
+| `minor.trial` | `{}` | Component `Wp`: gate có `kind=trial` và `have<need`. Thua UI mô tả không mất gì. Auto còn yêu cầu đủ tu vi và chờ 10 phút/lần. |
+| `sect.task.claim` | `{taskId}` | `state.sect.id`, `state.sectExtra.tasks`: chưa nhận, `current>=target`. Khác `sect.task` của nhánh Cầu Ma, có thể tiêu vật tư. |
+| `season.task.claim` | `{taskId}` | `state.season.tasks`: chưa nhận, `current>=target`. Không tự đổi lễ phù. |
+| `title.claim` | `{titleId}` | Component `Ed`, `state.ascend.titles`: `earned && !owned`; không tự gọi `title.equip`. |
+| `pet.adopt` | `{petId}` | `state.pets`: `canAdopt && !owned`. Hợp khế có thể dùng khế ấn; mặc định tắt. |
+| `npc.talk` | `{npcId}` | Component đạo hữu: `met`, `talked`; trò chuyện lần đầu ngày +8 thiện cảm. Auto bỏ qua thiện cảm đã 1000. |
+| `npc.claim` | `{npcId,tierId}` | `met`, `affinity>=tier.need`, `!claimed.includes(tier.id)`. Bảng `Xi`: acquainted=100, close=250, trusted=450, confidant=700, bonded=1000. |
+| `hunt.run` | `{petId}` | `character.level>=hunt.reqLevel`, `x2.hunt.runs>0`. UI mô tả thua hoàn lượt; auto vẫn chờ khoảng nghỉ để tránh spam. |
+
+`game_rules.py` giữ 40 mục tiêu từ literal `da.pets`, nhóm `da.hunts`, bảng cấp `Fe`, và vòng mở rộng `Ia`: Trúc Cơ=16, Kết Đan=20, Nguyên Anh=24, Hóa Thần=28, Vấn Đỉnh=36, Khuy Niết=42, Toái Niết=50, Không Niết=54, Không Huyền=62, Không Kiếp=66. Mỗi nhóm 4 linh thú, ngưỡng khế ấn lần lượt 20/40/60/90/120/160/220/280/360/480. `huntPetId` phải chọn rõ; auto dừng khi đủ ngưỡng hoặc đã thu nhận, không săn khế ấn dư cho tiến hóa.
+
+Đã thấy nhưng **chưa auto hóa**: `breakthrough.major`/`breakthrough.trial` (có thể mất vật liệu/tu vi), `npc.gift`, mua bán/đấu giá/quyên góp, đổi nhánh và các lệnh Cầu Ma. API state thực tế của các tính năng mới chưa được xác minh trên account thật; thiếu trường bắt buộc thì bỏ qua, không đoán là đã sẵn sàng. Không mở rộng allowlist sang các lệnh chưa triển khai/đối chiếu.

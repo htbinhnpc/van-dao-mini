@@ -34,7 +34,7 @@ Mini client cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ số nhân v�
 
 ## Nguyên tắc hoạt động
 
-Mini client chỉ dùng các lệnh chính thức của game:
+Mini client chỉ dùng các lệnh của game client qua API game (payload đã đối chiếu, không gọi endpoint quản trị):
 
 ```text
 settle
@@ -52,9 +52,37 @@ boss.fight
 field.plant
 field.harvest
 field.rush
+equip.best
+minor.trial
+sect.task.claim
+season.task.claim
+title.claim
+pet.adopt
+npc.talk
+npc.claim
+hunt.run
 ```
 
-Không chỉnh sửa dữ liệu, không gửi request giả, không vượt qua giới hạn của game. Trên Vercel, Cron xử lý theo phút và lần lượt từng tài khoản đến khi gần hết thời lượng Function; các tài khoản còn lại tiếp tục ở lượt Cron sau.
+Không chỉnh sửa dữ liệu máy chủ hay vượt qua giới hạn của game. Trên Vercel, Cron xử lý lần lượt các tài khoản đến hạn và dừng trước deadline Function; các tài khoản còn lại tiếp tục ở lượt Cron sau. Nhịp gọi Cron thực tế do `vercel.json` quyết định.
+
+### Auto mở rộng (tất cả mặc định tắt)
+
+Đối chiếu JavaScript **công khai** của game ngày 2026-11-04 (Chrome đang khóa cache; đã dùng bundle công khai thay thế theo lựa chọn người dùng). Đây là logic/payload quan sát từ client, không phải mã xử lý trên server hoặc cam kết API ổn định. Xem bằng chứng trong `api_knowledge.md`.
+
+| Cấu hình | Điều kiện / giới hạn |
+|---|---|
+| `autoEquipBest` | Khi có đồ trong túi, gọi `equip.best`; game tự chọn. Không tự bán, phân giải, mở khóa hay thay loại vũ khí bằng lệnh riêng. Có thể đổi bộ đồ theo bộ chọn của game. |
+| `autoMinorTrial` | Chỉ `character.next=minor`, đủ tu vi, `minorGate.kind=trial` chưa đạt; tối đa 1 lần/10 phút, kể cả thua/lỗi. Không tự đột phá lớn; auto lên tầng của game áp dụng ở lần settle sau. |
+| `autoSectTasks`, `autoSeasonTasks` | Nhận nhiệm vụ tông môn/lễ hội có `claimed=false`, đủ `current/target`; không đóng góp, mua hàng hay làm nhiệm vụ tốn vật phẩm. |
+| `autoTitles` | Chỉ nhận danh hiệu `earned=true`, `owned=false`; không tự mang/thay danh hiệu. Ba nhóm thưởng này tổng cộng tối đa 3 lệnh/vòng. |
+| `autoPetAdopt` | Tối đa 1 linh thú/vòng khi `canAdopt=true`, `owned=false`; có thể tiêu khế ấn hợp khế. Không tự xuất chiến, nuôi hay tiến hóa. |
+| `autoNpcTalk` | Tối đa 2 đạo hữu đã gặp/vòng, chưa trò chuyện ngày và thiện cảm dưới 1000; không tặng quà hay tự chọn quan hệ. |
+| `autoNpcRewards` | Tối đa 2 quà mốc thiện cảm/vòng; dùng state mới sau trò chuyện và bỏ qua mốc đã nhận. |
+| `autoHunt` | Bắt buộc chọn `huntPetId` trong 40 linh thú khế ấn; đủ cấp, còn lượt trên `huntReserveRuns`, chưa đủ khế ấn và chưa thu nhận. Tối đa 1 lượt/vòng, chờ `huntIntervalMin` (mặc định 10 phút) kể cả thua. Không mua thêm lượt. |
+
+Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng **tối đa 12 lệnh**, chỉ bắt đầu lệnh trong cửa sổ 40 giây. Phần chưa chạy để vòng sau. Nếu lệnh lỗi, timeout, xung đột version hoặc phản hồi thiếu state, dừng phần còn lại và lưu lỗi; không retry lệnh có tác dụng phụ với key mới. Lịch sử khoảng nghỉ lưu trong `automation_data`, không chỉ giữ trong RAM. Các kiểm thử dùng mock, chưa bật/thử auto mới trên tài khoản game thật.
+
+Chọn các auto trong tab **Tự động**, lưu cấu hình riêng cho từng tài khoản, rồi dùng **Chạy ngay** để chạy một vòng theo cấu hình đã lưu. Cron chỉ chạy khi tài khoản bật trợ lý; nhịp thực tế còn phụ thuộc lịch Cron của môi trường triển khai (cấu hình Vercel hiện tại là mỗi ngày một lần).
 
 ### Cơ chế luyện/dùng đan
 
@@ -84,6 +112,26 @@ Không chỉnh sửa dữ liệu, không gửi request giả, không vượt qua
 - Nếu phiên hết hạn, đăng xuất rồi đăng nhập lại.
 
 ## Skeleton phát triển
+
+### Dashboard: bản cập nhật giao diện tu tiên
+
+- Bảng màu ngọc bích, vàng cổ, nền mực xanh đối chiếu từ CSS game gốc. Hình Thanh Khê/nhân vật phục vụ nội bộ từ `frontend/public/game-art/`; xem nguồn và lưu ý quyền sử dụng ở `frontend/public/game-art/README.md`. Không tải font/ảnh bên thứ ba khi chạy dashboard.
+- Tổng quan có cảnh tu luyện, metadata cảnh giới/hoạt động, thanh tu vi, tài nguyên, nhiệm vụ và chỉ số (`state.stats`, có fallback schema cũ). Không mô phỏng số liệu hoặc chạy game bằng hiệu ứng giao diện.
+- Auto chia 6 nhóm, tìm kiếm, thiết lập mục tiêu/hạn mức, kiểm tra thay đổi chưa lưu, hoàn tác và xác nhận các mục tác động game. Lưu cấu hình không tự gọi tick. Chuyển trang/tài khoản/đăng xuất và tải lại trang được bảo vệ khi có bản nháp chưa lưu.
+- Chạy vòng thủ công và gỡ liên kết yêu cầu xác nhận. Chặn gửi trùng khi request đang chạy. Lỗi tải dữ liệu không bị nhầm là đã đăng xuất, túi trống hoặc thao tác thành công.
+- Túi đồ gồm vật liệu từ API, trang bị từ snapshot và tiền tệ; tìm không dấu, lọc, xem chi tiết chỉ đọc. Nhật ký có lọc trạng thái/nội dung. Mobile có thanh điều hướng dưới, hỗ trợ bàn phím, focus modal và reduced motion.
+
+#### Kiểm thử giao diện
+
+```powershell
+npm --prefix frontend install
+npm --prefix frontend exec -- playwright install chromium
+npm run build
+npm --prefix frontend run test:e2e
+python -m unittest discover -s tests -v
+```
+
+Playwright chạy Chromium thật trên **production preview**, với desktop và viewport iPhone; kiểm tra các luồng chính, xác nhận tiêu hao, bản nháp, lỗi API, nhiều độ rộng 320–1440px, bàn phím và WCAG qua axe. API được intercept bằng **tài khoản/dữ liệu giả lập**, không đọc `.env` hay Chrome cache, không đăng nhập/gửi lệnh tới game thật và không truy cập Supabase thật. Ảnh chụp/trace khi kiểm thử nằm trong `frontend/test-results/`, báo cáo HTML trong `frontend/playwright-report/` (không commit).
 
 - `frontend/`: React + Vite dashboard.
 - `api/`: FastAPI backend, local auth, game account service, dashboard APIs và automation worker.

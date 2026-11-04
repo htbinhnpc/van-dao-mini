@@ -37,7 +37,9 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_command_allowlist_contains_readme_commands_only(self):
-        self.assertEqual(len(ALLOWED_COMMANDS), 15)
+        from pathlib import Path
+        commands = Path("README.md").read_text(encoding="utf-8").split("```text\n", 1)[1].split("```", 1)[0]
+        self.assertEqual(ALLOWED_COMMANDS, frozenset(commands.split()))
         self.assertNotIn("admin.delete", ALLOWED_COMMANDS)
 
     def test_non_allowlisted_command_is_rejected_before_network(self):

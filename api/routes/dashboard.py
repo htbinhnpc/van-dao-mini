@@ -14,6 +14,7 @@ from api.routes.accounts import DEFAULT_CONFIG, account_config, owned_account, p
 from api.security import current_user
 from api.services.automation import run_account_tick
 from api.services.game_client import ALLOWED_COMMANDS, GameAPIError, GameClient
+from api.services.game_rules import HUNT_TARGETS
 from api.services.session_crypto import decrypt_session
 
 router = APIRouter()
@@ -33,12 +34,29 @@ def _config_for_update(current: dict, patch: dict) -> dict:
     if unknown:
         raise HTTPException(422, f"Config không hỗ trợ: {', '.join(sorted(unknown))}")
     result = {**DEFAULT_CONFIG, **current, **patch}
-    result["enabled"] = bool(result["enabled"])
-    result["intervalMs"] = max(60_000, min(300_000, int(result.get("intervalMs") or 60_000)))
-    result["bossIntervalMin"] = max(0, min(1440, int(result.get("bossIntervalMin") or 0)))
-    result["useThresholdMin"] = max(0, min(240, int(result.get("useThresholdMin") or 0)))
-    result["craftKeepQty"] = max(0, min(9999, int(result.get("craftKeepQty") or 0)))
-    result["farmReserveStones"] = max(0, int(result.get("farmReserveStones") or 0))
+    for key, default in DEFAULT_CONFIG.items():
+        if isinstance(default, bool) and type(result[key]) is not bool:
+            raise HTTPException(422, f"{key} phải là boolean true/false.")
+    limits = {
+        "intervalMs": (60_000, 300_000), "bossIntervalMin": (0, 1440),
+        "useThresholdMin": (0, 240), "craftKeepQty": (0, 9999),
+        "farmReserveStones": (0, 10**18), "huntReserveRuns": (0, 12),
+        "huntIntervalMin": (1, 1440), "autoSalvageTier": (0, 7),
+    }
+    for key, (minimum, maximum) in limits.items():
+        try:
+            if isinstance(result[key], bool):
+                raise ValueError
+            if isinstance(result[key], float) and not result[key].is_integer():
+                raise ValueError
+            result[key] = max(minimum, min(maximum, int(result[key])))
+        except (ValueError, TypeError, OverflowError) as exc:
+            raise HTTPException(422, f"{key} phải là số nguyên hợp lệ.") from exc
+    pet_id = result.get("huntPetId")
+    if not isinstance(pet_id, str) or (pet_id and pet_id not in HUNT_TARGETS):
+        raise HTTPException(422, "Linh thú săn khế ấn không hợp lệ.")
+    if result["autoHunt"] and not pet_id:
+        raise HTTPException(422, "Chọn linh thú mục tiêu trước khi bật auto săn khế ấn.")
     if result["activityType"] not in {"seclusion", "farm", "gather_herb", "mine_ore", "body_training"}:
         raise HTTPException(422, "Loại hoạt động không hợp lệ.")
     if result["autoSalvageMode"] not in {"salvage", "sell"}:
@@ -84,6 +102,23 @@ async def game_metadata() -> dict:
         "realms": META.get("realms", {}),
         "activities": META.get("activities", {}),
         "spots": META.get("spots", {}),
+        "huntTargets": HUNT_TARGETS,
+        "stats": META.get("stats", {}),
+        "slots": META.get("slots", {}),
+        "rarities": META.get("rarities", {}),
+        "equipment": {
+            key: {field: value.get(field) for field in ("id", "name", "slot", "rarity", "reqLevel")}
+            for key, value in META.get("equipment", {}).items()
+        },
+        "recipes": {
+            key: {field: value.get(field) for field in ("id", "name", "reqLevel")}
+            for key, value in META.get("recipes", {}).items()
+            if (META.get("items", {}).get((value.get("output") or {}).get("itemId"), {}).get("use") or {}).get("type")
+            in {"cultivation_buff", "cultivation_exp"}
+        },
+        "seeds": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("seeds", {}).items()},
+        "regions": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("regions", {}).items()},
+        "quests": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("quests", {}).items()},
     }
 
 
@@ -214,6 +249,8 @@ async def manual_tick(account_id: str, user: dict = Depends(current_user)) -> di
     account = await owned_account(user["id"], account_id)
     account["config"] = await account_config(account_id)
     result = await run_account_tick(account, manual=True)
+    if result.get("error"):
+        raise HTTPException(502, f"Đã dừng auto an toàn: {result['error']}")
     return {"ok": True, **result}
 
 
@@ -247,7 +284,7 @@ async def automation_cron(request: Request, authorization: str | None = Header(d
     started = time.monotonic()
     processed = []
     for candidate in rows or []:
-        if time.monotonic() - started > 45:
+        if time.monotonic() - started > 43:
             break
         lease_until = candidate.get("lease_until")
         lease_filter = f"lease_until=lt.{filter_value(now.isoformat())}" if lease_until else "lease_until=is.null"
@@ -261,13 +298,13 @@ async def automation_cron(request: Request, authorization: str | None = Header(d
         try:
             config = await account_config(candidate["id"])
             candidate["config"] = config
-            result = await run_account_tick(candidate)
+            result = await run_account_tick(candidate, time_budget=max(0, 43 - (time.monotonic() - started)))
             next_run = datetime.now(timezone.utc) + timedelta(milliseconds=max(60_000, min(300_000, int(config.get("intervalMs") or 60_000))))
             await patch_rows("game_accounts", f"id=eq.{filter_value(candidate['id'])}", {
                 "next_run_at": next_run.isoformat(), "lease_until": None,
-                "last_tick_at": datetime.now(timezone.utc).isoformat(), "last_error": None,
+                "last_tick_at": datetime.now(timezone.utc).isoformat(), "last_error": result.get("error"),
             })
-            processed.append({"accountId": candidate["id"], "ok": True, "skipped": result.get("skipped", False)})
+            processed.append({"accountId": candidate["id"], "ok": not result.get("error"), "skipped": result.get("skipped", False)})
         except Exception as exc:
             message = str(exc)[:500]
             await patch_rows("game_accounts", f"id=eq.{filter_value(candidate['id'])}", {
