@@ -5,10 +5,11 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const tempDir = path.join(__dirname, 'tmp');
 const PORT = Number(process.env.PORT || 3010);
 const GAME_ORIGIN = process.env.GAME_ORIGIN || 'https://vandaonghichmenh.hongvan.net:60010';
-const SESSION_FILE = path.join(__dirname, '.acc.session.json');
-const CONFIG_FILE = path.join(__dirname, '.config.json');
+const SESSION_FILE = path.join(tempDir, '.acc.session.json');
+const CONFIG_FILE = path.join(tempDir, '.config.json');
 const META_FILE = path.join(__dirname, 'data', 'meta.json');
 
 const DEFAULT_CONFIG = {
@@ -248,6 +249,11 @@ async function login(username, password, remember = true) {
     .find((c) => c.startsWith('vd_sid='));
   if (!sid) throw new Error('Máy chủ game không trả về phiên đăng nhập (vd_sid).');
   session = { cookie: sid, user: json.user || null, savedAt: nowIso() };
+  try {
+    await fs.access(SESSION_FILE, fs.constants.F_OK);
+  } catch {
+    fs.mkdir(tempDir, { recursive: true }).catch(() => {});
+  }
   if (remember) await saveSession();
   await refreshState(false);
   addLog('success', 'Đăng nhập thành công', session.user?.username || username);

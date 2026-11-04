@@ -1,7 +1,5 @@
 node_modules/
-*.session.json
-.config.json
-*.log
+tmp/*
 .DS_Store
 Thumbs.db
 .aider*
