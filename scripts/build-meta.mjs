@@ -106,6 +106,22 @@ for (const [id, rg] of Object.entries(m.Za)) {
   };
 }
 
+const bosses = {};
+for (const boss of m.Ga) {
+  bosses[boss.id] = {
+    id: boss.id,
+    name: nameOf(boss.nameKey, boss.id),
+    mechanic: tr[boss.mechanicKey] || '',
+    regionId: boss.regionId || null,
+    reqLevel: boss.reqLevel || 1,
+    cooldownMs: boss.cooldownMs || 0,
+    maxTimeMs: boss.maxTimeMs || 0,
+    monsterId: boss.monsterId || '',
+    firstClear: boss.firstClear || null,
+    repeat: boss.repeat || null,
+  };
+}
+
 const realms = {};
 for (const [id, r] of Object.entries(m.Do)) {
   realms[id] = {
@@ -137,6 +153,56 @@ for (const [id, p] of Object.entries(m.Sa)) {
     name: nameOf(p.nameKey, id),
     desc: tr[p.descKey] || '',
     role: p.role,
+  };
+}
+
+const recipes = {};
+for (const recipe of m.Ia) {
+  recipes[recipe.id] = {
+    id: recipe.id,
+    name: nameOf(recipe.nameKey, recipe.id),
+    reqLevel: recipe.reqLevel,
+    durationMs: recipe.durationMs,
+    stones: recipe.stones || 0,
+    inputs: recipe.inputs || [],
+    output: recipe.output,
+    weekLimit: m.Ra?.[recipe.id] ?? null,
+  };
+}
+
+const seeds = {};
+for (const [id, seed] of Object.entries(m['$i'] || {})) {
+  seeds[id] = {
+    id,
+    name: nameOf(seed.nameKey, id),
+    reqField: seed.reqField || 1,
+    reqLevel: m.Sr?.[id] || 0,
+    durationMs: seed.durationMs || 0,
+    stones: seed.stones || 0,
+    yield: seed.yield || null,
+    habitat: seed.habitat || null,
+    alsoHabitat: seed.alsoHabitat || null,
+    kind: seed.habitat ? 'habitat' : seed.alsoHabitat ? 'both' : 'field',
+  };
+}
+
+const habitatNames = {
+  han: 'Hàn tuyền',
+  loi: 'Lôi trì',
+  am: 'Âm viên',
+  duong: 'Dương viên',
+  hu: 'Hư viên',
+};
+const habitats = {};
+for (const habitat of m.yr || []) {
+  habitats[habitat.id] = {
+    id: habitat.id,
+    name: tr[habitat.nameKey] || habitatNames[habitat.id] || prettify(habitat.id),
+    order: habitat.order,
+    reqLevel: habitat.reqLevel || 0,
+    plotStart: habitat.order * 100 + 1,
+    plotCount: 4,
+    openHours: [2, 4, 8, 8],
   };
 }
 
@@ -229,9 +295,13 @@ const meta = {
   skills,
   spots,
   regions,
+  bosses,
   realms,
   quests,
   pets,
+  recipes,
+  seeds,
+  habitats,
   daily: m.Gi.map((t) => ({ ...t, name: tr[t.nameKey] || prettify(t.id) })),
   weekly: m.aa.map((t) => ({ ...t, name: tr[t.nameKey] || prettify(t.id) })),
   achievements: Object.fromEntries(Object.entries(m.zi).map(([id, a]) => [
@@ -245,5 +315,7 @@ fs.writeFileSync(fileURLToPath(new URL('../data/meta.json', import.meta.url)), J
 console.log('meta written');
 console.log('items', Object.keys(items).length, 'equipment', Object.keys(equipment).length, 'skills', Object.keys(skills).length);
 console.log('spots', Object.keys(spots).length, 'regions', Object.keys(regions).length, 'quests', Object.keys(quests).length);
+console.log('recipes', Object.keys(recipes).length, 'bosses', Object.keys(bosses).length);
+console.log('seeds', Object.keys(seeds).length, 'habitats', Object.keys(habitats).length);
 console.log('sample item', items.item_qi_pill);
 console.log('sample equip', equipment.equip_t1_weapon);

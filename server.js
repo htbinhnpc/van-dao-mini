@@ -28,6 +28,24 @@ const DEFAULT_CONFIG = {
   autoMail: true,
   autoX2Daily: false,
   autoFallbackHunt: true,
+  autoCraft: false,
+  craftRecipeId: '',
+  craftKeepQty: 10,
+  autoUse: false,
+  autoUseBuffs: true,
+  autoUseExp: false,
+  autoUseOnlyBest: true,
+  useThresholdMin: 15,
+  autoBoss: false,
+  bossIntervalMin: 10,
+  bossRegionId: '',
+  autoFarm: false,
+  farmHarvest: true,
+  farmPlant: true,
+  farmIncludeHabitats: true,
+  farmSeedMode: 'best',
+  farmSeedId: '',
+  farmReserveStones: 0,
 };
 
 const MIME = {
@@ -54,6 +72,13 @@ let loopTimer = null;
 let tickBusy = false;
 let lastCommandAt = 0;
 let lastMailClaimAt = 0;
+let lastCraftWarnAt = 0;
+let lastUseWarnAt = 0;
+let lastBossWarnAt = 0;
+let lastFarmWarnAt = 0;
+const bossLastFightAt = new Map();
+let bossCursor = '';
+let hasSavedConfig = false;
 let mailCache = { at: 0, count: 0 };
 let commandChain = Promise.resolve();
 
@@ -96,9 +121,46 @@ async function writeJson(file, value) {
   await fs.writeFile(file, JSON.stringify(value, null, 2), 'utf8');
 }
 
+const ACTIVITY_TYPES = new Set(['seclusion', 'farm', 'gather_herb', 'mine_ore', 'body_training']);
+
+async function seedConfigFromGame({ force = false, persist = false } = {}) {
+  if (!state || (hasSavedConfig && !force)) return false;
+  const firstSeed = !hasSavedConfig;
+  const settings = state.settings || {};
+  const tier = Math.max(0, Math.min(5, Number(settings.autoSalvageTier) || 0));
+  const before = JSON.stringify({
+    autoMinor: config.autoMinor,
+    autoSalvage: config.autoSalvage,
+    autoSalvageTier: config.autoSalvageTier,
+    autoSalvageMode: config.autoSalvageMode,
+    activityType: config.activityType,
+    huntSpotId: config.huntSpotId,
+  });
+
+  config.autoMinor = !!state.character?.autoMinor;
+  config.autoSalvageTier = tier;
+  config.autoSalvage = tier > 0;
+  config.autoSalvageMode = settings.autoSalvageMode === 'sell' ? 'sell' : 'salvage';
+  if (ACTIVITY_TYPES.has(state.activity?.type)) config.activityType = state.activity.type;
+  if (state.activity?.type === 'farm' && state.activity?.targetId) config.huntSpotId = state.activity.targetId;
+
+  hasSavedConfig = true;
+  const after = JSON.stringify({
+    autoMinor: config.autoMinor,
+    autoSalvage: config.autoSalvage,
+    autoSalvageTier: config.autoSalvageTier,
+    autoSalvageMode: config.autoSalvageMode,
+    activityType: config.activityType,
+    huntSpotId: config.huntSpotId,
+  });
+  if (persist || firstSeed || before !== after) await writeJson(CONFIG_FILE, config);
+  return before !== after;
+}
+
 async function loadLocal() {
   meta = await readJson(META_FILE, {});
   const savedConfig = await readJson(CONFIG_FILE, null);
+  hasSavedConfig = !!savedConfig;
   if (savedConfig) config = { ...DEFAULT_CONFIG, ...savedConfig };
   const savedSession = await readJson(SESSION_FILE, null);
   if (savedSession?.cookie) {
@@ -198,6 +260,7 @@ async function refreshState(log = false) {
   const json = await gameFetch('/api/state');
   if (!json?.state) throw new Error('Phản hồi /api/state không hợp lệ.');
   state = json.state;
+  await seedConfigFromGame();
   if (log) addLog('info', 'Đã làm mới trạng thái');
   broadcast('state', publicSnapshot());
   return state;
@@ -209,6 +272,7 @@ function publicSnapshot() {
     user: session?.user || null,
     state,
     config,
+    boss: bossSnapshot(),
     logs: logs.slice(-80),
     serverTime: Date.now(),
   };
@@ -284,6 +348,7 @@ function summarizeSettle(cmd, settle) {
   if (settle.cycles) bits.push(`${settle.cycles} chu kỳ`);
   if (settle.layerUps?.length) bits.push(`lên ${settle.layerUps.length} tầng`);
   if (settle.equipment?.length) bits.push(`${settle.equipment.length} trang bị`);
+  if (settle.craftsCompleted?.length) bits.push(`${settle.craftsCompleted.length} mẻ luyện xong`);
   if (settle.autoSalvaged) bits.push(`tự xử lý ${settle.autoSalvaged} món`);
   if (settle.stopReason) bits.push(`dừng: ${settle.stopReason}`);
   if (bits.length) addLog('info', `Kết toán ${cmd === 'settle' ? '' : `sau ${cmd} `}`, bits.join(' · '));
@@ -479,6 +544,303 @@ async function claimRewards() {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Đan dược: tự chế tạo và tự sử dụng                                  */
+/* ------------------------------------------------------------------ */
+
+const PILL_USE_TYPES = new Set(['cultivation_buff', 'cultivation_exp']);
+
+function recipeInfo(id) {
+  return meta?.recipes?.[id] || null;
+}
+
+function isPillRecipe(recipe) {
+  if (!recipe || recipe.output?.kind !== 'item') return false;
+  const item = meta?.items?.[recipe.output.itemId];
+  if (!item) return false;
+  if (PILL_USE_TYPES.has(item.use?.type)) return true;
+  if (item.kind === 'breakthrough') return true;
+  return item.kind === 'consumable' && /đan|pill/i.test(`${item.name} ${item.id}`);
+}
+
+function isUsablePillRecipe(recipe) {
+  const item = meta?.items?.[recipe?.output?.itemId];
+  return PILL_USE_TYPES.has(item?.use?.type);
+}
+
+function pillRecipeList() {
+  return Object.values(meta?.recipes || {}).filter(isPillRecipe);
+}
+
+function craftWeekRemaining(recipe) {
+  if (!recipe?.weekLimit) return Infinity;
+  const used = Number(state?.crafting?.weekUsed?.[recipe.id] || 0);
+  return Math.max(0, Number(recipe.weekLimit) - used);
+}
+
+function recipeCraftable(recipe) {
+  if (!recipe || !isPillRecipe(recipe) || !state) return false;
+  if (Number(state.character?.level || 0) < Number(recipe.reqLevel || 0)) return false;
+  if (craftWeekRemaining(recipe) < 1) return false;
+  let stones = 0n;
+  try {
+    stones = BigInt(state.wallet?.spirit_stone ?? '0');
+  } catch {
+    stones = BigInt(Math.floor(Number(state.wallet?.spirit_stone) || 0));
+  }
+  if (stones < BigInt(Number(recipe.stones || 0))) return false;
+  return (recipe.inputs || []).every((input) => (
+    Number(state.materials?.[input.itemId] || 0) >= Number(input.qty || 0)
+  ));
+}
+
+function recipePriority(recipe) {
+  const item = meta?.items?.[recipe?.output?.itemId];
+  const use = item?.use;
+  if (use?.type === 'cultivation_buff') {
+    return 2e15 + Number(use.ratePct || 0) * 1e9 + Number(recipe.reqLevel || 0);
+  }
+  if (use?.type === 'cultivation_exp') {
+    return 1e15 + Number(use.exp || 0);
+  }
+  return Number(recipe?.reqLevel || 0);
+}
+
+function bestCraftRecipe() {
+  return pillRecipeList()
+    .filter((recipe) => isUsablePillRecipe(recipe) && recipeCraftable(recipe))
+    .sort((a, b) => recipePriority(b) - recipePriority(a))[0] || null;
+}
+
+async function autoCraftTick() {
+  if (!config.autoCraft || !state?.crafting) return;
+  const crafting = state.crafting;
+  const freeSlots = Math.max(0, Number(crafting.slots || 0) - (crafting.jobs?.length || 0));
+  if (freeSlots < 1) return;
+
+  const selected = config.craftRecipeId ? recipeInfo(config.craftRecipeId) : null;
+  const recipe = selected && isPillRecipe(selected) ? selected : bestCraftRecipe();
+  if (!recipe) return;
+
+  if (!recipeCraftable(recipe)) {
+    if (Date.now() - lastCraftWarnAt > 120000) {
+      lastCraftWarnAt = Date.now();
+      const missing = (recipe.inputs || [])
+        .filter((input) => Number(state.materials?.[input.itemId] || 0) < Number(input.qty || 0))
+        .map((input) => `${meta?.items?.[input.itemId]?.name || input.itemId} ${formatNum(state.materials?.[input.itemId] || 0)}/${formatNum(input.qty)}`);
+      addLog('warn', 'Chưa thể tự luyện đan', missing.length
+        ? `${recipe.name}: thiếu ${missing.join(', ')}`
+        : `${recipe.name}: chưa đủ cấp, linh thạch hoặc lượt tuần.`);
+    }
+    return;
+  }
+
+  const outputId = recipe.output.itemId;
+  const have = Number(state.materials?.[outputId] || 0);
+  const inProgress = (crafting.jobs || [])
+    .filter((job) => job.recipeId === recipe.id)
+    .reduce((sum, job) => sum + Number(recipe.output.qty || 1), 0);
+  const projected = have + inProgress;
+  const keep = Math.max(0, Number(config.craftKeepQty) || 0);
+  if (keep > 0 && projected >= keep) return;
+  const need = keep > 0 ? keep - projected : freeSlots;
+
+  const maxByMaterials = (recipe.inputs || []).length
+    ? Math.min(...recipe.inputs.map((input) => Math.floor(
+      Number(state.materials?.[input.itemId] || 0) / Math.max(1, Number(input.qty || 1)),
+    )))
+    : Infinity;
+  const stones = Number(recipe.stones || 0);
+  const maxByStones = stones > 0 ? Math.floor(Number(state.wallet?.spirit_stone || 0) / stones) : Infinity;
+  const count = Math.max(0, Math.min(freeSlots, maxByMaterials, maxByStones, craftWeekRemaining(recipe), need, 8));
+  if (count < 1) return;
+
+  try {
+    await sendCommand('craft.start', { recipeId: recipe.id, count });
+    addLog('success', 'Bắt đầu luyện đan', `${recipe.name} ×${count} · ${meta?.items?.[outputId]?.name || outputId}`);
+  } catch (err) {
+    if (Date.now() - lastCraftWarnAt > 120000) {
+      lastCraftWarnAt = Date.now();
+      addLog('warn', 'Không bắt đầu được mẻ luyện', `${recipe.name}: ${err.message}`);
+    }
+  }
+}
+
+function buffRemainingMs(itemId) {
+  const buff = (state?.buffs || []).find((entry) => entry.id === `buff:${itemId}`);
+  if (!buff) return 0;
+  const now = Number(state?.serverNow) || Date.now();
+  return Math.max(0, Number(buff.expiresAt || 0) - now);
+}
+
+function availablePills(type) {
+  return Object.values(meta?.items || {})
+    .filter((item) => item.use?.type === type && Number(state?.materials?.[item.id] || 0) > 0)
+    .sort((a, b) => {
+      if (type === 'cultivation_buff') return Number(b.use.ratePct || 0) - Number(a.use.ratePct || 0);
+      return Number(b.use.exp || 0) - Number(a.use.exp || 0);
+    });
+}
+
+async function usePill(item) {
+  await sendCommand('item.use', { itemId: item.id, qty: 1 });
+  const use = item.use || {};
+  const effect = use.type === 'cultivation_buff'
+    ? `+${formatNum(use.ratePct)}% tốc độ tu vi trong ${Math.round(Number(use.durationMs || 0) / 60000)} phút`
+    : use.type === 'cultivation_exp'
+      ? `+${formatNum(use.exp)} tu vi`
+      : 'đã dùng';
+  addLog('success', 'Đã dùng đan dược', `${item.name} · ${effect}`);
+}
+
+async function autoUseTick() {
+  if (!config.autoUse || !state) return false;
+  const thresholdMs = Math.max(0, Number(config.useThresholdMin) || 0) * 60000;
+
+  if (config.autoUseBuffs) {
+    const pills = availablePills('cultivation_buff');
+    const candidates = config.autoUseOnlyBest ? pills.slice(0, 1) : pills;
+    for (const pill of candidates) {
+      const remaining = buffRemainingMs(pill.id);
+      const maxTotal = Number(pill.use?.maxTotalMs || 0);
+      const duration = Number(pill.use?.durationMs || 0);
+      if (maxTotal > 0 && duration > 0 && remaining + duration > maxTotal) continue;
+      if (maxTotal > 0 && duration <= 0 && remaining >= maxTotal) continue;
+      if (remaining > thresholdMs) continue;
+      try {
+        await usePill(pill);
+        return true;
+      } catch (err) {
+        if (Date.now() - lastUseWarnAt > 120000) {
+          lastUseWarnAt = Date.now();
+          addLog('warn', 'Không dùng được đan dược', `${pill.name}: ${err.message}`);
+        }
+        return false;
+      }
+    }
+  }
+
+  if (config.autoUseExp) {
+    const pills = availablePills('cultivation_exp');
+    const candidates = config.autoUseOnlyBest ? pills.slice(0, 1) : pills;
+    for (const pill of candidates) {
+      try {
+        await usePill(pill);
+        return true;
+      } catch (err) {
+        if (Date.now() - lastUseWarnAt > 120000) {
+          lastUseWarnAt = Date.now();
+          addLog('warn', 'Không dùng được đan dược', `${pill.name}: ${err.message}`);
+        }
+        return false;
+      }
+    }
+  }
+
+  return false;
+}
+
+/* ------------------------------------------------------------------ */
+/* Boss khu vực: tự đánh lại boss đã hạ                                */
+/* ------------------------------------------------------------------ */
+
+function bossInfo(id) {
+  return meta?.bosses?.[id] || null;
+}
+
+function bossCooldownRemaining(region) {
+  if (!region?.bossCooldownUntil) return 0;
+  const now = Number(state?.serverNow) || Date.now();
+  return Math.max(0, Number(region.bossCooldownUntil) - now);
+}
+
+function clearedBossEntries() {
+  const entries = [];
+  for (const region of state?.regions || []) {
+    if (!region.unlocked || !region.bossCleared) continue;
+    const regionMeta = meta?.regions?.[region.id];
+    const boss = bossInfo(regionMeta?.bossId);
+    if (!boss) continue;
+    entries.push({ region, regionMeta, boss });
+  }
+  return entries.sort((a, b) => Number(a.boss.reqLevel || 0) - Number(b.boss.reqLevel || 0)
+    || String(a.boss.id).localeCompare(String(b.boss.id)));
+}
+
+function bossLocalRemaining(entry) {
+  const intervalMs = Math.max(0, Number(config.bossIntervalMin) || 0) * 60000;
+  if (intervalMs <= 0) return 0;
+  const last = bossLastFightAt.get(entry.boss.id) || 0;
+  return Math.max(0, intervalMs - (Date.now() - last));
+}
+
+function bossEntryReady(entry) {
+  if (!entry) return false;
+  if (Number(state?.character?.level || 0) < Number(entry.boss.reqLevel || 0)) return false;
+  if (bossCooldownRemaining(entry.region) > 0) return false;
+  return bossLocalRemaining(entry) <= 0;
+}
+
+function nextBossEntry() {
+  const ready = clearedBossEntries().filter(bossEntryReady);
+  if (!ready.length) return null;
+  if (config.bossRegionId) {
+    return ready.find((entry) => entry.region.id === config.bossRegionId) || null;
+  }
+  const cursorIndex = ready.findIndex((entry) => entry.boss.id === bossCursor);
+  return ready[(cursorIndex + 1) % ready.length];
+}
+
+function bossSnapshot() {
+  const ready = clearedBossEntries().filter(bossEntryReady);
+  return {
+    cursor: bossCursor,
+    nextId: nextBossEntry()?.boss.id || null,
+    readyIds: ready.map((entry) => entry.boss.id),
+  };
+}
+
+function bossRewardBits(rewards) {
+  if (!rewards) return [];
+  const bits = [];
+  if (Number(rewards.stones) > 0) bits.push(`${formatNum(rewards.stones)} linh thạch`);
+  if (rewards.items?.length) {
+    bits.push(rewards.items.map((entry) => {
+      const name = meta?.items?.[entry.itemId]?.name || entry.itemId;
+      return `${name} ×${formatNum(entry.qty)}`;
+    }).join(', '));
+  }
+  return bits;
+}
+
+async function autoBossTick() {
+  if (!config.autoBoss || !state) return false;
+
+  const target = nextBossEntry();
+  if (!target) return false;
+
+  try {
+    const result = await sendCommand('boss.fight', { bossId: target.boss.id });
+    bossLastFightAt.set(target.boss.id, Date.now());
+    bossCursor = target.boss.id;
+    const fight = result?.result || {};
+    const won = fight.battle?.result?.winner === 'ally';
+    const rewards = bossRewardBits(fight.rewards);
+    addLog(
+      won ? 'success' : 'warn',
+      won ? 'Hạ boss khu vực' : 'Chưa hạ được boss khu vực',
+      `${target.boss.name} · ${target.regionMeta?.name || target.region.id}${won && rewards.length ? ` · ${rewards.join(' · ')}` : ''}`,
+    );
+    return true;
+  } catch (err) {
+    if (Date.now() - lastBossWarnAt > 120000) {
+      lastBossWarnAt = Date.now();
+      addLog('warn', 'Không đánh được boss khu vực', `${target.boss.name}: ${err.message}`);
+    }
+    return false;
+  }
+}
+
 async function autoTick({ manual = false } = {}) {
   if (tickBusy) return { skipped: true };
   if (!session) throw Object.assign(new Error('Chưa đăng nhập.'), { code: 'UNAUTHENTICATED' });
@@ -490,6 +852,9 @@ async function autoTick({ manual = false } = {}) {
       await applySettings();
       await ensureActivity();
       await claimRewards();
+      await autoUseTick();
+      await autoCraftTick();
+      await autoBossTick();
     } else {
       await refreshState(false);
     }
@@ -541,6 +906,18 @@ function validateConfig(input) {
   next.autoMail = !!next.autoMail;
   next.autoX2Daily = !!next.autoX2Daily;
   next.autoFallbackHunt = !!next.autoFallbackHunt;
+  next.autoCraft = !!next.autoCraft;
+  next.craftRecipeId = String(next.craftRecipeId || '');
+  next.craftKeepQty = Math.max(0, Math.min(9999, Number(next.craftKeepQty) || 0));
+  next.autoUse = !!next.autoUse;
+  next.autoUseBuffs = !!next.autoUseBuffs;
+  next.autoUseExp = !!next.autoUseExp;
+  next.autoUseOnlyBest = !!next.autoUseOnlyBest;
+  next.useThresholdMin = Math.max(0, Math.min(240, Number(next.useThresholdMin) || 0));
+  next.autoBoss = !!next.autoBoss;
+  next.bossIntervalMin = Math.max(0, Math.min(240, Number(next.bossIntervalMin) || 0));
+  next.bossRegionId = String(next.bossRegionId || '');
+  delete next.craftIntervalMs;
   return next;
 }
 
@@ -555,7 +932,7 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === '/api/meta') {
-    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=3600' });
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache' });
     return res.end(JSON.stringify(meta));
   }
 
@@ -600,12 +977,22 @@ async function handleApi(req, res, url) {
     return send(200, { ok: true, config });
   }
 
+  if (url.pathname === '/api/config/sync' && req.method === 'POST') {
+    if (!session) return send(401, { ok: false, errorCode: 'UNAUTHENTICATED', message: 'Chưa đăng nhập.' });
+    await refreshState(false);
+    await seedConfigFromGame({ force: true, persist: true });
+    addLog('info', 'Đã đồng bộ thiết lập từ game', 'Tự lên tầng, dọn trang bị và hoạt động hiện tại.');
+    broadcast('config', config);
+    return send(200, { ok: true, config });
+  }
+
   if (url.pathname === '/api/config' && req.method === 'POST') {
     const body = await readBody(req);
     const wasEnabled = config.enabled;
     const previousInterval = config.intervalMs;
     config = validateConfig(body);
     await writeJson(CONFIG_FILE, config);
+    hasSavedConfig = true;
     if (config.enabled) {
       if (!wasEnabled || previousInterval !== config.intervalMs || !loopTimer) startLoop();
     } else {

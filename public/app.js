@@ -254,6 +254,115 @@ function itemInfo(id) {
   };
 }
 
+function recipeInfo(id) {
+  return app.meta?.recipes?.[id] || null;
+}
+
+function isPillRecipe(recipe) {
+  if (!recipe || recipe.output?.kind !== 'item') return false;
+  const item = app.meta?.items?.[recipe.output.itemId];
+  if (!item) return false;
+  if (['cultivation_buff', 'cultivation_exp'].includes(item.use?.type)) return true;
+  if (item.kind === 'breakthrough') return true;
+  return item.kind === 'consumable' && /đan|pill/i.test(`${item.name} ${item.id}`);
+}
+
+function isUsablePillRecipe(recipe) {
+  const item = app.meta?.items?.[recipe?.output?.itemId];
+  return ['cultivation_buff', 'cultivation_exp'].includes(item?.use?.type);
+}
+
+function pillRecipes() {
+  return Object.values(app.meta?.recipes || {})
+    .filter(isPillRecipe)
+    .sort((a, b) => a.reqLevel - b.reqLevel || a.name.localeCompare(b.name, 'vi'));
+}
+
+function pillCount(id) {
+  return toNumber(state()?.materials?.[id]);
+}
+
+function craftWeekRemaining(recipe) {
+  if (!recipe?.weekLimit) return Infinity;
+  const used = toNumber(state()?.crafting?.weekUsed?.[recipe.id]);
+  return Math.max(0, toNumber(recipe.weekLimit) - used);
+}
+
+function recipeCraftable(recipe) {
+  const st = state();
+  if (!recipe || !st || !isPillRecipe(recipe)) return false;
+  if (toNumber(st.character?.level) < toNumber(recipe.reqLevel)) return false;
+  if (craftWeekRemaining(recipe) < 1) return false;
+  try {
+    if (BigInt(st.wallet?.spirit_stone ?? '0') < BigInt(toNumber(recipe.stones))) return false;
+  } catch {
+    if (toNumber(st.wallet?.spirit_stone) < toNumber(recipe.stones)) return false;
+  }
+  return (recipe.inputs || []).every((input) => pillCount(input.itemId) >= toNumber(input.qty));
+}
+
+function recipePriority(recipe) {
+  const item = itemInfo(recipe?.output?.itemId);
+  const use = item.use || {};
+  if (use.type === 'cultivation_buff') return 2e15 + toNumber(use.ratePct) * 1e9 + toNumber(recipe.reqLevel);
+  if (use.type === 'cultivation_exp') return 1e15 + toNumber(use.exp);
+  return toNumber(recipe?.reqLevel);
+}
+
+function bestCraftRecipe() {
+  return pillRecipes()
+    .filter((recipe) => isUsablePillRecipe(recipe) && recipeCraftable(recipe))
+    .sort((a, b) => recipePriority(b) - recipePriority(a))[0] || null;
+}
+
+function buffRemainingMs(itemId) {
+  const buff = (state()?.buffs || []).find((entry) => entry.id === `buff:${itemId}`);
+  if (!buff) return 0;
+  const now = toNumber(state()?.serverNow) || Date.now();
+  return Math.max(0, toNumber(buff.expiresAt) - now);
+}
+
+function bossInfo(id) {
+  return app.meta?.bosses?.[id] || null;
+}
+
+function bossCooldownRemaining(region) {
+  if (!region?.bossCooldownUntil) return 0;
+  const now = toNumber(state()?.serverNow) || Date.now();
+  return Math.max(0, toNumber(region.bossCooldownUntil) - now);
+}
+
+function clearedBossEntries() {
+  const entries = [];
+  for (const region of state()?.regions || []) {
+    if (!region.unlocked || !region.bossCleared) continue;
+    const regionMeta = app.meta?.regions?.[region.id];
+    const boss = bossInfo(regionMeta?.bossId);
+    if (!boss) continue;
+    entries.push({ region, regionMeta, boss });
+  }
+  return entries.sort((a, b) => toNumber(a.boss.reqLevel) - toNumber(b.boss.reqLevel)
+    || String(a.boss.id).localeCompare(String(b.boss.id)));
+}
+
+function bossEntryReady(entry) {
+  if (!entry) return false;
+  const readyIds = app.snapshot?.boss?.readyIds;
+  if (Array.isArray(readyIds)) return readyIds.includes(entry.boss.id);
+  if (toNumber(state()?.character?.level) < toNumber(entry.boss.reqLevel)) return false;
+  return bossCooldownRemaining(entry.region) <= 0;
+}
+
+function nextBossEntry() {
+  const entries = clearedBossEntries();
+  const nextId = app.snapshot?.boss?.nextId;
+  if (nextId) {
+    const found = entries.find((entry) => entry.boss.id === nextId);
+    if (found) return found;
+  }
+  return entries.filter(bossEntryReady)[0] || null;
+}
+
 function equipInfo(id) {
   return app.meta?.equipment?.[id] || null;
 }
@@ -341,7 +450,7 @@ function statusTagClass(status) {
 async function boot() {
   try {
     const [meta, session] = await Promise.all([
-      api('/api/meta'),
+      api('/api/meta?v=2026-11-04-boss-sequential'),
       api('/api/session'),
     ]);
     app.meta = meta;
@@ -382,7 +491,7 @@ function applySnapshot(snapshot, { initial = false } = {}) {
   }
   renderChrome();
   if (app.snapshot.authenticated) {
-    if (!isTyping()) renderView();
+    if (!isTyping()) rerenderPreservingFocus();
     else renderChrome();
   }
 }
@@ -396,19 +505,20 @@ function onStateEvent(data) {
   };
   if (data.state) app.stateAt = Date.now();
   if (data.config && !app.autoDirty) app.autoDraft = { ...data.config };
-  renderChrome();
-  if (app.snapshot.authenticated) {
-    if (!isTyping()) renderView();
-    else renderChrome();
+  if (!app.snapshot.authenticated) {
+    renderChrome();
+    return;
   }
+  if (isTyping()) renderChrome();
+  else rerenderPreservingFocus();
 }
 
 function onConfigEvent(config) {
   if (!config || !app.snapshot) return;
   app.snapshot.config = config;
   if (!app.autoDirty) app.autoDraft = { ...config };
-  renderChrome();
-  if (app.view === 'auto' && !isTyping()) renderView();
+  if (app.view === 'auto' && !isTyping()) rerenderPreservingFocus();
+  else renderChrome();
 }
 
 function onLogEvent(log) {
@@ -1110,6 +1220,81 @@ function renderAuto() {
   const readyWeekly = (st?.periodic?.weekly || []).filter((task) => !task.claimed && toNumber(task.current) >= toNumber(task.target)).length;
   const readyAchv = (st?.periodic?.achievements || []).filter((task) => !task.claimed && toNumber(task.current) >= toNumber(task.target)).length;
 
+  const recipeChoices = pillRecipes();
+  const recipeOptions = [
+    ['', 'Tự chọn đan tốt nhất có thể luyện'],
+    ...recipeChoices.map((recipe) => [
+      recipe.id,
+      `${itemInfo(recipe.output.itemId).name} · cấp ${recipe.reqLevel} · ${duration(recipe.durationMs)}`,
+    ]),
+  ];
+  const selectedRecipe = cfg.craftRecipeId ? recipeInfo(cfg.craftRecipeId) : null;
+  const autoBestRecipe = bestCraftRecipe();
+  const previewRecipe = selectedRecipe || autoBestRecipe;
+  const crafting = st?.crafting || {};
+  const freeSlots = Math.max(0, toNumber(crafting.slots) - (crafting.jobs?.length || 0));
+  const previewItem = previewRecipe ? itemInfo(previewRecipe.output.itemId) : null;
+  const previewHave = previewItem ? pillCount(previewItem.id) : 0;
+  const previewInputs = (previewRecipe?.inputs || []).map((input) => {
+    const item = itemInfo(input.itemId);
+    const have = pillCount(input.itemId);
+    const need = toNumber(input.qty);
+    return { item, have, need, ok: have >= need };
+  });
+  const buffPills = Object.values(app.meta?.items || {})
+    .filter((item) => item.use?.type === 'cultivation_buff' && pillCount(item.id) > 0)
+    .sort((a, b) => toNumber(b.use.ratePct) - toNumber(a.use.ratePct));
+  const expPills = Object.values(app.meta?.items || {})
+    .filter((item) => item.use?.type === 'cultivation_exp' && pillCount(item.id) > 0)
+    .sort((a, b) => toNumber(b.use.exp) - toNumber(a.use.exp));
+  const pillSummary = buffPills.length
+    ? `<ul class="pill-list">${buffPills.map((item, index) => {
+      const remaining = buffRemainingMs(item.id);
+      return `<li class="${index === 0 ? 'best' : ''}">
+        <span class="pill-name"><b>${esc(item.name)}</b><i>×${fmt(pillCount(item.id))}</i></span>
+        <span class="pill-effect">+${fmt(item.use.ratePct)}% tốc độ · ${remaining > 0 ? `còn ${duration(remaining)}` : 'chưa kích hoạt'}</span>
+      </li>`;
+    }).join('')}</ul>`
+    : '<p class="small muted">Chưa có đan tăng tốc tu vi trong túi.</p>';
+  const expSummary = expPills.length
+    ? `<p class="small muted">Đan tu vi trực tiếp: <b>${esc(expPills[0].name)}</b> ×${fmt(pillCount(expPills[0].id))} (+${fmt(expPills[0].use.exp)} tu vi mỗi đan).</p>`
+    : '';
+  const craftInputSummary = previewInputs.length
+    ? previewInputs.map((input) => `<span class="pill-mat ${input.ok ? 'ok' : 'missing'}">${esc(input.item.name)} ${fmt(input.have)}/${fmt(input.need)}</span>`).join('')
+    : '<span class="pill-mat ok">Không cần nguyên liệu</span>';
+
+  const bossEntries = clearedBossEntries();
+  const bossOptions = [
+    ['', 'Đánh tuần tự tất cả boss đã vượt'],
+    ...bossEntries.map((entry) => [
+      entry.region.id,
+      `${entry.boss.name} · ${entry.regionMeta?.name || entry.region.id} · cấp ${entry.boss.reqLevel}`,
+    ]),
+  ];
+  const selectedBossEntry = cfg.bossRegionId
+    ? bossEntries.find((entry) => entry.region.id === cfg.bossRegionId) || null
+    : null;
+  const bossTarget = selectedBossEntry || nextBossEntry();
+  const bossStatusRows = bossEntries.length
+    ? bossEntries.map((entry) => {
+      const remaining = bossCooldownRemaining(entry.region);
+      const levelOk = toNumber(st?.character?.level) >= toNumber(entry.boss.reqLevel);
+      const ready = bossEntryReady(entry);
+      const isNext = !!bossTarget && bossTarget.boss.id === entry.boss.id;
+      const label = !levelOk
+        ? `Cần cấp ${fmt(entry.boss.reqLevel)}`
+        : remaining > 0
+          ? `Hồi chiêu còn ${duration(remaining)}`
+          : ready
+            ? (isNext ? 'Kế tiếp' : 'Sẵn sàng')
+            : 'Chờ nhịp cục bộ';
+      return `<li class="${ready ? 'best' : ''}">
+        <span class="pill-name"><b>${esc(entry.boss.name)}</b><i>${esc(entry.regionMeta?.name || entry.region.id)}</i></span>
+        <span class="pill-effect">${esc(label)}</span>
+      </li>`;
+    }).join('')
+    : '<p class="small muted">Chưa có boss khu vực nào đã hạ. Hãy khiêu chiến boss lần đầu trong game.</p>';
+
   return `<div class="auto-view">
     <section class="card auto-banner ${enabled ? 'on' : ''}">
       <div class="auto-banner-main">
@@ -1118,7 +1303,7 @@ function renderAuto() {
           <span class="eyebrow">Trợ lý tự động</span>
           <h2>${enabled ? 'Đang chạy' : 'Đang tắt'}</h2>
           <p>${enabled
-            ? `Mỗi ${duration(interval)} máy chủ cục bộ sẽ kết toán tu vi, đồng bộ thiết lập, giữ hoạt động và nhận các mốc thưởng đã đạt.`
+            ? `Mỗi ${duration(interval)} máy chủ cục bộ sẽ kết toán tu vi, đồng bộ thiết lập, giữ hoạt động, nhận các mốc thưởng đã đạt${cfg.autoCraft ? ', tự luyện đan' : ''}${cfg.autoUse ? ', tự dùng đan' : ''}${cfg.autoBoss ? ', tự đánh boss' : ''}.`
             : 'Bật trợ lý để tự động kết toán, giữ hoạt động và nhận thưởng theo cấu hình bên dưới.'}</p>
           <div class="auto-status-line">
             <span>Nhịp <b>${esc(duration(interval))}</b></span>
@@ -1167,6 +1352,70 @@ function renderAuto() {
           ${switchRow('autoMinor', 'Tự lên tiểu tầng', 'Tự động lên tầng khi đủ tu vi, kể cả khi không mở tab. Đại cảnh giới vẫn cần xác nhận thủ công.', cfg.autoMinor)}
           ${switchRow('autoActivity', 'Giữ hoạt động đã chọn', 'Tự chuyển về hoạt động và điểm săn đã cấu hình nếu game thay đổi trạng thái.', cfg.autoActivity)}
           ${switchRow('autoFallbackHunt', 'Lùi điểm săn khi thua', 'Nếu chu kỳ săn hiện tại thua, tự chuyển sang điểm thấp hơn hoặc về bế quan.', cfg.autoFallbackHunt)}
+        </div>
+      </section>
+
+      <section class="card span-3">
+        <div class="card-head">
+          <div><span class="eyebrow">Đan dược</span><h3>Tự luyện &amp; tự dùng</h3></div>
+          <span class="tag ${cfg.autoCraft || cfg.autoUse ? 'gold' : ''}">${cfg.autoCraft || cfg.autoUse ? 'Bật' : 'Tắt'}</span>
+        </div>
+        <div class="pill-grid">
+          <div class="pill-block">
+            <div class="pill-block-head">
+              <div><b>Tự chế tạo</b><small>Chỉ dùng lệnh <code>craft.start</code> chính thức, tôn trọng nguyên liệu, linh thạch và giới hạn tuần.</small></div>
+              <span class="tag ${cfg.autoCraft ? 'jade' : ''}">${cfg.autoCraft ? 'Đang bật' : 'Đang tắt'}</span>
+            </div>
+            ${switchRow('autoCraft', 'Tự luyện đan', 'Tự xếp mẻ vào lò trống khi đủ nguyên liệu. Chọn một công thức cụ thể hoặc để hệ thống tự chọn đan tốt nhất.', cfg.autoCraft)}
+            <div class="form-grid" style="margin-top:12px">
+              <label class="field">
+                <span>Công thức</span>
+                <select data-config="craftRecipeId">${selectOptions(recipeOptions, cfg.craftRecipeId || '')}</select>
+                <small>${recipeChoices.length} công thức đan dược. “Tự chọn” ưu tiên đan tăng tốc tu vi cao nhất có thể luyện.</small>
+              </label>
+              <label class="field">
+                <span>Số lượng muốn giữ</span>
+                <input type="number" min="0" max="9999" step="1" data-config="craftKeepQty" value="${esc(cfg.craftKeepQty ?? 10)}" />
+                <small>Không luyện thêm khi trong túi đã có đủ số này. Đặt 0 để lấp đầy lò đang trống.</small>
+              </label>
+            </div>
+            <div class="pill-status">
+              <div class="pill-status-line">
+                <span>Lò trống <b>${fmt(freeSlots)}</b>/${fmt(crafting.slots)}</span>
+                <span>Đang chạy <b>${fmt(crafting.jobs?.length || 0)}</b></span>
+                <span>Đã có <b>${previewItem ? `${fmt(previewHave)} ${esc(previewItem.name)}` : '—'}</b></span>
+              </div>
+              ${previewRecipe ? `<div class="pill-preview">
+                <span class="pill-preview-title">${selectedRecipe ? 'Công thức đang chọn' : 'Tự chọn hiện tại'}: <b>${esc(previewRecipe.name)}</b></span>
+                <span class="pill-preview-meta">${esc(previewItem?.name || '')} · ${duration(previewRecipe.durationMs)} · ${fmt(previewRecipe.stones)} linh thạch</span>
+                <div class="pill-mats">${craftInputSummary}</div>
+              </div>` : '<p class="small muted">Chưa có công thức đan nào đủ điều kiện để luyện.</p>'}
+            </div>
+          </div>
+
+          <div class="pill-block">
+            <div class="pill-block-head">
+              <div><b>Tự sử dụng</b><small>Chỉ dùng lệnh <code>item.use</code> chính thức. Mặc định ưu tiên đan tăng tốc tu vi tốt nhất đang có.</small></div>
+              <span class="tag ${cfg.autoUse ? 'jade' : ''}">${cfg.autoUse ? 'Đang bật' : 'Đang tắt'}</span>
+            </div>
+            ${switchRow('autoUse', 'Tự dùng đan', 'Tự dùng đan khi buff sắp hết hoặc khi có đan tu vi trực tiếp nếu bật bên dưới.', cfg.autoUse)}
+            <div class="switch-list" style="margin-top:6px">
+              ${switchRow('autoUseBuffs', 'Đan tăng tốc tu vi', 'Dùng đan cultivation_buff theo thứ tự tốt nhất trước, không vượt quá thời lượng tối đa của game.', cfg.autoUseBuffs)}
+              ${switchRow('autoUseExp', 'Đan tu vi trực tiếp', 'Dùng đan cultivation_exp, ưu tiên đan cho nhiều tu vi nhất. Mặc định tắt để tránh tiêu đan sự kiện quý.', cfg.autoUseExp)}
+              ${switchRow('autoUseOnlyBest', 'Chỉ dùng loại tốt nhất', 'Khi loại tốt nhất còn hiệu lực, không tiêu các đan thấp hơn. Tắt để dùng lần lượt mọi loại đang có.', cfg.autoUseOnlyBest)}
+            </div>
+            <div class="form-grid" style="margin-top:12px">
+              <label class="field">
+                <span>Dùng khi buff còn dưới</span>
+                <input type="number" min="0" max="240" step="1" data-config="useThresholdMin" value="${esc(cfg.useThresholdMin ?? 15)}" />
+                <small>Phút. Đặt 0 để chỉ dùng khi buff đã hết hẳn.</small>
+              </label>
+            </div>
+            <div class="pill-status">
+              ${pillSummary}
+              ${expSummary}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1221,6 +1470,9 @@ function renderAuto() {
           <button class="btn ghost wide" data-action="save-auto">
             <svg><use href="#i-save"/></svg><span>Lưu cấu hình</span>
           </button>
+          <button class="btn ghost wide" data-action="sync-game-settings">
+            <svg><use href="#i-refresh"/></svg><span>Đồng bộ thiết lập từ game</span>
+          </button>
         </div>
         <div class="auto-save-note ${app.autoDirty ? 'dirty' : ''}">
           <i class="dot"></i><span>${esc(saveText)}</span>
@@ -1228,8 +1480,44 @@ function renderAuto() {
         <p class="small muted" style="margin-top:10px;line-height:1.55">“Chạy một vòng” dùng đúng cấu hình đang lưu; các thay đổi chưa lưu sẽ được lưu trước khi chạy.</p>
       </section>
 
+      <section class="card span-3">
+        <div class="card-head">
+          <div><span class="eyebrow">Boss khu vực</span><h3>Tự đánh boss đã vượt</h3></div>
+          <span class="tag ${cfg.autoBoss ? 'jade' : ''}">${cfg.autoBoss ? 'Đang bật' : 'Đang tắt'}</span>
+        </div>
+        <div class="pill-block">
+          <div class="pill-block-head">
+            <div><b>Khiêu chiến tuần tự</b><small>Chỉ dùng lệnh <code>boss.fight</code> chính thức. Đánh lần lượt từng boss của vùng đã hạ lần đầu khi hồi chiêu kết thúc; thua không mất gì.</small></div>
+            <span class="tag ${cfg.autoBoss ? 'jade' : ''}">${cfg.autoBoss ? 'Đang bật' : 'Đang tắt'}</span>
+          </div>
+          ${switchRow('autoBoss', 'Tự đánh boss khu vực', 'Tự khiêu chiến lần lượt các boss đã vượt khi hết hồi chiêu. Có thể ghim một boss nếu muốn tập trung.', cfg.autoBoss)}
+          <div class="form-grid" style="margin-top:12px">
+            <label class="field">
+              <span>Nhịp đánh mỗi boss</span>
+              <input type="number" min="0" max="240" step="1" data-config="bossIntervalMin" value="${esc(cfg.bossIntervalMin ?? 10)}" />
+              <small>Phút. Đặt 0 để chỉ dựa vào hồi chiêu của game; mặc định 10 phút cho mỗi boss.</small>
+            </label>
+            <label class="field">
+              <span>Chế độ</span>
+              <select data-config="bossRegionId">${selectOptions(bossOptions, cfg.bossRegionId || '')}</select>
+              <small>${bossEntries.length} boss khu vực đã hạ. Chế độ tuần tự đánh lần lượt tất cả boss đang sẵn sàng.</small>
+            </label>
+          </div>
+          <div class="pill-status">
+            <div class="pill-status-line">
+              <span>Đã hạ <b>${fmt(bossEntries.length)}</b> boss</span>
+              <span>Sẵn sàng <b>${fmt(bossEntries.filter(bossEntryReady).length)}</b></span>
+              <span>Kế tiếp <b>${bossTarget ? esc(bossTarget.boss.name) : '—'}</b></span>
+            </div>
+            ${bossEntries.length
+              ? `<ul class="pill-list scroll">${bossStatusRows}</ul>`
+              : bossStatusRows}
+          </div>
+        </div>
+      </section>
+
       <div class="note-card span-3">
-        <b>Nguyên tắc an toàn:</b> mini client chỉ gửi các lệnh chính thức như <code>settle</code>, <code>settings.set</code>, <code>activity.set</code>, <code>quest.claim</code>, <code>daily.claim</code> và <code>mail.claimAll</code> tới máy chủ game. Không can thiệp dữ liệu, không gửi mật khẩu đi nơi khác. Vòng tự động chạy trên server Node cục bộ, nên đóng tab trình duyệt vẫn tiếp tục nếu server còn mở. Hãy giữ nhịp hợp lý để không tạo tải bất thường.
+        <b>Nguyên tắc an toàn:</b> mini client chỉ gửi các lệnh chính thức như <code>settle</code>, <code>settings.set</code>, <code>activity.set</code>, <code>quest.claim</code>, <code>daily.claim</code>, <code>mail.claimAll</code>, <code>craft.start</code>, <code>item.use</code> và <code>boss.fight</code> tới máy chủ game. Không can thiệp dữ liệu, không gửi mật khẩu đi nơi khác. Vòng tự động chạy trên server Node cục bộ, nên đóng tab trình duyệt vẫn tiếp tục nếu server còn mở. Hãy giữ nhịp hợp lý để không tạo tải bất thường.
       </div>
     </div>
   </div>`;
@@ -1447,6 +1735,19 @@ async function claimX2(element) {
   });
 }
 
+async function syncGameSettings(element) {
+  return withBusy(element, async () => {
+    const data = await api('/api/config/sync', { method: 'POST' });
+    app.snapshot.config = data.config;
+    app.autoDraft = { ...data.config };
+    app.autoDirty = false;
+    app.lastSavedAt = Date.now();
+    renderChrome();
+    renderView();
+    toast('success', 'Đã đồng bộ thiết lập từ game', 'Tự lên tầng, dọn trang bị và hoạt động hiện tại đã được đưa vào cấu hình.');
+  });
+}
+
 async function saveAuto({ notify = false } = {}) {
   clearTimeout(app.autoSaveTimer);
   const cfg = ensureAutoDraft();
@@ -1610,6 +1911,9 @@ async function handleAction(action, element) {
     case 'save-auto':
       await saveAuto({ notify: true });
       break;
+    case 'sync-game-settings':
+      await syncGameSettings(element);
+      break;
     case 'auto-tick':
       await runTick(element);
       break;
@@ -1632,19 +1936,64 @@ async function handleAction(action, element) {
   }
 }
 
+function captureFocusState() {
+  const el = document.activeElement;
+  if (!el || !(el instanceof HTMLElement)) return null;
+  const selector = el.dataset?.config
+    ? `[data-config="${el.dataset.config}"]`
+    : el.id
+      ? `#${el.id}`
+      : null;
+  if (!selector) return null;
+  let start = null;
+  let end = null;
+  try {
+    start = el.selectionStart;
+    end = el.selectionEnd;
+  } catch { /* not a text field */ }
+  return { selector, start, end, scrollY: window.scrollY };
+}
+
+function restoreFocusState(snapshot) {
+  if (!snapshot) return;
+  const el = document.querySelector(snapshot.selector);
+  if (el && typeof el.focus === 'function') {
+    el.focus({ preventScroll: true });
+    if (snapshot.start != null && typeof el.setSelectionRange === 'function') {
+      try { el.setSelectionRange(snapshot.start, snapshot.end ?? snapshot.start); } catch { /* ignore */ }
+    }
+  }
+  if (Math.abs(window.scrollY - snapshot.scrollY) > 2) window.scrollTo(0, snapshot.scrollY);
+}
+
+function rerenderPreservingFocus() {
+  const snapshot = captureFocusState();
+  renderView();
+  restoreFocusState(snapshot);
+}
+
+const CONFIG_NUMBER_KEYS = new Set([
+  'intervalMs', 'autoSalvageTier', 'craftKeepQty', 'useThresholdMin', 'bossIntervalMin',
+]);
+
+const AUTO_LAYOUT_KEYS = new Set([
+  'enabled', 'intervalMs', 'autoSalvage', 'autoSalvageTier', 'activityType', 'huntSpotId',
+  'autoCraft', 'craftRecipeId', 'autoUse', 'autoUseBuffs', 'autoUseExp', 'autoBoss', 'bossRegionId',
+]);
+
 function handleConfigChange(element) {
   const key = element.dataset.config;
   if (!key) return;
   const cfg = ensureAutoDraft();
   let value = element.type === 'checkbox' ? element.checked : element.value;
-  if (key === 'intervalMs' || key === 'autoSalvageTier') value = Number(value);
+  if (CONFIG_NUMBER_KEYS.has(key)) value = Number(value);
   cfg[key] = value;
   if (key === 'autoSalvage' && value && Number(cfg.autoSalvageTier) === 0) cfg.autoSalvageTier = 1;
   if (key === 'autoSalvageTier') cfg.autoSalvage = Number(value) !== 0;
   app.autoDirty = true;
   app.saveSeq += 1;
-  renderChrome();
-  if (app.view === 'auto') renderView();
+  if (app.view === 'auto' && AUTO_LAYOUT_KEYS.has(key)) rerenderPreservingFocus();
+  else renderChrome();
   scheduleSave();
 }
 

@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-03T02:49:51.791Z",
+ "generatedAt": "2026-11-04T01:18:52.333Z",
  "source": "Vấn Đạo: Nghịch Mệnh client bundle",
  "stats": {
   "hp": {
@@ -69158,6 +69158,1286 @@
    "bossId": "boss_dapthien"
   }
  },
+ "bosses": {
+  "boss_qingxi": {
+   "id": "boss_qingxi",
+   "name": "Vụ Lang Vương",
+   "mechanic": "Lang Vương niệm 1,5 giây trước cú vồ gây chảy máu nặng; dưới 50% Sinh lực sẽ tru lên cuồng nộ (+30% Công, +20% Tốc độ). Choáng đúng lúc sẽ ngắt cú vồ.",
+   "regionId": "region_qingxi",
+   "reqLevel": 5,
+   "cooldownMs": 600000,
+   "maxTimeMs": 120000,
+   "monsterId": "boss_mist_wolf_king",
+   "firstClear": {
+    "stones": 120,
+    "items": [
+     {
+      "itemId": "item_wolf_king_fang",
+      "qty": 1
+     },
+     {
+      "itemId": "item_beast_hide",
+      "qty": 6
+     }
+    ],
+    "equipDefIds": [
+     "equip_t1_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 25,
+    "items": [
+     {
+      "itemId": "item_beast_hide",
+      "qty": 2
+     }
+    ]
+   }
+  },
+  "boss_cloudstone": {
+   "id": "boss_cloudstone",
+   "name": "Trấn Sơn Thạch Linh",
+   "mechanic": "Thạch Linh dựng khiên đá định kỳ và niệm 1,8 giây trước Băng Sơn Chấn gây choáng. Phá Giáp giúp xuyên lớp thủ dày và ngắt chiêu; trận kéo dài nên cần giữ linh lực.",
+   "regionId": "region_cloudstone",
+   "reqLevel": 12,
+   "cooldownMs": 600000,
+   "maxTimeMs": 150000,
+   "monsterId": "boss_stone_guardian",
+   "firstClear": {
+    "stones": 400,
+    "items": [
+     {
+      "itemId": "item_guardian_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_iron_ore",
+      "qty": 10
+     }
+    ],
+    "equipDefIds": [
+     "equip_t2_pendant"
+    ]
+   },
+   "repeat": {
+    "stones": 80,
+    "items": [
+     {
+      "itemId": "item_iron_ore",
+      "qty": 4
+     }
+    ]
+   }
+  },
+  "boss_hanvu": {
+   "id": "boss_hanvu",
+   "name": "Hàn Vụ Xà Mẫu",
+   "mechanic": "Xà Mẫu dựng Băng Lân Giáp khi mất máu và niệm 1,6 giây trước Hàn Vụ Phong Ấn gây đóng băng 1,5 giây. Ngắt được bằng choáng hoặc cấm kỹ năng; Kháng giảm sát thương băng.",
+   "regionId": "region_hanvu",
+   "reqLevel": 18,
+   "cooldownMs": 900000,
+   "maxTimeMs": 150000,
+   "monsterId": "boss_frost_matriarch",
+   "firstClear": {
+    "stones": 1500,
+    "items": [
+     {
+      "itemId": "item_matriarch_scale",
+      "qty": 1
+     },
+     {
+      "itemId": "item_frost_crystal",
+      "qty": 15
+     }
+    ],
+    "equipDefIds": [
+     "equip_t3_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 300,
+    "items": [
+     {
+      "itemId": "item_frost_crystal",
+      "qty": 5
+     }
+    ]
+   }
+  },
+  "boss_xichsa": {
+   "id": "boss_xichsa",
+   "name": "Xích Sa Bạo Quân",
+   "mechanic": "Bạo Quân niệm 1,5 giây rồi gọi bão cát gây thiêu đốt cộng dồn và làm chậm; dưới 40% Sinh lực sẽ cuồng nộ 10 giây. Ngắt bão cát và giữ hồi phục cho giai đoạn cuối.",
+   "regionId": "region_xichsa",
+   "reqLevel": 22,
+   "cooldownMs": 900000,
+   "maxTimeMs": 150000,
+   "monsterId": "boss_sand_tyrant",
+   "firstClear": {
+    "stones": 5000,
+    "items": [
+     {
+      "itemId": "item_tyrant_heart",
+      "qty": 1
+     },
+     {
+      "itemId": "item_ember_sand",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t3_pendant"
+    ]
+   },
+   "repeat": {
+    "stones": 900,
+    "items": [
+     {
+      "itemId": "item_ember_sand",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "boss_comoc": {
+   "id": "boss_comoc",
+   "name": "Cổ Mộc Thụ Yêu",
+   "mechanic": "Thụ Yêu niệm 2 giây để hồi 12% Sinh lực mỗi lần; không ngắt được thì trận kéo dài vô ích. Nó còn rải bào tử cấm kỹ năng — hãy để dành chiêu ngắt.",
+   "regionId": "region_comoc",
+   "reqLevel": 23,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_ancient_treant",
+   "firstClear": {
+    "stones": 9000,
+    "items": [
+     {
+      "itemId": "item_treant_seed",
+      "qty": 1
+     },
+     {
+      "itemId": "item_ancient_resin",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t4_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 1600,
+    "items": [
+     {
+      "itemId": "item_ancient_resin",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "boss_tannguyet": {
+   "id": "boss_tannguyet",
+   "name": "Tàn Nguyệt Thủ Tướng",
+   "mechanic": "Thủ Tướng phá giáp rồi niệm 1,8 giây cho Tàn Nguyệt Trảm; mục tiêu dưới 35% Sinh lực nhận ×1,5. Dưới 50% hắn cuồng nộ. Giữ Sinh lực cao và ngắt nhát chém.",
+   "regionId": "region_tannguyet",
+   "reqLevel": 26,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_moon_warden",
+   "firstClear": {
+    "stones": 20000,
+    "items": [
+     {
+      "itemId": "item_warden_seal",
+      "qty": 1
+     },
+     {
+      "itemId": "item_moon_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t4_pendant"
+    ]
+   },
+   "repeat": {
+    "stones": 3500,
+    "items": [
+     {
+      "itemId": "item_moon_shard",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "boss_lacha": {
+   "id": "boss_lacha",
+   "name": "Lạc Hà Lôi Bằng",
+   "mechanic": "Lôi Bằng niệm 1,5 giây rồi giáng bão sét gắn 2 Nhiễm điện; dưới 40% Sinh lực nó cuồng nộ. Ngắt bão sét và dồn sát thương ở giai đoạn cuối.",
+   "regionId": "region_lacha",
+   "reqLevel": 29,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_thunder_roc",
+   "firstClear": {
+    "stones": 24000,
+    "items": [
+     {
+      "itemId": "item_roc_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_thunder_feather",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_relic_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 4000,
+    "items": [
+     {
+      "itemId": "item_thunder_feather",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_uminh": {
+   "id": "boss_uminh",
+   "name": "U Minh Thủ Hồn",
+   "mechanic": "Thủ Hồn niệm 1,7 giây để hút hồn (sát thương lớn và tự hồi 8%), gây Suy hồn và cấm kỹ năng. Không ngắt được chiêu hút thì trận kéo dài.",
+   "regionId": "region_uminh",
+   "reqLevel": 31,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_soul_keeper",
+   "firstClear": {
+    "stones": 37200,
+    "items": [
+     {
+      "itemId": "item_keeper_lantern",
+      "qty": 1
+     },
+     {
+      "itemId": "item_soul_dew",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_t5_pendant"
+    ]
+   },
+   "repeat": {
+    "stones": 6200,
+    "items": [
+     {
+      "itemId": "item_soul_dew",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_tienlinh": {
+   "id": "boss_tienlinh",
+   "name": "Tiên Linh Tàn Niệm",
+   "mechanic": "Tàn Niệm dựng giáp khi mất máu và niệm 1,8 giây cho nhát kết liễu (×1,5 khi bạn dưới 35% Sinh lực). Giữ Sinh lực cao trước mỗi nhát.",
+   "regionId": "region_tienlinh",
+   "reqLevel": 33,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_immortal_remnant",
+   "firstClear": {
+    "stones": 58800,
+    "items": [
+     {
+      "itemId": "item_remnant_seal",
+      "qty": 1
+     },
+     {
+      "itemId": "item_immortal_jade",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_relic_pendant"
+    ]
+   },
+   "repeat": {
+    "stones": 9800,
+    "items": [
+     {
+      "itemId": "item_immortal_jade",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_huyetsa": {
+   "id": "boss_huyetsa",
+   "name": "Huyết Sa Tướng Quân",
+   "mechanic": "Tướng Quân phá giáp rồi kết liễu; dưới 45% Sinh lực hắn cuồng nộ. Đây là bài kiểm tra sát thương dồn lẫn khả năng trụ.",
+   "regionId": "region_huyetsa",
+   "reqLevel": 35,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_blood_general",
+   "firstClear": {
+    "stones": 93000,
+    "items": [
+     {
+      "itemId": "item_general_banner",
+      "qty": 1
+     },
+     {
+      "itemId": "item_blood_iron",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_relic_belt"
+    ]
+   },
+   "repeat": {
+    "stones": 15500,
+    "items": [
+     {
+      "itemId": "item_blood_iron",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_vantam": {
+   "id": "boss_vantam",
+   "name": "Vấn Tâm Phán Quan",
+   "mechanic": "Phán Quan dựng Kính Tâm Thế phản 40% sát thương, đóng băng bằng chiêu niệm 1,6 giây và tự hồi khi dưới 60%. Đừng dồn chiêu lớn lúc hắn đang phản đòn.",
+   "regionId": "region_vantam",
+   "reqLevel": 37,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_heart_judge",
+   "firstClear": {
+    "stones": 147000,
+    "items": [
+     {
+      "itemId": "item_judge_mirror",
+      "qty": 1
+     },
+     {
+      "itemId": "item_heart_stone",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_t7_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 24500,
+    "items": [
+     {
+      "itemId": "item_heart_stone",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_thienkhuyet": {
+   "id": "boss_thienkhuyet",
+   "name": "Thiên Khuyết Điện Chủ",
+   "mechanic": "Điện Chủ có đủ: giáp, bão thiêu đốt niệm 1,5 giây, kết liễu niệm 1,8 giây và cuồng nộ dưới 35%. Boss vùng khó nhất hiện có.",
+   "regionId": "region_thienkhuyet",
+   "reqLevel": 39,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_palace_lord",
+   "firstClear": {
+    "stones": 234000,
+    "items": [
+     {
+      "itemId": "item_palace_key",
+      "qty": 1
+     },
+     {
+      "itemId": "item_star_fragment",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_relic_boots"
+    ]
+   },
+   "repeat": {
+    "stones": 39000,
+    "items": [
+     {
+      "itemId": "item_star_fragment",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_amhu": {
+   "id": "boss_amhu",
+   "name": "Amhu",
+   "mechanic": "",
+   "regionId": "region_amhu",
+   "reqLevel": 40,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_amhu_lord",
+   "firstClear": {
+    "stones": 312000,
+    "items": [
+     {
+      "itemId": "item_amhu_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_amhu_mat",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_t8_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 52000,
+    "items": [
+     {
+      "itemId": "item_amhu_mat",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_duongthuc": {
+   "id": "boss_duongthuc",
+   "name": "Duongthuc",
+   "mechanic": "",
+   "regionId": "region_duongthuc",
+   "reqLevel": 41,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_duongthuc_lord",
+   "firstClear": {
+    "stones": 405600,
+    "items": [
+     {
+      "itemId": "item_duongthuc_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_duongthuc_mat",
+      "qty": 25
+     }
+    ],
+    "equipDefIds": [
+     "equip_t8_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 67600,
+    "items": [
+     {
+      "itemId": "item_duongthuc_mat",
+      "qty": 8
+     }
+    ]
+   }
+  },
+  "boss_khuyniet": {
+   "id": "boss_khuyniet",
+   "name": "Khuyniet",
+   "mechanic": "",
+   "regionId": "region_khuyniet",
+   "reqLevel": 45,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_khuyniet_lord",
+   "firstClear": {
+    "stones": 527280,
+    "items": [
+     {
+      "itemId": "item_khuyniet_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_khuyniet_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t9_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 87880,
+    "items": [
+     {
+      "itemId": "item_khuyniet_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_tinhniet": {
+   "id": "boss_tinhniet",
+   "name": "Tinhniet",
+   "mechanic": "",
+   "regionId": "region_tinhniet",
+   "reqLevel": 49,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_tinhniet_lord",
+   "firstClear": {
+    "stones": 1505940,
+    "items": [
+     {
+      "itemId": "item_tinhniet_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_tinhniet_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t13_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 250990,
+    "items": [
+     {
+      "itemId": "item_tinhniet_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_toainiet": {
+   "id": "boss_toainiet",
+   "name": "Toainiet",
+   "mechanic": "",
+   "regionId": "region_toainiet",
+   "reqLevel": 53,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_toainiet_lord",
+   "firstClear": {
+    "stones": 4301160,
+    "items": [
+     {
+      "itemId": "item_toainiet_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_toainiet_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t10_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 716860,
+    "items": [
+     {
+      "itemId": "item_toainiet_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_khongniet": {
+   "id": "boss_khongniet",
+   "name": "Khongniet",
+   "mechanic": "",
+   "regionId": "region_khongniet",
+   "reqLevel": 57,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_khongniet_lord",
+   "firstClear": {
+    "stones": 12284640,
+    "items": [
+     {
+      "itemId": "item_khongniet_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_khongniet_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t14_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 2047440,
+    "items": [
+     {
+      "itemId": "item_khongniet_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_khonglinh": {
+   "id": "boss_khonglinh",
+   "name": "Khonglinh",
+   "mechanic": "",
+   "regionId": "region_khonglinh",
+   "reqLevel": 61,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_khonglinh_lord",
+   "firstClear": {
+    "stones": 35086080,
+    "items": [
+     {
+      "itemId": "item_khonglinh_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_khonglinh_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t11_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 5847680,
+    "items": [
+     {
+      "itemId": "item_khonglinh_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_khonghuyen": {
+   "id": "boss_khonghuyen",
+   "name": "Khonghuyen",
+   "mechanic": "",
+   "regionId": "region_khonghuyen",
+   "reqLevel": 65,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_khonghuyen_lord",
+   "firstClear": {
+    "stones": 100209360,
+    "items": [
+     {
+      "itemId": "item_khonghuyen_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_khonghuyen_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t15_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 16701560,
+    "items": [
+     {
+      "itemId": "item_khonghuyen_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_khongkiep": {
+   "id": "boss_khongkiep",
+   "name": "Khongkiep",
+   "mechanic": "",
+   "regionId": "region_khongkiep",
+   "reqLevel": 69,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_khongkiep_lord",
+   "firstClear": {
+    "stones": 286207980,
+    "items": [
+     {
+      "itemId": "item_khongkiep_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_khongkiep_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t12_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 47701330,
+    "items": [
+     {
+      "itemId": "item_khongkiep_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "boss_dapthien": {
+   "id": "boss_dapthien",
+   "name": "Dapthien",
+   "mechanic": "",
+   "regionId": "region_dapthien",
+   "reqLevel": 70,
+   "cooldownMs": 1200000,
+   "maxTimeMs": 180000,
+   "monsterId": "boss_dapthien_lord",
+   "firstClear": {
+    "stones": 817438620,
+    "items": [
+     {
+      "itemId": "item_dapthien_core",
+      "qty": 1
+     },
+     {
+      "itemId": "item_dapthien_mat",
+      "qty": 25
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 20
+     }
+    ],
+    "equipDefIds": [
+     "equip_t16_ring"
+    ]
+   },
+   "repeat": {
+    "stones": 136239770,
+    "items": [
+     {
+      "itemId": "item_dapthien_mat",
+      "qty": 8
+     },
+     {
+      "itemId": "item_origin_shard",
+      "qty": 3
+     }
+    ]
+   }
+  },
+  "x2_mapboss_01": {
+   "id": "x2_mapboss_01",
+   "name": "X2 Mapboss 01",
+   "mechanic": "",
+   "regionId": "region_tannguyet",
+   "reqLevel": 24,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_01_m",
+   "firstClear": {
+    "stones": 8000,
+    "items": [
+     {
+      "itemId": "x2_essence_03",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_03",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 800,
+    "items": [
+     {
+      "itemId": "x2_essence_03",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_03",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_02": {
+   "id": "x2_mapboss_02",
+   "name": "X2 Mapboss 02",
+   "mechanic": "",
+   "regionId": "region_lacha",
+   "reqLevel": 28,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_02_m",
+   "firstClear": {
+    "stones": 20000,
+    "items": [
+     {
+      "itemId": "x2_essence_04",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_04",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 2000,
+    "items": [
+     {
+      "itemId": "x2_essence_04",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_04",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_03": {
+   "id": "x2_mapboss_03",
+   "name": "X2 Mapboss 03",
+   "mechanic": "",
+   "regionId": "region_lacha",
+   "reqLevel": 28,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_03_m",
+   "firstClear": {
+    "stones": 20000,
+    "items": [
+     {
+      "itemId": "x2_essence_04",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_04",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 2000,
+    "items": [
+     {
+      "itemId": "x2_essence_04",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_04",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_04": {
+   "id": "x2_mapboss_04",
+   "name": "X2 Mapboss 04",
+   "mechanic": "",
+   "regionId": "region_tienlinh",
+   "reqLevel": 32,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_04_m",
+   "firstClear": {
+    "stones": 50000,
+    "items": [
+     {
+      "itemId": "x2_essence_05",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_05",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 5000,
+    "items": [
+     {
+      "itemId": "x2_essence_05",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_05",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_05": {
+   "id": "x2_mapboss_05",
+   "name": "X2 Mapboss 05",
+   "mechanic": "",
+   "regionId": "region_vantam",
+   "reqLevel": 36,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_05_m",
+   "firstClear": {
+    "stones": 120000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 12000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_06": {
+   "id": "x2_mapboss_06",
+   "name": "X2 Mapboss 06",
+   "mechanic": "",
+   "regionId": "region_amhu",
+   "reqLevel": 40,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_06_m",
+   "firstClear": {
+    "stones": 120000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 12000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_07": {
+   "id": "x2_mapboss_07",
+   "name": "X2 Mapboss 07",
+   "mechanic": "",
+   "regionId": "region_duongthuc",
+   "reqLevel": 41,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_07_m",
+   "firstClear": {
+    "stones": 120000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 12000,
+    "items": [
+     {
+      "itemId": "x2_essence_06",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_06",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_08": {
+   "id": "x2_mapboss_08",
+   "name": "X2 Mapboss 08",
+   "mechanic": "",
+   "regionId": "region_khuyniet",
+   "reqLevel": 42,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_08_m",
+   "firstClear": {
+    "stones": 300000,
+    "items": [
+     {
+      "itemId": "x2_essence_07",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_07",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 30000,
+    "items": [
+     {
+      "itemId": "x2_essence_07",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_07",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_09": {
+   "id": "x2_mapboss_09",
+   "name": "X2 Mapboss 09",
+   "mechanic": "",
+   "regionId": "region_tinhniet",
+   "reqLevel": 46,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_09_m",
+   "firstClear": {
+    "stones": 300000,
+    "items": [
+     {
+      "itemId": "x2_essence_07",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_07",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 30000,
+    "items": [
+     {
+      "itemId": "x2_essence_07",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_07",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_10": {
+   "id": "x2_mapboss_10",
+   "name": "X2 Mapboss 10",
+   "mechanic": "",
+   "regionId": "region_toainiet",
+   "reqLevel": 50,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_10_m",
+   "firstClear": {
+    "stones": 800000,
+    "items": [
+     {
+      "itemId": "x2_essence_08",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_08",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 80000,
+    "items": [
+     {
+      "itemId": "x2_essence_08",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_08",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_11": {
+   "id": "x2_mapboss_11",
+   "name": "X2 Mapboss 11",
+   "mechanic": "",
+   "regionId": "region_khonglinh",
+   "reqLevel": 58,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_11_m",
+   "firstClear": {
+    "stones": 2000000,
+    "items": [
+     {
+      "itemId": "x2_essence_09",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_09",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 200000,
+    "items": [
+     {
+      "itemId": "x2_essence_09",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_09",
+      "qty": 6
+     }
+    ]
+   }
+  },
+  "x2_mapboss_12": {
+   "id": "x2_mapboss_12",
+   "name": "X2 Mapboss 12",
+   "mechanic": "",
+   "regionId": "region_khonghuyen",
+   "reqLevel": 62,
+   "cooldownMs": 1800000,
+   "maxTimeMs": 180000,
+   "monsterId": "x2_mapboss_12_m",
+   "firstClear": {
+    "stones": 2000000,
+    "items": [
+     {
+      "itemId": "x2_essence_09",
+      "qty": 10
+     },
+     {
+      "itemId": "x2_refine_09",
+      "qty": 12
+     }
+    ],
+    "equipDefIds": []
+   },
+   "repeat": {
+    "stones": 200000,
+    "items": [
+     {
+      "itemId": "x2_essence_09",
+      "qty": 5
+     },
+     {
+      "itemId": "x2_refine_09",
+      "qty": 6
+     }
+    ]
+   }
+  }
+ },
  "realms": {
   "ngung_khi": {
    "id": "ngung_khi",
@@ -70332,6 +71612,8611 @@
    "name": "X2 Pet 040",
    "desc": "",
    "role": "attack"
+  }
+ },
+ "recipes": {
+  "recipe_qi_pill": {
+   "id": "recipe_qi_pill",
+   "name": "Luyện Dưỡng Khí Đan",
+   "reqLevel": 2,
+   "durationMs": 30000,
+   "stones": 0,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_qi_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_iron_sword": {
+   "id": "recipe_iron_sword",
+   "name": "Rèn Thanh Khê Thiết Kiếm",
+   "reqLevel": 2,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_cloud_robe": {
+   "id": "recipe_cloud_robe",
+   "name": "May Vân Thạch Pháp Y",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_foundation_pill": {
+   "id": "recipe_foundation_pill",
+   "name": "Luyện Trúc Cơ Đan",
+   "reqLevel": 12,
+   "durationMs": 180000,
+   "stones": 200,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 20
+    },
+    {
+     "itemId": "item_wolf_king_fang",
+     "qty": 1
+    },
+    {
+     "itemId": "item_guardian_core",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_foundation_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_spirit_pill": {
+   "id": "recipe_spirit_pill",
+   "name": "Luyện Tụ Linh Đan",
+   "reqLevel": 16,
+   "durationMs": 120000,
+   "stones": 60,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 12
+    },
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_spirit_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_frost_blade": {
+   "id": "recipe_frost_blade",
+   "name": "Rèn Hàn Vụ Băng Kiếm",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 12
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 30
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_thunder_staff": {
+   "id": "recipe_thunder_staff",
+   "name": "Chế Hàn Vụ Lôi Pháp Khí",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 12
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 40
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_iron_gauntlet": {
+   "id": "recipe_iron_gauntlet",
+   "name": "Rèn Hàn Vụ Thiết Quyền",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_core_pill": {
+   "id": "recipe_core_pill",
+   "name": "Luyện Kết Kim Đan",
+   "reqLevel": 18,
+   "durationMs": 600000,
+   "stones": 1500,
+   "inputs": [
+    {
+     "itemId": "item_matriarch_scale",
+     "qty": 1
+    },
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_core_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_moon_robe": {
+   "id": "recipe_moon_robe",
+   "name": "May Tàn Nguyệt Pháp Bào",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_moon_blade": {
+   "id": "recipe_moon_blade",
+   "name": "Rèn Tàn Nguyệt Kiếm",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 80
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_nascent_pill": {
+   "id": "recipe_nascent_pill",
+   "name": "Luyện Ngưng Anh Đan",
+   "reqLevel": 23,
+   "durationMs": 1800000,
+   "stones": 12000,
+   "inputs": [
+    {
+     "itemId": "item_tyrant_heart",
+     "qty": 1
+    },
+    {
+     "itemId": "item_treant_seed",
+     "qty": 1
+    },
+    {
+     "itemId": "item_ember_sand",
+     "qty": 40
+    },
+    {
+     "itemId": "item_ancient_resin",
+     "qty": 30
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_nascent_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_soul_lantern": {
+   "id": "recipe_soul_lantern",
+   "name": "Chế Hàn Vụ Hồn Đăng",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 12
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 40
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_array_banner": {
+   "id": "recipe_array_banner",
+   "name": "May Hàn Vụ Trận Kỳ",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 12
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 30
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_soul_pill": {
+   "id": "recipe_soul_pill",
+   "name": "Luyện Hóa Thần Đan",
+   "reqLevel": 27,
+   "durationMs": 2400000,
+   "stones": 40000,
+   "inputs": [
+    {
+     "itemId": "item_warden_seal",
+     "qty": 1
+    },
+    {
+     "itemId": "item_moon_shard",
+     "qty": 60
+    },
+    {
+     "itemId": "item_ancient_resin",
+     "qty": 40
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_soul_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_grand_pill": {
+   "id": "recipe_grand_pill",
+   "name": "Luyện Đại Tụ Linh Đan",
+   "reqLevel": 28,
+   "durationMs": 18000000,
+   "stones": 12000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 36
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 360
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_grand_pill",
+    "qty": 1
+   },
+   "weekLimit": 4
+  },
+  "recipe_t5_weapon": {
+   "id": "recipe_t5_weapon",
+   "name": "Rèn Lạc Hà Kiếm",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_t5_staff": {
+   "id": "recipe_t5_staff",
+   "name": "Chế Lạc Hà Lôi Pháp Khí",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_transform_pill": {
+   "id": "recipe_transform_pill",
+   "name": "Luyện Tiên Linh Đan",
+   "reqLevel": 31,
+   "durationMs": 3000000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "item_roc_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_keeper_lantern",
+     "qty": 1
+    },
+    {
+     "itemId": "item_soul_dew",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_transform_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_t6_weapon": {
+   "id": "recipe_t6_weapon",
+   "name": "Rèn Tiên Linh Kiếm",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 400
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_t6_robe": {
+   "id": "recipe_t6_robe",
+   "name": "May Tiên Linh Pháp Bào",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_summit_pill": {
+   "id": "recipe_summit_pill",
+   "name": "Luyện Vấn Đỉnh Đan",
+   "reqLevel": 35,
+   "durationMs": 3600000,
+   "stones": 400000,
+   "inputs": [
+    {
+     "itemId": "item_remnant_seal",
+     "qty": 1
+    },
+    {
+     "itemId": "item_general_banner",
+     "qty": 1
+    },
+    {
+     "itemId": "item_blood_iron",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_summit_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_t7_weapon": {
+   "id": "recipe_t7_weapon",
+   "name": "Rèn Thiên Khuyết Kiếm",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_t7_robe": {
+   "id": "recipe_t7_robe",
+   "name": "May Thiên Khuyết Pháp Bào",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 400
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_amhu_pill": {
+   "id": "recipe_amhu_pill",
+   "name": "Amhu Pill",
+   "reqLevel": 39,
+   "durationMs": 3600000,
+   "stones": 1350000,
+   "inputs": [
+    {
+     "itemId": "item_palace_key",
+     "qty": 1
+    },
+    {
+     "itemId": "item_star_fragment",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_amhu_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_duongthuc_pill": {
+   "id": "recipe_duongthuc_pill",
+   "name": "Duongthuc Pill",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 1822500,
+   "inputs": [
+    {
+     "itemId": "item_amhu_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_duongthuc_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_khuyniet_pill": {
+   "id": "recipe_khuyniet_pill",
+   "name": "Khuyniet Pill",
+   "reqLevel": 41,
+   "durationMs": 3600000,
+   "stones": 2460375,
+   "inputs": [
+    {
+     "itemId": "item_duongthuc_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_duongthuc_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_khuyniet_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_tinhniet_pill": {
+   "id": "recipe_tinhniet_pill",
+   "name": "Tinhniet Pill",
+   "reqLevel": 45,
+   "durationMs": 3600000,
+   "stones": 8172151,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_tinhniet_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_toainiet_pill": {
+   "id": "recipe_toainiet_pill",
+   "name": "Toainiet Pill",
+   "reqLevel": 49,
+   "durationMs": 3600000,
+   "stones": 27143850,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_toainiet_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_khongniet_pill": {
+   "id": "recipe_khongniet_pill",
+   "name": "Khongniet Pill",
+   "reqLevel": 53,
+   "durationMs": 3600000,
+   "stones": 90158469,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_khongniet_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_khonglinh_pill": {
+   "id": "recipe_khonglinh_pill",
+   "name": "Khonglinh Pill",
+   "reqLevel": 57,
+   "durationMs": 3600000,
+   "stones": 299461918,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_khonglinh_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_khonghuyen_pill": {
+   "id": "recipe_khonghuyen_pill",
+   "name": "Khonghuyen Pill",
+   "reqLevel": 61,
+   "durationMs": 3600000,
+   "stones": 994664631,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_khonghuyen_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_khongkiep_pill": {
+   "id": "recipe_khongkiep_pill",
+   "name": "Khongkiep Pill",
+   "reqLevel": 65,
+   "durationMs": 3600000,
+   "stones": 3303784789,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_khongkiep_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_dapthien_pill": {
+   "id": "recipe_dapthien_pill",
+   "name": "Dapthien Pill",
+   "reqLevel": 69,
+   "durationMs": 3600000,
+   "stones": 10973541827,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_core",
+     "qty": 1
+    },
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 60
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_dapthien_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_aid_thunder_ward": {
+   "id": "recipe_aid_thunder_ward",
+   "name": "Vẽ Tị Lôi Phù",
+   "reqLevel": 12,
+   "durationMs": 180000,
+   "stones": 120,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 20
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_aid_thunder_ward",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_aid_recovery_pill": {
+   "id": "recipe_aid_recovery_pill",
+   "name": "Luyện Hồi Nguyên Đan",
+   "reqLevel": 12,
+   "durationMs": 180000,
+   "stones": 120,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 30
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_aid_recovery_pill",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_aid_guard_array": {
+   "id": "recipe_aid_guard_array",
+   "name": "Khắc Hộ Thân Trận Bàn",
+   "reqLevel": 16,
+   "durationMs": 240000,
+   "stones": 200,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 30
+    },
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "item_aid_guard_array",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_weapon": {
+   "id": "recipe_forge_t2_weapon",
+   "name": "Forge T2 Weapon",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 8
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_robe": {
+   "id": "recipe_forge_t1_robe",
+   "name": "Forge T1 Robe",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_head": {
+   "id": "recipe_forge_t1_head",
+   "name": "Forge T1 Head",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_head": {
+   "id": "recipe_forge_t2_head",
+   "name": "Forge T2 Head",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_bracer": {
+   "id": "recipe_forge_t1_bracer",
+   "name": "Forge T1 Bracer",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_bracer": {
+   "id": "recipe_forge_t2_bracer",
+   "name": "Forge T2 Bracer",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_belt": {
+   "id": "recipe_forge_t1_belt",
+   "name": "Forge T1 Belt",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_belt": {
+   "id": "recipe_forge_t2_belt",
+   "name": "Forge T2 Belt",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_boots": {
+   "id": "recipe_forge_t1_boots",
+   "name": "Forge T1 Boots",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_boots": {
+   "id": "recipe_forge_t2_boots",
+   "name": "Forge T2 Boots",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_ring": {
+   "id": "recipe_forge_t1_ring",
+   "name": "Forge T1 Ring",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_ring": {
+   "id": "recipe_forge_t2_ring",
+   "name": "Forge T2 Ring",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_pendant": {
+   "id": "recipe_forge_t1_pendant",
+   "name": "Forge T1 Pendant",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 11,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_pendant": {
+   "id": "recipe_forge_t2_pendant",
+   "name": "Forge T2 Pendant",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 56,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 6
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_staff": {
+   "id": "recipe_forge_t1_staff",
+   "name": "Forge T1 Staff",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_gauntlet": {
+   "id": "recipe_forge_t1_gauntlet",
+   "name": "Forge T1 Gauntlet",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_lantern": {
+   "id": "recipe_forge_t1_lantern",
+   "name": "Forge T1 Lantern",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t1_banner": {
+   "id": "recipe_forge_t1_banner",
+   "name": "Forge T1 Banner",
+   "reqLevel": 1,
+   "durationMs": 45000,
+   "stones": 15,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t1_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_staff": {
+   "id": "recipe_forge_t2_staff",
+   "name": "Forge T2 Staff",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_gauntlet": {
+   "id": "recipe_forge_t2_gauntlet",
+   "name": "Forge T2 Gauntlet",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_iron_ore",
+     "qty": 8
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_lantern": {
+   "id": "recipe_forge_t2_lantern",
+   "name": "Forge T2 Lantern",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t2_banner": {
+   "id": "recipe_forge_t2_banner",
+   "name": "Forge T2 Banner",
+   "reqLevel": 8,
+   "durationMs": 120000,
+   "stones": 80,
+   "inputs": [
+    {
+     "itemId": "item_beast_hide",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t2_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_robe": {
+   "id": "recipe_forge_t3_robe",
+   "name": "Forge T3 Robe",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 600,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 12
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 30
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_head": {
+   "id": "recipe_forge_t3_head",
+   "name": "Forge T3 Head",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_bracer": {
+   "id": "recipe_forge_t3_bracer",
+   "name": "Forge T3 Bracer",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_belt": {
+   "id": "recipe_forge_t3_belt",
+   "name": "Forge T3 Belt",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_boots": {
+   "id": "recipe_forge_t3_boots",
+   "name": "Forge T3 Boots",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_ring": {
+   "id": "recipe_forge_t3_ring",
+   "name": "Forge T3 Ring",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t3_pendant": {
+   "id": "recipe_forge_t3_pendant",
+   "name": "Forge T3 Pendant",
+   "reqLevel": 16,
+   "durationMs": 300000,
+   "stones": 420,
+   "inputs": [
+    {
+     "itemId": "item_frost_crystal",
+     "qty": 8
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 21
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t3_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_head": {
+   "id": "recipe_forge_t4_head",
+   "name": "Forge T4 Head",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_bracer": {
+   "id": "recipe_forge_t4_bracer",
+   "name": "Forge T4 Bracer",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_belt": {
+   "id": "recipe_forge_t4_belt",
+   "name": "Forge T4 Belt",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_boots": {
+   "id": "recipe_forge_t4_boots",
+   "name": "Forge T4 Boots",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_ring": {
+   "id": "recipe_forge_t4_ring",
+   "name": "Forge T4 Ring",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_pendant": {
+   "id": "recipe_forge_t4_pendant",
+   "name": "Forge T4 Pendant",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 4200,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 18
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 49
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_staff": {
+   "id": "recipe_forge_t4_staff",
+   "name": "Forge T4 Staff",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 70
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_gauntlet": {
+   "id": "recipe_forge_t4_gauntlet",
+   "name": "Forge T4 Gauntlet",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 70
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_lantern": {
+   "id": "recipe_forge_t4_lantern",
+   "name": "Forge T4 Lantern",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 70
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t4_banner": {
+   "id": "recipe_forge_t4_banner",
+   "name": "Forge T4 Banner",
+   "reqLevel": 22,
+   "durationMs": 900000,
+   "stones": 6000,
+   "inputs": [
+    {
+     "itemId": "item_ember_sand",
+     "qty": 25
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 70
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t4_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_robe": {
+   "id": "recipe_forge_t5_robe",
+   "name": "Forge T5 Robe",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_head": {
+   "id": "recipe_forge_t5_head",
+   "name": "Forge T5 Head",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_bracer": {
+   "id": "recipe_forge_t5_bracer",
+   "name": "Forge T5 Bracer",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_belt": {
+   "id": "recipe_forge_t5_belt",
+   "name": "Forge T5 Belt",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_boots": {
+   "id": "recipe_forge_t5_boots",
+   "name": "Forge T5 Boots",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_ring": {
+   "id": "recipe_forge_t5_ring",
+   "name": "Forge T5 Ring",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_pendant": {
+   "id": "recipe_forge_t5_pendant",
+   "name": "Forge T5 Pendant",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 21000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 140
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_gauntlet": {
+   "id": "recipe_forge_t5_gauntlet",
+   "name": "Forge T5 Gauntlet",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_lantern": {
+   "id": "recipe_forge_t5_lantern",
+   "name": "Forge T5 Lantern",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t5_banner": {
+   "id": "recipe_forge_t5_banner",
+   "name": "Forge T5 Banner",
+   "reqLevel": 28,
+   "durationMs": 1800000,
+   "stones": 30000,
+   "inputs": [
+    {
+     "itemId": "item_thunder_feather",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 200
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t5_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_head": {
+   "id": "recipe_forge_t6_head",
+   "name": "Forge T6 Head",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_bracer": {
+   "id": "recipe_forge_t6_bracer",
+   "name": "Forge T6 Bracer",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_belt": {
+   "id": "recipe_forge_t6_belt",
+   "name": "Forge T6 Belt",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_boots": {
+   "id": "recipe_forge_t6_boots",
+   "name": "Forge T6 Boots",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_ring": {
+   "id": "recipe_forge_t6_ring",
+   "name": "Forge T6 Ring",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_pendant": {
+   "id": "recipe_forge_t6_pendant",
+   "name": "Forge T6 Pendant",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 63000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 210
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_staff": {
+   "id": "recipe_forge_t6_staff",
+   "name": "Forge T6 Staff",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 300
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_gauntlet": {
+   "id": "recipe_forge_t6_gauntlet",
+   "name": "Forge T6 Gauntlet",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 300
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_lantern": {
+   "id": "recipe_forge_t6_lantern",
+   "name": "Forge T6 Lantern",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 300
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t6_banner": {
+   "id": "recipe_forge_t6_banner",
+   "name": "Forge T6 Banner",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 90000,
+   "inputs": [
+    {
+     "itemId": "item_immortal_jade",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 300
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t6_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_head": {
+   "id": "recipe_forge_t7_head",
+   "name": "Forge T7 Head",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_bracer": {
+   "id": "recipe_forge_t7_bracer",
+   "name": "Forge T7 Bracer",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_belt": {
+   "id": "recipe_forge_t7_belt",
+   "name": "Forge T7 Belt",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_boots": {
+   "id": "recipe_forge_t7_boots",
+   "name": "Forge T7 Boots",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_ring": {
+   "id": "recipe_forge_t7_ring",
+   "name": "Forge T7 Ring",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_pendant": {
+   "id": "recipe_forge_t7_pendant",
+   "name": "Forge T7 Pendant",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 210000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 420
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_staff": {
+   "id": "recipe_forge_t7_staff",
+   "name": "Forge T7 Staff",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 600
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_gauntlet": {
+   "id": "recipe_forge_t7_gauntlet",
+   "name": "Forge T7 Gauntlet",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 600
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_lantern": {
+   "id": "recipe_forge_t7_lantern",
+   "name": "Forge T7 Lantern",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 600
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t7_banner": {
+   "id": "recipe_forge_t7_banner",
+   "name": "Forge T7 Banner",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "item_heart_stone",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 600
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t7_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_weapon": {
+   "id": "recipe_forge_t8_weapon",
+   "name": "Forge T8 Weapon",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_robe": {
+   "id": "recipe_forge_t8_robe",
+   "name": "Forge T8 Robe",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_head": {
+   "id": "recipe_forge_t8_head",
+   "name": "Forge T8 Head",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_bracer": {
+   "id": "recipe_forge_t8_bracer",
+   "name": "Forge T8 Bracer",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_belt": {
+   "id": "recipe_forge_t8_belt",
+   "name": "Forge T8 Belt",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_boots": {
+   "id": "recipe_forge_t8_boots",
+   "name": "Forge T8 Boots",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_ring": {
+   "id": "recipe_forge_t8_ring",
+   "name": "Forge T8 Ring",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_pendant": {
+   "id": "recipe_forge_t8_pendant",
+   "name": "Forge T8 Pendant",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 630000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 560
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_staff": {
+   "id": "recipe_forge_t8_staff",
+   "name": "Forge T8 Staff",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_gauntlet": {
+   "id": "recipe_forge_t8_gauntlet",
+   "name": "Forge T8 Gauntlet",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_lantern": {
+   "id": "recipe_forge_t8_lantern",
+   "name": "Forge T8 Lantern",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t8_banner": {
+   "id": "recipe_forge_t8_banner",
+   "name": "Forge T8 Banner",
+   "reqLevel": 40,
+   "durationMs": 3600000,
+   "stones": 900000,
+   "inputs": [
+    {
+     "itemId": "item_amhu_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 800
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t8_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_weapon": {
+   "id": "recipe_forge_t9_weapon",
+   "name": "Forge T9 Weapon",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_robe": {
+   "id": "recipe_forge_t9_robe",
+   "name": "Forge T9 Robe",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_head": {
+   "id": "recipe_forge_t9_head",
+   "name": "Forge T9 Head",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_bracer": {
+   "id": "recipe_forge_t9_bracer",
+   "name": "Forge T9 Bracer",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_belt": {
+   "id": "recipe_forge_t9_belt",
+   "name": "Forge T9 Belt",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_boots": {
+   "id": "recipe_forge_t9_boots",
+   "name": "Forge T9 Boots",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_ring": {
+   "id": "recipe_forge_t9_ring",
+   "name": "Forge T9 Ring",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_pendant": {
+   "id": "recipe_forge_t9_pendant",
+   "name": "Forge T9 Pendant",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 1890000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 630
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_staff": {
+   "id": "recipe_forge_t9_staff",
+   "name": "Forge T9 Staff",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_gauntlet": {
+   "id": "recipe_forge_t9_gauntlet",
+   "name": "Forge T9 Gauntlet",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_lantern": {
+   "id": "recipe_forge_t9_lantern",
+   "name": "Forge T9 Lantern",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t9_banner": {
+   "id": "recipe_forge_t9_banner",
+   "name": "Forge T9 Banner",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 2700000,
+   "inputs": [
+    {
+     "itemId": "item_khuyniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 900
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t9_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_weapon": {
+   "id": "recipe_forge_t10_weapon",
+   "name": "Forge T10 Weapon",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_robe": {
+   "id": "recipe_forge_t10_robe",
+   "name": "Forge T10 Robe",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_head": {
+   "id": "recipe_forge_t10_head",
+   "name": "Forge T10 Head",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_bracer": {
+   "id": "recipe_forge_t10_bracer",
+   "name": "Forge T10 Bracer",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_belt": {
+   "id": "recipe_forge_t10_belt",
+   "name": "Forge T10 Belt",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_boots": {
+   "id": "recipe_forge_t10_boots",
+   "name": "Forge T10 Boots",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_ring": {
+   "id": "recipe_forge_t10_ring",
+   "name": "Forge T10 Ring",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_pendant": {
+   "id": "recipe_forge_t10_pendant",
+   "name": "Forge T10 Pendant",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 5670000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 700
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_staff": {
+   "id": "recipe_forge_t10_staff",
+   "name": "Forge T10 Staff",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_gauntlet": {
+   "id": "recipe_forge_t10_gauntlet",
+   "name": "Forge T10 Gauntlet",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_lantern": {
+   "id": "recipe_forge_t10_lantern",
+   "name": "Forge T10 Lantern",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t10_banner": {
+   "id": "recipe_forge_t10_banner",
+   "name": "Forge T10 Banner",
+   "reqLevel": 50,
+   "durationMs": 3600000,
+   "stones": 8100000,
+   "inputs": [
+    {
+     "itemId": "item_toainiet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1000
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 4
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t10_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_weapon": {
+   "id": "recipe_forge_t11_weapon",
+   "name": "Forge T11 Weapon",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_robe": {
+   "id": "recipe_forge_t11_robe",
+   "name": "Forge T11 Robe",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_head": {
+   "id": "recipe_forge_t11_head",
+   "name": "Forge T11 Head",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_bracer": {
+   "id": "recipe_forge_t11_bracer",
+   "name": "Forge T11 Bracer",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_belt": {
+   "id": "recipe_forge_t11_belt",
+   "name": "Forge T11 Belt",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_boots": {
+   "id": "recipe_forge_t11_boots",
+   "name": "Forge T11 Boots",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_ring": {
+   "id": "recipe_forge_t11_ring",
+   "name": "Forge T11 Ring",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_pendant": {
+   "id": "recipe_forge_t11_pendant",
+   "name": "Forge T11 Pendant",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 17010000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 770
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_staff": {
+   "id": "recipe_forge_t11_staff",
+   "name": "Forge T11 Staff",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_gauntlet": {
+   "id": "recipe_forge_t11_gauntlet",
+   "name": "Forge T11 Gauntlet",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_lantern": {
+   "id": "recipe_forge_t11_lantern",
+   "name": "Forge T11 Lantern",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t11_banner": {
+   "id": "recipe_forge_t11_banner",
+   "name": "Forge T11 Banner",
+   "reqLevel": 58,
+   "durationMs": 3600000,
+   "stones": 24300000,
+   "inputs": [
+    {
+     "itemId": "item_khonglinh_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1100
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 6
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t11_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_weapon": {
+   "id": "recipe_forge_t12_weapon",
+   "name": "Forge T12 Weapon",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_robe": {
+   "id": "recipe_forge_t12_robe",
+   "name": "Forge T12 Robe",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_head": {
+   "id": "recipe_forge_t12_head",
+   "name": "Forge T12 Head",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_bracer": {
+   "id": "recipe_forge_t12_bracer",
+   "name": "Forge T12 Bracer",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_belt": {
+   "id": "recipe_forge_t12_belt",
+   "name": "Forge T12 Belt",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_boots": {
+   "id": "recipe_forge_t12_boots",
+   "name": "Forge T12 Boots",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_ring": {
+   "id": "recipe_forge_t12_ring",
+   "name": "Forge T12 Ring",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_pendant": {
+   "id": "recipe_forge_t12_pendant",
+   "name": "Forge T12 Pendant",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 51030000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 840
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_staff": {
+   "id": "recipe_forge_t12_staff",
+   "name": "Forge T12 Staff",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_gauntlet": {
+   "id": "recipe_forge_t12_gauntlet",
+   "name": "Forge T12 Gauntlet",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_lantern": {
+   "id": "recipe_forge_t12_lantern",
+   "name": "Forge T12 Lantern",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t12_banner": {
+   "id": "recipe_forge_t12_banner",
+   "name": "Forge T12 Banner",
+   "reqLevel": 66,
+   "durationMs": 3600000,
+   "stones": 72900000,
+   "inputs": [
+    {
+     "itemId": "item_khongkiep_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1200
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 8
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t12_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_weapon": {
+   "id": "recipe_forge_t13_weapon",
+   "name": "Forge T13 Weapon",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_robe": {
+   "id": "recipe_forge_t13_robe",
+   "name": "Forge T13 Robe",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_head": {
+   "id": "recipe_forge_t13_head",
+   "name": "Forge T13 Head",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_bracer": {
+   "id": "recipe_forge_t13_bracer",
+   "name": "Forge T13 Bracer",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_belt": {
+   "id": "recipe_forge_t13_belt",
+   "name": "Forge T13 Belt",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_boots": {
+   "id": "recipe_forge_t13_boots",
+   "name": "Forge T13 Boots",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_ring": {
+   "id": "recipe_forge_t13_ring",
+   "name": "Forge T13 Ring",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_pendant": {
+   "id": "recipe_forge_t13_pendant",
+   "name": "Forge T13 Pendant",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 3290000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 665
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_staff": {
+   "id": "recipe_forge_t13_staff",
+   "name": "Forge T13 Staff",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_gauntlet": {
+   "id": "recipe_forge_t13_gauntlet",
+   "name": "Forge T13 Gauntlet",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_lantern": {
+   "id": "recipe_forge_t13_lantern",
+   "name": "Forge T13 Lantern",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t13_banner": {
+   "id": "recipe_forge_t13_banner",
+   "name": "Forge T13 Banner",
+   "reqLevel": 46,
+   "durationMs": 3600000,
+   "stones": 4700000,
+   "inputs": [
+    {
+     "itemId": "item_tinhniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 950
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t13_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_weapon": {
+   "id": "recipe_forge_t14_weapon",
+   "name": "Forge T14 Weapon",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_robe": {
+   "id": "recipe_forge_t14_robe",
+   "name": "Forge T14 Robe",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_head": {
+   "id": "recipe_forge_t14_head",
+   "name": "Forge T14 Head",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_bracer": {
+   "id": "recipe_forge_t14_bracer",
+   "name": "Forge T14 Bracer",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_belt": {
+   "id": "recipe_forge_t14_belt",
+   "name": "Forge T14 Belt",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_boots": {
+   "id": "recipe_forge_t14_boots",
+   "name": "Forge T14 Boots",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_ring": {
+   "id": "recipe_forge_t14_ring",
+   "name": "Forge T14 Ring",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_pendant": {
+   "id": "recipe_forge_t14_pendant",
+   "name": "Forge T14 Pendant",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 9800000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 735
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_staff": {
+   "id": "recipe_forge_t14_staff",
+   "name": "Forge T14 Staff",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_gauntlet": {
+   "id": "recipe_forge_t14_gauntlet",
+   "name": "Forge T14 Gauntlet",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_lantern": {
+   "id": "recipe_forge_t14_lantern",
+   "name": "Forge T14 Lantern",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t14_banner": {
+   "id": "recipe_forge_t14_banner",
+   "name": "Forge T14 Banner",
+   "reqLevel": 54,
+   "durationMs": 3600000,
+   "stones": 14000000,
+   "inputs": [
+    {
+     "itemId": "item_khongniet_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1050
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t14_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_weapon": {
+   "id": "recipe_forge_t15_weapon",
+   "name": "Forge T15 Weapon",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_robe": {
+   "id": "recipe_forge_t15_robe",
+   "name": "Forge T15 Robe",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_head": {
+   "id": "recipe_forge_t15_head",
+   "name": "Forge T15 Head",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_bracer": {
+   "id": "recipe_forge_t15_bracer",
+   "name": "Forge T15 Bracer",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_belt": {
+   "id": "recipe_forge_t15_belt",
+   "name": "Forge T15 Belt",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_boots": {
+   "id": "recipe_forge_t15_boots",
+   "name": "Forge T15 Boots",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_ring": {
+   "id": "recipe_forge_t15_ring",
+   "name": "Forge T15 Ring",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_pendant": {
+   "id": "recipe_forge_t15_pendant",
+   "name": "Forge T15 Pendant",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 29400000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 805
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_staff": {
+   "id": "recipe_forge_t15_staff",
+   "name": "Forge T15 Staff",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_gauntlet": {
+   "id": "recipe_forge_t15_gauntlet",
+   "name": "Forge T15 Gauntlet",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_lantern": {
+   "id": "recipe_forge_t15_lantern",
+   "name": "Forge T15 Lantern",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t15_banner": {
+   "id": "recipe_forge_t15_banner",
+   "name": "Forge T15 Banner",
+   "reqLevel": 62,
+   "durationMs": 3600000,
+   "stones": 42000000,
+   "inputs": [
+    {
+     "itemId": "item_khonghuyen_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1150
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 7
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t15_banner"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_weapon": {
+   "id": "recipe_forge_t16_weapon",
+   "name": "Forge T16 Weapon",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_weapon"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_robe": {
+   "id": "recipe_forge_t16_robe",
+   "name": "Forge T16 Robe",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_robe"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_head": {
+   "id": "recipe_forge_t16_head",
+   "name": "Forge T16 Head",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_head"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_bracer": {
+   "id": "recipe_forge_t16_bracer",
+   "name": "Forge T16 Bracer",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_bracer"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_belt": {
+   "id": "recipe_forge_t16_belt",
+   "name": "Forge T16 Belt",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_belt"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_boots": {
+   "id": "recipe_forge_t16_boots",
+   "name": "Forge T16 Boots",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_boots"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_ring": {
+   "id": "recipe_forge_t16_ring",
+   "name": "Forge T16 Ring",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_ring"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_pendant": {
+   "id": "recipe_forge_t16_pendant",
+   "name": "Forge T16 Pendant",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 88200000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 21
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 910
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_pendant"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_staff": {
+   "id": "recipe_forge_t16_staff",
+   "name": "Forge T16 Staff",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_staff"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_gauntlet": {
+   "id": "recipe_forge_t16_gauntlet",
+   "name": "Forge T16 Gauntlet",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_iron_ore",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_gauntlet"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_lantern": {
+   "id": "recipe_forge_t16_lantern",
+   "name": "Forge T16 Lantern",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_spirit_herb",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_lantern"
+   },
+   "weekLimit": null
+  },
+  "recipe_forge_t16_banner": {
+   "id": "recipe_forge_t16_banner",
+   "name": "Forge T16 Banner",
+   "reqLevel": 70,
+   "durationMs": 3600000,
+   "stones": 126000000,
+   "inputs": [
+    {
+     "itemId": "item_dapthien_mat",
+     "qty": 30
+    },
+    {
+     "itemId": "item_beast_hide",
+     "qty": 1300
+    },
+    {
+     "itemId": "item_origin_shard",
+     "qty": 9
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "equip_t16_banner"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_001": {
+   "id": "x2_recipe_001",
+   "name": "Luyện Nguyên Tức Tụ Linh Đan",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_09",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_01",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_011": {
+   "id": "x2_recipe_011",
+   "name": "Luyện Bổ Khuyết Nguyên Đan",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_17",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_11",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_025": {
+   "id": "x2_recipe_025",
+   "name": "Luyện Thông Mạch Dưỡng Ngọc Đan",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_09",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_25",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_031": {
+   "id": "x2_recipe_031",
+   "name": "Rèn Tàng Phong Kiếm",
+   "reqLevel": 24,
+   "durationMs": 3600000,
+   "stones": 32000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_03",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_001"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_032": {
+   "id": "x2_recipe_032",
+   "name": "Rèn Tàng Phong Bội",
+   "reqLevel": 24,
+   "durationMs": 3600000,
+   "stones": 32000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_03",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_008"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_035": {
+   "id": "x2_recipe_035",
+   "name": "Rèn Huyền Cốt Quyền Sáo",
+   "reqLevel": 24,
+   "durationMs": 3600000,
+   "stones": 32000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_03",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_017"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_002": {
+   "id": "x2_recipe_002",
+   "name": "X2 Recipe 002",
+   "reqLevel": 28,
+   "durationMs": 1200000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_17",
+     "qty": 6
+    },
+    {
+     "itemId": "x2_herb_05",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_02",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_003": {
+   "id": "x2_recipe_003",
+   "name": "X2 Recipe 003",
+   "reqLevel": 32,
+   "durationMs": 1500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_18",
+     "qty": 7
+    },
+    {
+     "itemId": "x2_herb_06",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_03",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_004": {
+   "id": "x2_recipe_004",
+   "name": "X2 Recipe 004",
+   "reqLevel": 36,
+   "durationMs": 1500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_11",
+     "qty": 7
+    },
+    {
+     "itemId": "x2_herb_14",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_04",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_005": {
+   "id": "x2_recipe_005",
+   "name": "X2 Recipe 005",
+   "reqLevel": 41,
+   "durationMs": 1800000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_10",
+     "qty": 8
+    },
+    {
+     "itemId": "x2_herb_18",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_05",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_006": {
+   "id": "x2_recipe_006",
+   "name": "X2 Recipe 006",
+   "reqLevel": 42,
+   "durationMs": 1800000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_21",
+     "qty": 8
+    },
+    {
+     "itemId": "x2_herb_07",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_06",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_007": {
+   "id": "x2_recipe_007",
+   "name": "X2 Recipe 007",
+   "reqLevel": 46,
+   "durationMs": 2100000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_15",
+     "qty": 9
+    },
+    {
+     "itemId": "x2_herb_11",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_07",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_008": {
+   "id": "x2_recipe_008",
+   "name": "X2 Recipe 008",
+   "reqLevel": 50,
+   "durationMs": 2100000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_22",
+     "qty": 9
+    },
+    {
+     "itemId": "x2_herb_19",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_08",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_009": {
+   "id": "x2_recipe_009",
+   "name": "X2 Recipe 009",
+   "reqLevel": 58,
+   "durationMs": 2400000,
+   "stones": 800000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_12",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_herb_21",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_09",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_010": {
+   "id": "x2_recipe_010",
+   "name": "X2 Recipe 010",
+   "reqLevel": 62,
+   "durationMs": 2700000,
+   "stones": 2000000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_16",
+     "qty": 11
+    },
+    {
+     "itemId": "x2_herb_23",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_09",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_10",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_012": {
+   "id": "x2_recipe_012",
+   "name": "X2 Recipe 012",
+   "reqLevel": 42,
+   "durationMs": 1800000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_21",
+     "qty": 8
+    },
+    {
+     "itemId": "x2_herb_11",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_12",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_013": {
+   "id": "x2_recipe_013",
+   "name": "X2 Recipe 013",
+   "reqLevel": 54,
+   "durationMs": 2400000,
+   "stones": 800000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_08",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_herb_22",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_13",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_014": {
+   "id": "x2_recipe_014",
+   "name": "X2 Recipe 014",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_02",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_09",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_14",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_015": {
+   "id": "x2_recipe_015",
+   "name": "X2 Recipe 015",
+   "reqLevel": 42,
+   "durationMs": 1800000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_10",
+     "qty": 8
+    },
+    {
+     "itemId": "x2_herb_14",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_15",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_016": {
+   "id": "x2_recipe_016",
+   "name": "X2 Recipe 016",
+   "reqLevel": 28,
+   "durationMs": 1200000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_05",
+     "qty": 6
+    },
+    {
+     "itemId": "x2_herb_09",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_16",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_017": {
+   "id": "x2_recipe_017",
+   "name": "X2 Recipe 017",
+   "reqLevel": 32,
+   "durationMs": 1500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_13",
+     "qty": 7
+    },
+    {
+     "itemId": "x2_herb_10",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_17",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_018": {
+   "id": "x2_recipe_018",
+   "name": "X2 Recipe 018",
+   "reqLevel": 36,
+   "durationMs": 1500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_17",
+     "qty": 7
+    },
+    {
+     "itemId": "x2_herb_11",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_18",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_019": {
+   "id": "x2_recipe_019",
+   "name": "X2 Recipe 019",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_17",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_19",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_020": {
+   "id": "x2_recipe_020",
+   "name": "X2 Recipe 020",
+   "reqLevel": 36,
+   "durationMs": 1500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_04",
+     "qty": 7
+    },
+    {
+     "itemId": "x2_herb_06",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_20",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_021": {
+   "id": "x2_recipe_021",
+   "name": "X2 Recipe 021",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_09",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_02",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_21",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_022": {
+   "id": "x2_recipe_022",
+   "name": "X2 Recipe 022",
+   "reqLevel": 28,
+   "durationMs": 1200000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_04",
+     "qty": 6
+    },
+    {
+     "itemId": "x2_herb_10",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_22",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_023": {
+   "id": "x2_recipe_023",
+   "name": "X2 Recipe 023",
+   "reqLevel": 42,
+   "durationMs": 1800000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_13",
+     "qty": 8
+    },
+    {
+     "itemId": "x2_herb_11",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_23",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_024": {
+   "id": "x2_recipe_024",
+   "name": "X2 Recipe 024",
+   "reqLevel": 50,
+   "durationMs": 2100000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_19",
+     "qty": 9
+    },
+    {
+     "itemId": "x2_herb_03",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_24",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_026": {
+   "id": "x2_recipe_026",
+   "name": "X2 Recipe 026",
+   "reqLevel": 28,
+   "durationMs": 1200000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_10",
+     "qty": 6
+    },
+    {
+     "itemId": "x2_herb_02",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_26",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_027": {
+   "id": "x2_recipe_027",
+   "name": "X2 Recipe 027",
+   "reqLevel": 24,
+   "durationMs": 900000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_02",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_herb_17",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_27",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_028": {
+   "id": "x2_recipe_028",
+   "name": "X2 Recipe 028",
+   "reqLevel": 28,
+   "durationMs": 1200000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_10",
+     "qty": 6
+    },
+    {
+     "itemId": "x2_herb_05",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_28",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_029": {
+   "id": "x2_recipe_029",
+   "name": "X2 Recipe 029",
+   "reqLevel": 54,
+   "durationMs": 2400000,
+   "stones": 800000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_08",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_herb_22",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_29",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_030": {
+   "id": "x2_recipe_030",
+   "name": "X2 Recipe 030",
+   "reqLevel": 66,
+   "durationMs": 3000000,
+   "stones": 5000000,
+   "inputs": [
+    {
+     "itemId": "x2_herb_20",
+     "qty": 12
+    },
+    {
+     "itemId": "x2_herb_24",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_10",
+     "qty": 1
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_pill_30",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_033": {
+   "id": "x2_recipe_033",
+   "name": "X2 Recipe 033",
+   "reqLevel": 28,
+   "durationMs": 4800000,
+   "stones": 80000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_04",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_04",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_009"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_034": {
+   "id": "x2_recipe_034",
+   "name": "X2 Recipe 034",
+   "reqLevel": 28,
+   "durationMs": 4800000,
+   "stones": 80000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_04",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_04",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_016"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_036": {
+   "id": "x2_recipe_036",
+   "name": "X2 Recipe 036",
+   "reqLevel": 24,
+   "durationMs": 3600000,
+   "stones": 32000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_03",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_024"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_037": {
+   "id": "x2_recipe_037",
+   "name": "X2 Recipe 037",
+   "reqLevel": 32,
+   "durationMs": 6000000,
+   "stones": 200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_05",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_025"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_038": {
+   "id": "x2_recipe_038",
+   "name": "X2 Recipe 038",
+   "reqLevel": 32,
+   "durationMs": 6000000,
+   "stones": 200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_05",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_032"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_039": {
+   "id": "x2_recipe_039",
+   "name": "X2 Recipe 039",
+   "reqLevel": 36,
+   "durationMs": 6000000,
+   "stones": 200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_05",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_033"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_040": {
+   "id": "x2_recipe_040",
+   "name": "X2 Recipe 040",
+   "reqLevel": 36,
+   "durationMs": 6000000,
+   "stones": 200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_05",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_040"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_041": {
+   "id": "x2_recipe_041",
+   "name": "X2 Recipe 041",
+   "reqLevel": 42,
+   "durationMs": 7200000,
+   "stones": 480000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_06",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_06",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_041"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_042": {
+   "id": "x2_recipe_042",
+   "name": "X2 Recipe 042",
+   "reqLevel": 42,
+   "durationMs": 7200000,
+   "stones": 480000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_06",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_06",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_048"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_043": {
+   "id": "x2_recipe_043",
+   "name": "X2 Recipe 043",
+   "reqLevel": 50,
+   "durationMs": 8400000,
+   "stones": 1200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_07",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_07",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_049"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_044": {
+   "id": "x2_recipe_044",
+   "name": "X2 Recipe 044",
+   "reqLevel": 50,
+   "durationMs": 8400000,
+   "stones": 1200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_07",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_07",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_056"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_045": {
+   "id": "x2_recipe_045",
+   "name": "X2 Recipe 045",
+   "reqLevel": 54,
+   "durationMs": 9600000,
+   "stones": 3200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_08",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_08",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_057"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_046": {
+   "id": "x2_recipe_046",
+   "name": "X2 Recipe 046",
+   "reqLevel": 54,
+   "durationMs": 9600000,
+   "stones": 3200000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_08",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_08",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_064"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_047": {
+   "id": "x2_recipe_047",
+   "name": "X2 Recipe 047",
+   "reqLevel": 58,
+   "durationMs": 10800000,
+   "stones": 8000000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_09",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_09",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_09",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_065"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_048": {
+   "id": "x2_recipe_048",
+   "name": "X2 Recipe 048",
+   "reqLevel": 58,
+   "durationMs": 10800000,
+   "stones": 8000000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_09",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_09",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_09",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_072"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_049": {
+   "id": "x2_recipe_049",
+   "name": "X2 Recipe 049",
+   "reqLevel": 62,
+   "durationMs": 10800000,
+   "stones": 8000000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_09",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_09",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_09",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_073"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_050": {
+   "id": "x2_recipe_050",
+   "name": "X2 Recipe 050",
+   "reqLevel": 62,
+   "durationMs": 10800000,
+   "stones": 8000000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_09",
+     "qty": 20
+    },
+    {
+     "itemId": "x2_essence_09",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_refine_09",
+     "qty": 5
+    }
+   ],
+   "output": {
+    "kind": "equip",
+    "defId": "x2_eq_080"
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_051": {
+   "id": "x2_recipe_051",
+   "name": "X2 Recipe 051",
+   "reqLevel": 24,
+   "durationMs": 5400000,
+   "stones": 48000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_01",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_052": {
+   "id": "x2_recipe_052",
+   "name": "X2 Recipe 052",
+   "reqLevel": 24,
+   "durationMs": 5400000,
+   "stones": 48000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_03",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_02",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_053": {
+   "id": "x2_recipe_053",
+   "name": "X2 Recipe 053",
+   "reqLevel": 28,
+   "durationMs": 7200000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_04",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_03",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_054": {
+   "id": "x2_recipe_054",
+   "name": "X2 Recipe 054",
+   "reqLevel": 28,
+   "durationMs": 7200000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_04",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_04",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_04",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_055": {
+   "id": "x2_recipe_055",
+   "name": "X2 Recipe 055",
+   "reqLevel": 32,
+   "durationMs": 9000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_05",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_056": {
+   "id": "x2_recipe_056",
+   "name": "X2 Recipe 056",
+   "reqLevel": 32,
+   "durationMs": 9000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_06",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_057": {
+   "id": "x2_recipe_057",
+   "name": "X2 Recipe 057",
+   "reqLevel": 36,
+   "durationMs": 9000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_07",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_058": {
+   "id": "x2_recipe_058",
+   "name": "X2 Recipe 058",
+   "reqLevel": 36,
+   "durationMs": 9000000,
+   "stones": 300000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_05",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_05",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_08",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_059": {
+   "id": "x2_recipe_059",
+   "name": "X2 Recipe 059",
+   "reqLevel": 42,
+   "durationMs": 10800000,
+   "stones": 720000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_06",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_09",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_060": {
+   "id": "x2_recipe_060",
+   "name": "X2 Recipe 060",
+   "reqLevel": 46,
+   "durationMs": 12600000,
+   "stones": 1800000,
+   "inputs": [
+    {
+     "itemId": "x2_ore_07",
+     "qty": 30
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_mat_insight",
+     "qty": 20
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_treasure_10",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_061": {
+   "id": "x2_recipe_061",
+   "name": "X2 Recipe 061",
+   "reqLevel": 16,
+   "durationMs": 600000,
+   "stones": 500,
+   "inputs": [
+    {
+     "itemId": "x2_essence_01",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_01",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_01",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_062": {
+   "id": "x2_recipe_062",
+   "name": "X2 Recipe 062",
+   "reqLevel": 20,
+   "durationMs": 1200000,
+   "stones": 1500,
+   "inputs": [
+    {
+     "itemId": "x2_essence_02",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_02",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_02",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_063": {
+   "id": "x2_recipe_063",
+   "name": "X2 Recipe 063",
+   "reqLevel": 24,
+   "durationMs": 1800000,
+   "stones": 4000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_03",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_03",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_03",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_064": {
+   "id": "x2_recipe_064",
+   "name": "X2 Recipe 064",
+   "reqLevel": 28,
+   "durationMs": 2400000,
+   "stones": 10000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_04",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_05",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_04",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_065": {
+   "id": "x2_recipe_065",
+   "name": "X2 Recipe 065",
+   "reqLevel": 36,
+   "durationMs": 3000000,
+   "stones": 25000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_05",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_06",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_05",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_066": {
+   "id": "x2_recipe_066",
+   "name": "X2 Recipe 066",
+   "reqLevel": 42,
+   "durationMs": 3600000,
+   "stones": 60000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_06",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_07",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_06",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_067": {
+   "id": "x2_recipe_067",
+   "name": "X2 Recipe 067",
+   "reqLevel": 50,
+   "durationMs": 4200000,
+   "stones": 150000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_07",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_19",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_07",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_068": {
+   "id": "x2_recipe_068",
+   "name": "X2 Recipe 068",
+   "reqLevel": 54,
+   "durationMs": 4800000,
+   "stones": 400000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_08",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_08",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_08",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_069": {
+   "id": "x2_recipe_069",
+   "name": "X2 Recipe 069",
+   "reqLevel": 62,
+   "durationMs": 5400000,
+   "stones": 1000000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_09",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_23",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_09",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_070": {
+   "id": "x2_recipe_070",
+   "name": "X2 Recipe 070",
+   "reqLevel": 66,
+   "durationMs": 6000000,
+   "stones": 2500000,
+   "inputs": [
+    {
+     "itemId": "x2_essence_10",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_herb_24",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_feed_10",
+    "qty": 5
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_071": {
+   "id": "x2_recipe_071",
+   "name": "X2 Recipe 071",
+   "reqLevel": 24,
+   "durationMs": 2160000,
+   "stones": 16000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_meridian",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_03",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_01",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_072": {
+   "id": "x2_recipe_072",
+   "name": "X2 Recipe 072",
+   "reqLevel": 28,
+   "durationMs": 2880000,
+   "stones": 40000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_ancient_blood",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_04",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_02",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_073": {
+   "id": "x2_recipe_073",
+   "name": "X2 Recipe 073",
+   "reqLevel": 32,
+   "durationMs": 3600000,
+   "stones": 100000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_ancient_blood",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_06",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_03",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_074": {
+   "id": "x2_recipe_074",
+   "name": "X2 Recipe 074",
+   "reqLevel": 24,
+   "durationMs": 2160000,
+   "stones": 16000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_ancient_blood",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_17",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_04",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_075": {
+   "id": "x2_recipe_075",
+   "name": "X2 Recipe 075",
+   "reqLevel": 28,
+   "durationMs": 2880000,
+   "stones": 40000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_meridian",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_10",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_05",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_076": {
+   "id": "x2_recipe_076",
+   "name": "X2 Recipe 076",
+   "reqLevel": 28,
+   "durationMs": 2880000,
+   "stones": 40000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_meridian",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_05",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_06",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_077": {
+   "id": "x2_recipe_077",
+   "name": "X2 Recipe 077",
+   "reqLevel": 36,
+   "durationMs": 3600000,
+   "stones": 100000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_ancient_blood",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_11",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_07",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_078": {
+   "id": "x2_recipe_078",
+   "name": "X2 Recipe 078",
+   "reqLevel": 46,
+   "durationMs": 5040000,
+   "stones": 600000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_ancient_blood",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_07",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_15",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_08",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_079": {
+   "id": "x2_recipe_079",
+   "name": "X2 Recipe 079",
+   "reqLevel": 36,
+   "durationMs": 3600000,
+   "stones": 100000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_meridian",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_14",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_09",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_080": {
+   "id": "x2_recipe_080",
+   "name": "X2 Recipe 080",
+   "reqLevel": 24,
+   "durationMs": 2160000,
+   "stones": 16000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_meridian",
+     "qty": 5
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_herb_09",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_utility_10",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_081": {
+   "id": "x2_recipe_081",
+   "name": "X2 Recipe 081",
+   "reqLevel": 20,
+   "durationMs": 960000,
+   "stones": 3000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_02",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_01",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_082": {
+   "id": "x2_recipe_082",
+   "name": "X2 Recipe 082",
+   "reqLevel": 24,
+   "durationMs": 1440000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_02",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_083": {
+   "id": "x2_recipe_083",
+   "name": "X2 Recipe 083",
+   "reqLevel": 24,
+   "durationMs": 1440000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_03",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_084": {
+   "id": "x2_recipe_084",
+   "name": "X2 Recipe 084",
+   "reqLevel": 28,
+   "durationMs": 1920000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_04",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_085": {
+   "id": "x2_recipe_085",
+   "name": "X2 Recipe 085",
+   "reqLevel": 28,
+   "durationMs": 1920000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_05",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_086": {
+   "id": "x2_recipe_086",
+   "name": "X2 Recipe 086",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_06",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_087": {
+   "id": "x2_recipe_087",
+   "name": "X2 Recipe 087",
+   "reqLevel": 32,
+   "durationMs": 2400000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_07",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_088": {
+   "id": "x2_recipe_088",
+   "name": "X2 Recipe 088",
+   "reqLevel": 36,
+   "durationMs": 2880000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_08",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_089": {
+   "id": "x2_recipe_089",
+   "name": "X2 Recipe 089",
+   "reqLevel": 62,
+   "durationMs": 2880000,
+   "stones": 2000000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_09",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_09",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_090": {
+   "id": "x2_recipe_090",
+   "name": "X2 Recipe 090",
+   "reqLevel": 16,
+   "durationMs": 480000,
+   "stones": 1000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_01",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_talisman_10",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_091": {
+   "id": "x2_recipe_091",
+   "name": "X2 Recipe 091",
+   "reqLevel": 16,
+   "durationMs": 900000,
+   "stones": 1000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_01",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_01",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_092": {
+   "id": "x2_recipe_092",
+   "name": "X2 Recipe 092",
+   "reqLevel": 24,
+   "durationMs": 2700000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_02",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_093": {
+   "id": "x2_recipe_093",
+   "name": "X2 Recipe 093",
+   "reqLevel": 28,
+   "durationMs": 3600000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_03",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_094": {
+   "id": "x2_recipe_094",
+   "name": "X2 Recipe 094",
+   "reqLevel": 32,
+   "durationMs": 4500000,
+   "stones": 50000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_04",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_095": {
+   "id": "x2_recipe_095",
+   "name": "X2 Recipe 095",
+   "reqLevel": 24,
+   "durationMs": 2700000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_05",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_096": {
+   "id": "x2_recipe_096",
+   "name": "X2 Recipe 096",
+   "reqLevel": 42,
+   "durationMs": 5400000,
+   "stones": 120000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_06",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_06",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_097": {
+   "id": "x2_recipe_097",
+   "name": "X2 Recipe 097",
+   "reqLevel": 16,
+   "durationMs": 900000,
+   "stones": 1000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_01",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_07",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_098": {
+   "id": "x2_recipe_098",
+   "name": "X2 Recipe 098",
+   "reqLevel": 16,
+   "durationMs": 900000,
+   "stones": 1000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_01",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_08",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_099": {
+   "id": "x2_recipe_099",
+   "name": "X2 Recipe 099",
+   "reqLevel": 24,
+   "durationMs": 2700000,
+   "stones": 8000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_09",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "x2_recipe_100": {
+   "id": "x2_recipe_100",
+   "name": "X2 Recipe 100",
+   "reqLevel": 28,
+   "durationMs": 3600000,
+   "stones": 20000,
+   "inputs": [
+    {
+     "itemId": "x2_mat_soil",
+     "qty": 4
+    },
+    {
+     "itemId": "x2_mat_water",
+     "qty": 10
+    },
+    {
+     "itemId": "x2_ore_04",
+     "qty": 3
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "x2_garden_craft_10",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_kim_cang": {
+   "id": "recipe_charm_tal_kim_cang",
+   "name": "Charm Tal Kim Cang",
+   "reqLevel": 16,
+   "durationMs": 780000,
+   "stones": 2200,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_01",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_kim_cang",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_liet_hoa": {
+   "id": "recipe_charm_tal_liet_hoa",
+   "name": "Charm Tal Liet Hoa",
+   "reqLevel": 34,
+   "durationMs": 1500000,
+   "stones": 51536,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_05",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_liet_hoa",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_tat_phong": {
+   "id": "recipe_charm_tal_tat_phong",
+   "name": "Charm Tal Tat Phong",
+   "reqLevel": 42,
+   "durationMs": 1680000,
+   "stones": 113380,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_06",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_tat_phong",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_pha_giap": {
+   "id": "recipe_charm_tal_pha_giap",
+   "name": "Charm Tal Pha Giap",
+   "reqLevel": 50,
+   "durationMs": 1860000,
+   "stones": 249436,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_07",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_pha_giap",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_hoi_xuan": {
+   "id": "recipe_charm_tal_hoi_xuan",
+   "name": "Charm Tal Hoi Xuan",
+   "reqLevel": 58,
+   "durationMs": 2040000,
+   "stones": 548759,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_08",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_hoi_xuan",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_tal_thien_loi": {
+   "id": "recipe_charm_tal_thien_loi",
+   "name": "Charm Tal Thien Loi",
+   "reqLevel": 66,
+   "durationMs": 2400000,
+   "stones": 2655992,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_10",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_tal_thien_loi",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_kim_quang": {
+   "id": "recipe_charm_arr_kim_quang",
+   "name": "Charm Arr Kim Quang",
+   "reqLevel": 20,
+   "durationMs": 1560000,
+   "stones": 4840,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_02",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_02",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_kim_quang",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_huyen_vu": {
+   "id": "recipe_charm_arr_huyen_vu",
+   "name": "Charm Arr Huyen Vu",
+   "reqLevel": 26,
+   "durationMs": 1740000,
+   "stones": 10648,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_03",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_03",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_huyen_vu",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_bat_quai": {
+   "id": "recipe_charm_arr_bat_quai",
+   "name": "Charm Arr Bat Quai",
+   "reqLevel": 42,
+   "durationMs": 2280000,
+   "stones": 113380,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_06",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_06",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_bat_quai",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_tu_linh": {
+   "id": "recipe_charm_arr_tu_linh",
+   "name": "Charm Arr Tu Linh",
+   "reqLevel": 46,
+   "durationMs": 2460000,
+   "stones": 249436,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_07",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_07",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_tu_linh",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_tu_tuong": {
+   "id": "recipe_charm_arr_tu_tuong",
+   "name": "Charm Arr Tu Tuong",
+   "reqLevel": 54,
+   "durationMs": 2640000,
+   "stones": 548759,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_08",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_tu_tuong",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_thanh_moc": {
+   "id": "recipe_charm_arr_thanh_moc",
+   "name": "Charm Arr Thanh Moc",
+   "reqLevel": 58,
+   "durationMs": 2640000,
+   "stones": 548759,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_08",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_08",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_thanh_moc",
+    "qty": 1
+   },
+   "weekLimit": null
+  },
+  "recipe_charm_arr_chu_thien": {
+   "id": "recipe_charm_arr_chu_thien",
+   "name": "Charm Arr Chu Thien",
+   "reqLevel": 66,
+   "durationMs": 3000000,
+   "stones": 2655992,
+   "inputs": [
+    {
+     "itemId": "x2_mat_paper",
+     "qty": 3
+    },
+    {
+     "itemId": "x2_mat_ink",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_ore_10",
+     "qty": 2
+    },
+    {
+     "itemId": "x2_essence_10",
+     "qty": 2
+    }
+   ],
+   "output": {
+    "kind": "item",
+    "itemId": "charm_arr_chu_thien",
+    "qty": 1
+   },
+   "weekLimit": null
+  }
+ },
+ "seeds": {
+  "seed_spirit_herb": {
+   "id": "seed_spirit_herb",
+   "name": "Giống Linh thảo",
+   "reqField": 1,
+   "reqLevel": 0,
+   "durationMs": 600000,
+   "stones": 10,
+   "yield": {
+    "itemId": "item_spirit_herb",
+    "qty": 12
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_frost_lotus": {
+   "id": "seed_frost_lotus",
+   "name": "Giống Hàn Liên",
+   "reqField": 2,
+   "reqLevel": 0,
+   "durationMs": 3600000,
+   "stones": 80,
+   "yield": {
+    "itemId": "item_frost_crystal",
+    "qty": 6
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_ember_root": {
+   "id": "seed_ember_root",
+   "name": "Giống Xích Căn",
+   "reqField": 3,
+   "reqLevel": 0,
+   "durationMs": 7200000,
+   "stones": 300,
+   "yield": {
+    "itemId": "item_ember_sand",
+    "qty": 6
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_resin_sapling": {
+   "id": "seed_resin_sapling",
+   "name": "Giống Cổ Mộc",
+   "reqField": 4,
+   "reqLevel": 0,
+   "durationMs": 14400000,
+   "stones": 800,
+   "yield": {
+    "itemId": "item_ancient_resin",
+    "qty": 8
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_x2_herb_03": {
+   "id": "seed_x2_herb_03",
+   "name": "Hạt Hoàng Cốt Căn",
+   "reqField": 4,
+   "reqLevel": 24,
+   "durationMs": 21600000,
+   "stones": 3000,
+   "yield": {
+    "itemId": "x2_herb_03",
+    "qty": 7
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_x2_herb_09": {
+   "id": "seed_x2_herb_09",
+   "name": "Hạt Hàn Phách Lan",
+   "reqField": 4,
+   "reqLevel": 24,
+   "durationMs": 14400000,
+   "stones": 2000,
+   "yield": {
+    "itemId": "x2_herb_09",
+    "qty": 5
+   },
+   "habitat": null,
+   "alsoHabitat": "han",
+   "kind": "both"
+  },
+  "seed_x2_herb_17": {
+   "id": "seed_x2_herb_17",
+   "name": "Hạt Xích Dương Sâm",
+   "reqField": 4,
+   "reqLevel": 24,
+   "durationMs": 18000000,
+   "stones": 2500,
+   "yield": {
+    "itemId": "x2_herb_17",
+    "qty": 5
+   },
+   "habitat": null,
+   "alsoHabitat": "duong",
+   "kind": "both"
+  },
+  "seed_x2_herb_01": {
+   "id": "seed_x2_herb_01",
+   "name": "Seed X2 Herb 01",
+   "reqField": 1,
+   "reqLevel": 16,
+   "durationMs": 7200000,
+   "stones": 500,
+   "yield": {
+    "itemId": "x2_herb_01",
+    "qty": 5
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_x2_herb_02": {
+   "id": "seed_x2_herb_02",
+   "name": "Seed X2 Herb 02",
+   "reqField": 1,
+   "reqLevel": 20,
+   "durationMs": 14400000,
+   "stones": 1000,
+   "yield": {
+    "itemId": "x2_herb_02",
+    "qty": 6
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_x2_herb_04": {
+   "id": "seed_x2_herb_04",
+   "name": "Seed X2 Herb 04",
+   "reqField": 2,
+   "reqLevel": 28,
+   "durationMs": 28800000,
+   "stones": 2000,
+   "yield": {
+    "itemId": "x2_herb_04",
+    "qty": 7
+   },
+   "habitat": null,
+   "alsoHabitat": null,
+   "kind": "field"
+  },
+  "seed_x2_herb_05": {
+   "id": "seed_x2_herb_05",
+   "name": "Seed X2 Herb 05",
+   "reqField": 1,
+   "reqLevel": 28,
+   "durationMs": 14400000,
+   "stones": 2000,
+   "yield": {
+    "itemId": "x2_herb_05",
+    "qty": 5
+   },
+   "habitat": "loi",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_06": {
+   "id": "seed_x2_herb_06",
+   "name": "Seed X2 Herb 06",
+   "reqField": 1,
+   "reqLevel": 32,
+   "durationMs": 21600000,
+   "stones": 2500,
+   "yield": {
+    "itemId": "x2_herb_06",
+    "qty": 6
+   },
+   "habitat": "loi",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_07": {
+   "id": "seed_x2_herb_07",
+   "name": "Seed X2 Herb 07",
+   "reqField": 1,
+   "reqLevel": 42,
+   "durationMs": 36000000,
+   "stones": 3500,
+   "yield": {
+    "itemId": "x2_herb_07",
+    "qty": 7
+   },
+   "habitat": "loi",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_08": {
+   "id": "seed_x2_herb_08",
+   "name": "Seed X2 Herb 08",
+   "reqField": 1,
+   "reqLevel": 54,
+   "durationMs": 57600000,
+   "stones": 4000,
+   "yield": {
+    "itemId": "x2_herb_08",
+    "qty": 8
+   },
+   "habitat": "loi",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_10": {
+   "id": "seed_x2_herb_10",
+   "name": "Seed X2 Herb 10",
+   "reqField": 1,
+   "reqLevel": 28,
+   "durationMs": 21600000,
+   "stones": 2000,
+   "yield": {
+    "itemId": "x2_herb_10",
+    "qty": 6
+   },
+   "habitat": "han",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_11": {
+   "id": "seed_x2_herb_11",
+   "name": "Seed X2 Herb 11",
+   "reqField": 1,
+   "reqLevel": 36,
+   "durationMs": 36000000,
+   "stones": 3000,
+   "yield": {
+    "itemId": "x2_herb_11",
+    "qty": 7
+   },
+   "habitat": "han",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_12": {
+   "id": "seed_x2_herb_12",
+   "name": "Seed X2 Herb 12",
+   "reqField": 1,
+   "reqLevel": 58,
+   "durationMs": 64800000,
+   "stones": 4500,
+   "yield": {
+    "itemId": "x2_herb_12",
+    "qty": 8
+   },
+   "habitat": "han",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_13": {
+   "id": "seed_x2_herb_13",
+   "name": "Seed X2 Herb 13",
+   "reqField": 1,
+   "reqLevel": 32,
+   "durationMs": 21600000,
+   "stones": 2500,
+   "yield": {
+    "itemId": "x2_herb_13",
+    "qty": 5
+   },
+   "habitat": "am",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_14": {
+   "id": "seed_x2_herb_14",
+   "name": "Seed X2 Herb 14",
+   "reqField": 1,
+   "reqLevel": 36,
+   "durationMs": 28800000,
+   "stones": 3000,
+   "yield": {
+    "itemId": "x2_herb_14",
+    "qty": 6
+   },
+   "habitat": "am",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_15": {
+   "id": "seed_x2_herb_15",
+   "name": "Seed X2 Herb 15",
+   "reqField": 1,
+   "reqLevel": 46,
+   "durationMs": 43200000,
+   "stones": 3500,
+   "yield": {
+    "itemId": "x2_herb_15",
+    "qty": 7
+   },
+   "habitat": "am",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_16": {
+   "id": "seed_x2_herb_16",
+   "name": "Seed X2 Herb 16",
+   "reqField": 1,
+   "reqLevel": 62,
+   "durationMs": 72000000,
+   "stones": 4500,
+   "yield": {
+    "itemId": "x2_herb_16",
+    "qty": 8
+   },
+   "habitat": "am",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_18": {
+   "id": "seed_x2_herb_18",
+   "name": "Seed X2 Herb 18",
+   "reqField": 1,
+   "reqLevel": 32,
+   "durationMs": 28800000,
+   "stones": 2500,
+   "yield": {
+    "itemId": "x2_herb_18",
+    "qty": 6
+   },
+   "habitat": "duong",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_19": {
+   "id": "seed_x2_herb_19",
+   "name": "Seed X2 Herb 19",
+   "reqField": 1,
+   "reqLevel": 50,
+   "durationMs": 50400000,
+   "stones": 4000,
+   "yield": {
+    "itemId": "x2_herb_19",
+    "qty": 7
+   },
+   "habitat": "duong",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_20": {
+   "id": "seed_x2_herb_20",
+   "name": "Seed X2 Herb 20",
+   "reqField": 1,
+   "reqLevel": 66,
+   "durationMs": 86400000,
+   "stones": 5000,
+   "yield": {
+    "itemId": "x2_herb_20",
+    "qty": 9
+   },
+   "habitat": "duong",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_21": {
+   "id": "seed_x2_herb_21",
+   "name": "Seed X2 Herb 21",
+   "reqField": 1,
+   "reqLevel": 42,
+   "durationMs": 43200000,
+   "stones": 3500,
+   "yield": {
+    "itemId": "x2_herb_21",
+    "qty": 6
+   },
+   "habitat": "hu",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_22": {
+   "id": "seed_x2_herb_22",
+   "name": "Seed X2 Herb 22",
+   "reqField": 1,
+   "reqLevel": 50,
+   "durationMs": 57600000,
+   "stones": 4000,
+   "yield": {
+    "itemId": "x2_herb_22",
+    "qty": 7
+   },
+   "habitat": "hu",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_23": {
+   "id": "seed_x2_herb_23",
+   "name": "Seed X2 Herb 23",
+   "reqField": 1,
+   "reqLevel": 62,
+   "durationMs": 86400000,
+   "stones": 4500,
+   "yield": {
+    "itemId": "x2_herb_23",
+    "qty": 8
+   },
+   "habitat": "hu",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  },
+  "seed_x2_herb_24": {
+   "id": "seed_x2_herb_24",
+   "name": "Seed X2 Herb 24",
+   "reqField": 1,
+   "reqLevel": 66,
+   "durationMs": 108000000,
+   "stones": 5000,
+   "yield": {
+    "itemId": "x2_herb_24",
+    "qty": 9
+   },
+   "habitat": "hu",
+   "alsoHabitat": null,
+   "kind": "habitat"
+  }
+ },
+ "habitats": {
+  "han": {
+   "id": "han",
+   "name": "Han",
+   "order": 1,
+   "reqLevel": 24,
+   "plotStart": 101,
+   "plotCount": 4,
+   "openHours": [
+    2,
+    4,
+    8,
+    8
+   ]
+  },
+  "loi": {
+   "id": "loi",
+   "name": "Loi",
+   "order": 2,
+   "reqLevel": 28,
+   "plotStart": 201,
+   "plotCount": 4,
+   "openHours": [
+    2,
+    4,
+    8,
+    8
+   ]
+  },
+  "am": {
+   "id": "am",
+   "name": "Am",
+   "order": 3,
+   "reqLevel": 32,
+   "plotStart": 301,
+   "plotCount": 4,
+   "openHours": [
+    2,
+    4,
+    8,
+    8
+   ]
+  },
+  "duong": {
+   "id": "duong",
+   "name": "Duong",
+   "order": 4,
+   "reqLevel": 24,
+   "plotStart": 401,
+   "plotCount": 4,
+   "openHours": [
+    2,
+    4,
+    8,
+    8
+   ]
+  },
+  "hu": {
+   "id": "hu",
+   "name": "Hu",
+   "order": 5,
+   "reqLevel": 42,
+   "plotStart": 501,
+   "plotCount": 4,
+   "openHours": [
+    2,
+    4,
+    8,
+    8
+   ]
   }
  },
  "daily": [
