@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3010);
 const GAME_ORIGIN = process.env.GAME_ORIGIN || 'https://vandaonghichmenh.hongvan.net:60010';
-const SESSION_FILE = path.join(__dirname, '.session.json');
+const SESSION_FILE = path.join(__dirname, '.acc.session.json');
 const CONFIG_FILE = path.join(__dirname, '.config.json');
 const META_FILE = path.join(__dirname, 'data', 'meta.json');
 
