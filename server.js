@@ -5,12 +5,12 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const tempDir = path.join(__dirname, 'tmp');
+const tempDir = '/tmp';
 const PORT = Number(process.env.PORT || 3010);
 const GAME_ORIGIN = process.env.GAME_ORIGIN || 'https://vandaonghichmenh.hongvan.net:60010';
 const SESSION_FILE = path.join(tempDir, '.acc.session.json');
 const CONFIG_FILE = path.join(tempDir, '.config.json');
-const META_FILE = path.join(__dirname, 'data', 'meta.json');
+const META_FILE = path.join(tempDir, 'data', 'meta.json');
 
 const DEFAULT_CONFIG = {
   enabled: false,
