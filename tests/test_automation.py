@@ -17,6 +17,7 @@ from api.services.game_rules import HUNT_TARGETS
 NEW_FLAGS = (
     "autoEquipBest", "autoMinorTrial", "autoSectTasks", "autoSeasonTasks",
     "autoTitles", "autoPetAdopt", "autoNpcTalk", "autoNpcRewards", "autoHunt",
+    "autoCleanup",
 )
 
 

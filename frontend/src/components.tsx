@@ -57,8 +57,8 @@ export function trapDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
     event.preventDefault(); first.focus();
   }
 }
-export function ConfirmDialog({ open, title, children, confirmLabel = "Xác nhận", danger = false, busy = false, onConfirm, onCancel }: {
-  open: boolean; title: string; children: ReactNode; confirmLabel?: string; danger?: boolean; busy?: boolean; onConfirm: () => void; onCancel: () => void;
+export function ConfirmDialog({ open, title, children, confirmLabel = "Xác nhận", danger = false, busy = false, confirmDisabled = false, onConfirm, onCancel }: {
+  open: boolean; title: string; children: ReactNode; confirmLabel?: string; danger?: boolean; busy?: boolean; confirmDisabled?: boolean; onConfirm: () => void; onCancel: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -71,7 +71,7 @@ export function ConfirmDialog({ open, title, children, confirmLabel = "Xác nh�
   return <dialog ref={ref} className="confirm-dialog" aria-labelledby={titleId} onKeyDown={trapDialogFocus} onCancel={(event) => { event.preventDefault(); if (!busy) onCancel(); }}>
     <div className="dialog-icon"><Icon name={danger ? "warning" : "shield"} size={28} /></div>
     <h2 id={titleId}>{title}</h2><div className="dialog-body">{children}</div>
-    <div className="dialog-actions"><button type="button" className="button ghost" onClick={onCancel} disabled={busy} autoFocus>Quay lại</button><button type="button" className={`button ${danger ? "danger" : "primary"}`} onClick={onConfirm} disabled={busy}>{busy && <Spinner />}{confirmLabel}</button></div>
+    <div className="dialog-actions"><button type="button" className="button ghost" onClick={onCancel} disabled={busy} autoFocus>Quay lại</button><button type="button" aria-label={confirmLabel} aria-busy={busy} className={`button ${danger ? "danger" : "primary"}`} onClick={onConfirm} disabled={busy || confirmDisabled}>{busy && <Spinner />}{confirmLabel}</button></div>
   </dialog>;
 }
 

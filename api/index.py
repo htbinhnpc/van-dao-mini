@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import accounts, auth, dashboard, health
+from api.routes import accounts, auth, cleanup, dashboard, health
 
 app = FastAPI(
     title="Vấn Đạo Mini API",
@@ -24,4 +24,5 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(accounts.router, prefix="/api/v1/accounts", tags=["accounts"])
+app.include_router(cleanup.router, prefix="/api/v1/accounts", tags=["cleanup"])
 app.include_router(dashboard.router, prefix="/api/v1", tags=["dashboard"])

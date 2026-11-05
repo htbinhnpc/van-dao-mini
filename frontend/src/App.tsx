@@ -38,6 +38,7 @@ export default function App() {
   const accountRequest = useRef<AbortController | null>(null);
   const selected = accounts.find((account) => account.id === selectedId);
   const currentSection = sections.find((item) => item.id === section)!;
+  const cleanupBusy = useCallback((value: boolean) => { mutationLock.current = value; setBusy(value ? "cleanup" : null); }, []);
 
   const notify = useCallback((text: string, kind: Toast["kind"] = "success") => setToast({ id: Date.now(), text, kind }), []);
   useEffect(() => {
@@ -176,7 +177,7 @@ export default function App() {
           {!selected && section !== "accounts" && !pageError && <div className="welcome-grid"><div><p className="eyebrow">KHỞI ĐẦU MỘT HÀNH TRÌNH</p><h2>Đạo lộ bắt đầu<br />từ một bước chân.</h2><p className="muted">Liên kết tài khoản game để xem tu vi, quản lý hành trang và thiết lập trợ lý tu hành riêng.</p></div><AddAccount onAdded={addAccount} /></div>}
           {selected && section === "overview" && <Overview account={selected} meta={meta} busy={!!busy} maintenance={server.status === "maintenance"} onTick={tick} onNavigate={(next) => setSection(next)} />}
           {selected && section === "automation" && <Automation account={selected} meta={meta} busy={busy === "save"} onSave={saveConfig} onDirtyChange={setDirty} />}
-          {selected && section === "inventory" && <Inventory account={selected} meta={meta} />}
+          {selected && section === "inventory" && <Inventory account={selected} meta={meta} onSaveConfig={saveConfig} onBusyChange={cleanupBusy} onState={(state) => setAccounts((rows) => rows.map((row) => row.id === selected.id ? { ...row, state } : row))} />}
           {selected && section === "logs" && <Logs accountId={selected.id} />}
           {section === "accounts" && <Accounts accounts={accounts} selectedId={selectedId} meta={meta} busy={!!busy} onAdd={addAccount} onSelect={(id) => void loadAccounts(id)} onDelete={(account) => setConfirmation({ title: `Gỡ ${account.label}?`, body: "Chỉ gỡ liên kết và dữ liệu trợ lý trong dashboard. Nhân vật game không bị xóa. Bạn có thể liên kết lại sau.", label: "Gỡ liên kết", danger: true, action: () => run("delete", async () => {
             await api(`/api/v1/accounts/${account.id}`, { method: "DELETE" });

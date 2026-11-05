@@ -15,6 +15,7 @@ from api.database import filter_value, insert_one, patch_rows
 from api.routes.accounts import DEFAULT_CONFIG
 from api.services.game_client import GameClient
 from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
+from api.services.cleanup import config_rules, plan_cleanup
 from api.services.session_crypto import decrypt_session
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
@@ -31,6 +32,12 @@ class TickBudget:
 
 
 _tick_budget: ContextVar[TickBudget | None] = ContextVar("tick_budget", default=None)
+
+
+class IncompleteDisposal(ValueError):
+    def __init__(self, state: dict):
+        super().__init__("Game chưa xác nhận dọn đủ danh sách; đã giữ state mới và dừng vòng, không thử lại mù.")
+        self.state = state
 
 
 def _can_command() -> bool:
@@ -63,7 +70,7 @@ def _integer(value: Any, default: int = 0) -> int:
         return default
 
 
-async def log(account: dict, level: str, action: str, message: str = "") -> None:
+async def log(account: dict, level: str, action: str, message: str = "", *, details: dict | None = None) -> None:
     await insert_one(
         "activity_logs",
         {
@@ -71,17 +78,22 @@ async def log(account: dict, level: str, action: str, message: str = "") -> None
             "level": level,
             "action": action[:80],
             "message": (message or action)[:500],
-            "details": {},
+            "details": details or {},
         },
     )
 
 
-async def _command(client: GameClient, state: dict, command: str, payload: dict, account: dict, label: str) -> dict:
+async def _command(client: GameClient, state: dict, command: str, payload: dict, account: dict, label: str, *, audit: dict | None = None) -> dict:
     if not _can_command():
         return state
     budget = _tick_budget.get()
     if budget:
         budget.attempts += 1
+    details = None
+    if command == "item.dispose":
+        details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
+                   "confirmation": "not_required", "requestedCount": len(payload["itemIds"]), "stateVersionBefore": state.get("stateVersion")}
+        await log(account, "info", command, f"{label} (tự động, không hỏi xác nhận): bắt đầu, đang chờ kết quả game.", details={**details, "status": "started"})
     request = client.command(
         command,
         payload,
@@ -91,17 +103,27 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     next_state = result.get("state")
     if not isinstance(next_state, dict) or not next_state.get("stateVersion"):
         raise ValueError("Game command response thiếu state/stateVersion; dừng vòng để tránh dùng state cũ.")
+    if command == "item.dispose":
+        remaining = next_state.get("equipment")
+        if (type(next_state.get("stateVersion")) is not int or next_state["stateVersion"] <= state.get("stateVersion", 0)
+                or not isinstance(remaining, list)):
+            raise ValueError("Game chưa xác nhận đã dọn đủ danh sách; dừng vòng, không thử lại mù.")
+        if any(e.get("id") in payload["itemIds"] for e in remaining if isinstance(e, dict)):
+            raise IncompleteDisposal(next_state)
     outcome = result.get("result") or {}
     lost = outcome.get("win") is False or outcome.get("success") is False
     if command == "settle":
         label = f"Kết toán tu vi: +{(result.get('settle') or {}).get('expGained', 0)}"
-    await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label)
+    if details is not None:
+        details = {**details, "status": "succeeded", "removedIds": payload["itemIds"], "remainingIds": [], "stateVersionAfter": next_state["stateVersion"]}
+        label += " (tự động, không hỏi xác nhận) · Game đã xác nhận dọn đủ danh sách"
+    await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label, details=details)
     return next_state
 
 
-async def _best_effort(client: GameClient, state: dict, command: str, payload: dict, account: dict, label: str) -> dict:
+async def _best_effort(client: GameClient, state: dict, command: str, payload: dict, account: dict, label: str, *, audit: dict | None = None) -> dict:
     try:
-        return await _command(client, state, command, payload, account, label)
+        return await _command(client, state, command, payload, account, label, audit=audit)
     except Exception as exc:
         message = str(exc) or type(exc).__name__
         budget = _tick_budget.get()
@@ -110,8 +132,17 @@ async def _best_effort(client: GameClient, state: dict, command: str, payload: d
             # mutation using an uncertain version, or retry with a new key.
             budget.stopped = True
             budget.error = f"{command}: {message}"[:500]
-        await log(account, "warning", command, f"{label}: {message[:350]}")
-        return state
+        details = None
+        if command == "item.dispose":
+            details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
+                       "confirmation": "not_required", "requestedCount": len(payload["itemIds"]),
+                       "stateVersionBefore": state.get("stateVersion"), "status": "partial" if isinstance(exc, IncompleteDisposal) else "uncertain"}
+            if isinstance(exc, IncompleteDisposal):
+                remaining = {item.get("id") for item in exc.state["equipment"] if isinstance(item, dict) and isinstance(item.get("id"), str)}
+                details.update(removedIds=[item_id for item_id in payload["itemIds"] if item_id not in remaining],
+                               remainingIds=[item_id for item_id in payload["itemIds"] if item_id in remaining], stateVersionAfter=exc.state["stateVersion"])
+        await log(account, "warning", command, f"{label}: {message[:350]}", details=details)
+        return exc.state if isinstance(exc, IncompleteDisposal) else state
 
 
 async def _claim_ready(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -233,7 +264,7 @@ async def _pets(client: GameClient, state: dict, config: dict, account: dict) ->
 
 async def _settings(client: GameClient, state: dict, config: dict, account: dict) -> dict:
     settings = state.get("settings") or {}
-    salvage_tier = int(config.get("autoSalvageTier") or 1) if config.get("autoSalvage") else 0
+    salvage_tier = int(config.get("autoSalvageTier") or 1) if config.get("autoSalvage") and not config.get("autoCleanup") else 0
     desired = {
         "autoMinor": bool(config.get("autoMinor", True)),
         "autoSalvageTier": salvage_tier,
@@ -247,6 +278,22 @@ async def _settings(client: GameClient, state: dict, config: dict, account: dict
     if desired == actual:
         return state
     return await _best_effort(client, state, "settings.set", desired, account, "Đồng bộ thiết lập game")
+
+
+async def _cleanup(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if not config.get("autoCleanup") or not _can_command():
+        return state
+    rules = config_rules(config)
+    plan = plan_cleanup(state, rules, META)
+    ids = [item["id"] for item in plan["items"]]
+    audit = {"rules": rules.model_dump(), "scanned": plan["scanned"], "summary": plan["summary"],
+             "items": [{key: item[key] for key in ("id", "name", "defId", "keptItemId")} for item in plan["items"]]}
+    if not ids:
+        await log(account, "info", "item.dispose", f"Dọn túi Mini (tự động): đã xét {plan['scanned']} món, không có bản trùng phù hợp; không gửi lệnh dọn.",
+                  details={**audit, "source": "autoCleanup", "confirmation": "not_required", "mode": rules.mode, "status": "skipped", "itemIds": []})
+        return state
+    label = f"Dọn túi Mini: {'bán' if rules.mode == 'sell' else 'phân giải'} {len(ids)} bản trùng yếu hơn"
+    return await _best_effort(client, state, "item.dispose", {"itemIds": ids, "mode": rules.mode}, account, label, audit=audit)
 
 
 async def _activity(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -456,11 +503,16 @@ async def _run_account_tick(account: dict) -> dict:
     state = await asyncio.wait_for(client.get_state(), max(0.01, budget.deadline - time.monotonic()))
     config_row = account.get("config") or {}
     config = {**DEFAULT_CONFIG, **config_row}
+    # Disable native drop disposal before explicitly settling when Mini owns
+    # cleanup. No migration enables the new destructive action automatically.
+    if config.get("autoCleanup"):
+        state = await _settings(client, state, config, account)
     state = await _best_effort(client, state, "settle", {}, account, "Kết toán tu vi")
     state = await _settings(client, state, config, account)
     state = await _claim_ready(client, state, config, account)
     state = await _extra_rewards(client, state, config, account)
     state = await _equipment(client, state, config, account)
+    state = await _cleanup(client, state, config, account)
     state = await _minor_trial(client, state, config, account)
     state = await _activity(client, state, config, account)
     state = await _pets(client, state, config, account)

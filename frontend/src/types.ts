@@ -28,6 +28,6 @@ export type ServerStatus = {
   status: "active" | "maintenance" | "unknown";
   checkedAt?: string; maintenance?: { message?: string } | null;
 };
-export type LogEntry = { id: number; level: string; action: string; message: string; created_at: string };
+export type LogEntry = { id: number; level: string; action: string; message: string; created_at: string; details?: Record<string, unknown> | null };
 export type Section = "overview" | "inventory" | "automation" | "accounts" | "logs";
 export type IconName = "compass" | "bag" | "spark" | "users" | "scroll" | "arrow" | "refresh" | "plus" | "close" | "check" | "shield" | "logout" | "search" | "leaf" | "sword" | "coin" | "clock" | "warning" | "eye" | "eyeOff" | "chevron";

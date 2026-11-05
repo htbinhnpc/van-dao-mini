@@ -117,6 +117,18 @@ Với sự cho phép của người dùng, đã thử một lần bằng tài kh
 
 Không lưu lại thông tin đăng nhập, cookie/session hoặc nội dung state trong repo/tài liệu. Không thử các lệnh tiêu hao vật phẩm/tài nguyên. `settle` là lệnh game thật và có thể cập nhật tiến độ tu vi; đây không phải mock hay sandbox.
 
+## Bộ dọn túi Mini (2026-11-05)
+
+Đối chiếu tĩnh bundle công khai đã lưu `main-Bmv0z3VX.js` (hash ở bảng bên dưới), component `zu` và trình dọn nhiều món `Gu`: `item.dispose` nhận `{itemIds: [...], mode: 'sell' | 'salvage'}` và guard version. UI game cắt danh sách ở **60 ID/lệnh**, bỏ đồ `location=equipped`, `locked`, `favorite`; xác nhận riêng đồ không phải phẩm Phàm hoặc đã cường hóa. Đây là bằng chứng phía client, chưa thử mutation trên account thật.
+
+Mini thay riêng policy chọn đồ bằng so sánh từng thành phần `subs` cùng `defId`, giữ mọi đánh đổi và tối thiểu số bản dự phòng. Chỉ bỏ duplicate đã chứng minh không hơn món giữ; không giả định tỷ lệ sức mạnh giữa HP/Công/bạo kích hay so chéo set/vũ khí. Metadata dùng `rarity` và `tier` riêng, không dùng nhầm ngưỡng 1–7 làm cả hai.
+
+`POST /api/v1/accounts/{id}/cleanup/preview`: GET state mới, tạo bản ghi `automation_runs` queued có rules/version/candidate IDs/expiry, không gửi command. `POST .../cleanup/execute`: xác thực owner, subset ID, expiry 120s, lease, GET state + replan, CAS queued→running và một `item.dispose` với idempotency key=run UUID. Không retry hoặc tái dùng preview sau lỗi. Chặn `item.dispose` ở endpoint manual command chung để không bỏ qua policy. Auto opt-in dùng cùng planner, tắt native salvage trước explicit settle và tuân thủ ngân sách 12 lệnh/vòng.
+
+Tùy chọn Mini `cleanupSkipConfirmation=false` mặc định, lưu riêng từng account. Cả preview nhanh và execute nhận thêm `skipConfirmation` boolean strict; nếu true phải có opt-in đã lưu. Đây chỉ là tùy chọn UI/Mini, **không gửi thêm trường này sang API game** và không bỏ các guard. Nút dọn ngay gọi preview mới rồi execute một mẻ, không lặp/retry. Worker auto không hỏi từng mẻ; UI có thể bỏ xác nhận khi lưu/bật riêng auto dọn nếu tùy chọn này được bật, không bỏ xác nhận tính năng khác.
+
+Audit: lưu intent trước lệnh hủy đồ, rồi kết quả có ID đã dọn/còn lại, rules, tên/mẫu/ID và witness giữ lại, version, nguồn và chế độ xác nhận. Nếu ghi intent lỗi thì không gửi command. Phân biệt started/succeeded/partial/uncertain/blocked/skipped/configured, không suy diễn timeout thành thành công. Không ghi session/cookie hay toàn bộ state vào nhật ký cleanup. UI hiển thị chi tiết và hỗ trợ tìm ID món.
+
 ## Thông tin đăng nhập
 
 Thông tin đăng nhập đã được cung cấp trong hội thoại và dùng cho đúng một lần thử login; không ghi lại giá trị đó trong tài liệu hay log. Nếu đây là mật khẩu đang dùng thật, nên đổi mật khẩu sau khi trao đổi trong chat.

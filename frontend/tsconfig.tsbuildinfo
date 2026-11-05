@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/automation-config.ts","./src/components.tsx","./src/lib.ts","./src/main.tsx","./src/types.ts","./src/views/auth.tsx","./src/views/automation.tsx","./src/views/collection.tsx","./src/views/overview.tsx"],"version":"5.7.3"}
+{"root":["./src/app.tsx","./src/automation-config.ts","./src/components.tsx","./src/lib.ts","./src/main.tsx","./src/types.ts","./src/views/auth.tsx","./src/views/automation.tsx","./src/views/cleanup.tsx","./src/views/cleanuplogdetails.tsx","./src/views/collection.tsx","./src/views/overview.tsx"],"version":"5.7.3"}

@@ -6,6 +6,9 @@ import { expect, type Page } from "@playwright/test";
 const bundledMeta = JSON.parse(readFileSync(new URL("../../data/meta.json", import.meta.url), "utf8"));
 export const defaultConfig = {
   enabled: false, intervalMs: 60000, autoMinor: true, autoSalvage: false, autoSalvageTier: 0,
+  autoCleanup: false, cleanupMode: "salvage", cleanupMaxRarity: "pham", cleanupMaxTier: 0,
+  cleanupSkipConfirmation: false,
+  cleanupKeepPerDefinition: 1, cleanupMaxItems: 20, cleanupSlots: [],
   autoSalvageMode: "salvage", autoActivity: false, activityType: "farm", huntSpotId: "",
   autoQuests: true, autoDaily: true, autoWeekly: false, autoAchievements: false, autoMail: true,
   autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 10,
@@ -35,7 +38,7 @@ export const meta = {
   recipes: Object.fromEntries(Object.entries(bundledMeta.recipes).filter(([, recipe]: any) => ["cultivation_buff", "cultivation_exp"].includes(bundledMeta.items[recipe.output?.itemId]?.use?.type))),
   huntTargets: { x2_pet_001: { id: "x2_pet_001", name: "Bích Nhĩ Linh Thỏ", reqLevel: 16, contractSeals: 20 }, x2_pet_033: { id: "x2_pet_033", name: "Thiên Cấm Huyền Xà", reqLevel: 62, contractSeals: 360 } },
 };
-type Options = { authenticated?: boolean; empty?: boolean; maintenance?: boolean; saveFailures?: number; authFailure?: boolean; bootFailures?: number; metaFailures?: number; itemFailure?: boolean; itemHtml?: boolean; holdItems?: Promise<void> };
+type Options = { authenticated?: boolean; empty?: boolean; maintenance?: boolean; saveFailures?: number; authFailure?: boolean; bootFailures?: number; metaFailures?: number; itemFailure?: boolean; itemHtml?: boolean; holdItems?: Promise<void>; cleanup?: boolean; cleanupConflict?: boolean; cleanupFailure?: boolean; cleanupEmpty?: boolean; holdCleanup?: Promise<void> };
 export async function mockApi(page: Page, options: Options = {}) {
   let authenticated = options.authenticated !== false;
   let saveFailures = options.saveFailures || 0, bootFailures = options.bootFailures || 0, metaFailures = options.metaFailures || 0;
@@ -43,7 +46,14 @@ export async function mockApi(page: Page, options: Options = {}) {
     { id: "account-1", label: "Thanh Vân", gameUsername: "fixture_alpha", status: "active", enabled: false, config: { ...defaultConfig }, state: structuredClone(sampleState), lastTickAt: "2026-11-04T09:30:00Z" },
     { id: "account-2", label: "Mặc Trần", gameUsername: "fixture_beta", status: "active", enabled: false, config: { ...defaultConfig }, state: { ...structuredClone(sampleState), stateVersion: 400, character: { ...sampleState.character, gender: "female", name: "Mặc Trần", realm: { realmId: "truc_co", stage: 1 } } }, lastTickAt: null },
   ];
+  if (options.cleanup && accounts[0]) accounts[0].state.equipment = [
+    { id: "keeper", defId: "equip_t1_weapon", slot: "weapon", location: "equipped", enhance: 0, locked: false, favorite: false, subs: [{ stat: "atk", add: 10 }] },
+    { id: "weak-1", defId: "equip_t1_weapon", slot: "weapon", location: "bag", enhance: 0, locked: false, favorite: false, subs: [{ stat: "atk", add: 2 }] },
+    { id: "weak-2", defId: "equip_t1_weapon", slot: "weapon", location: "bag", enhance: 0, locked: false, favorite: false, subs: [{ stat: "atk", add: 1 }] },
+    { id: "protected", defId: "equip_t1_weapon", slot: "weapon", location: "bag", enhance: 0, locked: true, favorite: true, subs: [{ stat: "atk", add: 0 }] },
+  ];
   const mutations: { method: string; path: string; body: any }[] = [], pageErrors: string[] = [], external: string[] = [];
+  const cleanupLogs: Record<string, any[]> = {}, cleanupRules: Record<string, any> = {};
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("request", (request) => { if (!request.url().startsWith("http://127.0.0.1:4175")) external.push(request.url()); });
   await page.route("**/api/**", async (route) => {
@@ -70,10 +80,32 @@ export async function mockApi(page: Page, options: Options = {}) {
     const accountId = path.split("/")[4], account = accounts.find((row) => row.id === accountId);
     if (method === "DELETE" && account) { accounts = accounts.filter((row) => row.id !== accountId); return reply({ ok: true }); }
     if (!account) return reply({ detail: "Không tìm thấy fixture" }, 404);
+    if (path.endsWith("/cleanup/preview")) { cleanupRules[accountId] = body.rules; return reply({
+      previewId: options.cleanupEmpty ? null : "11111111-1111-4111-8111-111111111111", expiresAt: Math.floor(Date.now() / 1000) + 120,
+      state: account.state,
+      plan: { stateVersion: account.state.stateVersion, scanned: account.state.equipment.length, candidateCount: 2, deferredCount: 0,
+        items: (options.cleanupEmpty ? [] : ["weak-1", "weak-2"]).map((id) => ({ id, name: "Thanh Khê Thiết Kiếm", rarity: "pham", tier: 1, slot: "weapon", reasonLabel: "Bản trùng không hơn món được giữ ở bất kỳ chỉ số nào", keptItemId: "keeper" })),
+        kept: [{ id: "keeper", name: "Thanh Khê Thiết Kiếm", reasonLabel: "Đang mặc" }, { id: "protected", name: "Thanh Khê Thiết Kiếm đã khóa", reasonLabel: "Đã khóa hoặc đánh dấu yêu thích" }],
+        summary: [{ reason: "protected", label: "Đã khóa hoặc đánh dấu yêu thích", count: 1 }],
+      },
+    }); }
+    if (path.endsWith("/cleanup/execute")) {
+      if (options.holdCleanup) await options.holdCleanup;
+      if (options.cleanupConflict) return reply({ detail: "State game đã thay đổi từ lúc xem trước. Hãy xem trước lại; chưa dọn món nào." }, 409);
+      if (options.cleanupFailure) return reply({ detail: "Không xác nhận được kết quả dọn. Đồng bộ túi và kiểm tra nhật ký; không tự gửi lại lệnh." }, 502);
+      account.state.equipment = account.state.equipment.filter((item: any) => !body.itemIds.includes(item.id)); account.state.stateVersion++;
+      (cleanupLogs[accountId] ||= []).unshift({ id: 100, level: "success", action: "cleanup.manual", message: `Đã dọn ${body.itemIds.length} món (${body.skipConfirmation ? "không hỏi xác nhận" : "có xác nhận"}).`, created_at: new Date().toISOString(), details: {
+        source: body.skipConfirmation ? "quick" : "manual", confirmation: body.skipConfirmation ? "skipped" : "dialog", status: "succeeded",
+        mode: cleanupRules[accountId]?.mode || "salvage", rules: cleanupRules[accountId], itemIds: body.itemIds, removedIds: body.itemIds,
+        stateVersionBefore: account.state.stateVersion - 1, stateVersionAfter: account.state.stateVersion,
+        items: body.itemIds.map((id: string) => ({ id, defId: "equip_t1_weapon", name: "Thanh Khê Thiết Kiếm", keptItemId: "keeper" })),
+      } });
+      return reply({ state: account.state, removedCount: body.itemIds.length, mode: cleanupRules[accountId]?.mode || "salvage" });
+    }
     if (path.endsWith("/state")) return reply({ state: account.state });
     if (path.endsWith("/config") && method === "PATCH") {
       if (saveFailures-- > 0) return reply({ detail: "Lưu cấu hình thất bại. Hãy thử lại." }, 500);
-      account.config = body.config; account.enabled = body.config.enabled;
+      account.config = { ...account.config, ...body.config }; account.enabled = account.config.enabled;
       return reply({ config: account.config, enabled: account.enabled });
     }
     if (path.endsWith("/config")) return reply({ config: account.config });
@@ -85,6 +117,7 @@ export async function mockApi(page: Page, options: Options = {}) {
       return reply({ wallet: account.state.wallet, items: [{ id: "item_spirit_herb", name: "Linh thảo", kind: "material", qty: 126, desc: "Linh thảo mọc nơi có linh khí." }, { id: "item_qi_pill", name: "Dưỡng Khí Đan", kind: "consumable", qty: 8 }] });
     }
     if (path.endsWith("/logs")) return reply({ logs: [
+      ...(cleanupLogs[accountId] || []),
       { id: 1, level: "success", action: "settle", message: "Kết toán tu vi: +2400", created_at: "2026-11-04T09:30:00Z" },
       { id: 2, level: "warning", action: "boss.fight", message: "Boss chưa hết hồi chiêu", created_at: "2026-11-04T09:25:00Z" },
       { id: 3, level: "error", action: "automation.tick", message: "Dừng vòng vì state thay đổi", created_at: "2026-11-04T09:20:00Z" },

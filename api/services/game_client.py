@@ -42,6 +42,7 @@ ALLOWED_COMMANDS = frozenset(
         "npc.talk",
         "npc.claim",
         "hunt.run",
+        "item.dispose",
     }
 )
 

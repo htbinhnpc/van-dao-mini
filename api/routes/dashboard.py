@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from api.database import filter_value, insert_one, patch_rows, rest, select_one
 from api.routes.accounts import DEFAULT_CONFIG, account_config, owned_account, public_account
@@ -15,6 +15,7 @@ from api.security import current_user
 from api.services.automation import run_account_tick
 from api.services.game_client import ALLOWED_COMMANDS, GameAPIError, GameClient
 from api.services.game_rules import HUNT_TARGETS
+from api.services.cleanup import config_rules
 from api.services.session_crypto import decrypt_session
 
 router = APIRouter()
@@ -63,6 +64,12 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         raise HTTPException(422, "Chế độ dọn trang bị không hợp lệ.")
     if result["farmSeedMode"] not in {"best", "fast"}:
         raise HTTPException(422, "Chế độ chọn giống không hợp lệ.")
+    try:
+        config_rules(result)
+    except ValidationError as exc:
+        raise HTTPException(422, "Bộ lọc dọn đồ Mini không hợp lệ. Kiểm tra phẩm chất, cấp đồ, vị trí và số món.") from exc
+    if result["autoCleanup"]:
+        result["autoSalvage"] = False
     # Keep expensive/consumable actions opt-in; clients must explicitly set true.
     for key in ("autoCraft", "autoUse", "autoUseExp", "autoBoss", "autoFarm"):
         result[key] = bool(result[key])
@@ -189,7 +196,8 @@ async def get_config(account_id: str, user: dict = Depends(current_user)) -> dic
 @router.patch("/accounts/{account_id}/config")
 async def save_config(account_id: str, update: ConfigUpdate, user: dict = Depends(current_user)) -> dict:
     account = await owned_account(user["id"], account_id)
-    config = _config_for_update(await account_config(account_id), update.config)
+    previous = await account_config(account_id)
+    config = _config_for_update(previous, update.config)
     await patch_rows("account_configs", f"account_id=eq.{filter_value(account_id)}", {"config": config, "updated_at": datetime.now(timezone.utc).isoformat()})
     await patch_rows(
         "game_accounts",
@@ -200,6 +208,12 @@ async def save_config(account_id: str, update: ConfigUpdate, user: dict = Depend
             "updated_at": datetime.now(timezone.utc).isoformat(),
         },
     )
+    if any(previous.get(key, False) != config[key] for key in ("cleanupSkipConfirmation", "autoCleanup")):
+        await insert_one("activity_logs", {
+            "account_id": account_id, "level": "info", "action": "cleanup.config",
+            "message": f"Đã lưu dọn túi Mini: auto {'bật' if config['autoCleanup'] else 'tắt'}, bỏ hỏi xác nhận {'bật' if config['cleanupSkipConfirmation'] else 'tắt'}. Lưu cấu hình không chạy dọn ngay.",
+            "details": {"autoCleanup": config["autoCleanup"], "cleanupSkipConfirmation": config["cleanupSkipConfirmation"], "rules": config_rules(config).model_dump(), "status": "configured"},
+        })
     return {"ok": True, "config": config, "enabled": config["enabled"]}
 
 
@@ -221,6 +235,8 @@ async def sync_config(account_id: str, user: dict = Depends(current_user)) -> di
 
 @router.post("/accounts/{account_id}/command")
 async def send_command(account_id: str, request: CommandRequest, user: dict = Depends(current_user)) -> dict:
+    if request.command == "item.dispose":
+        raise HTTPException(400, "Dùng chức năng Dọn túi Mini để kiểm tra bộ lọc và bảo vệ đồ trước khi bán/phân giải.")
     if request.command not in ALLOWED_COMMANDS:
         raise HTTPException(400, "Lệnh không nằm trong danh sách cho phép.")
     account = await owned_account(user["id"], account_id)

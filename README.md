@@ -61,9 +61,25 @@ pet.adopt
 npc.talk
 npc.claim
 hunt.run
+item.dispose
 ```
 
 Không chỉnh sửa dữ liệu máy chủ hay vượt qua giới hạn của game. Trên Vercel, Cron xử lý lần lượt các tài khoản đến hạn và dừng trước deadline Function; các tài khoản còn lại tiếp tục ở lượt Cron sau. Nhịp gọi Cron thực tế do `vercel.json` quyết định.
+
+### Dọn túi Mini — bộ chọn đồ riêng
+
+- Vào **Túi đồ → Dọn túi Mini**: chọn bán/phân giải, phẩm chất tối đa, tier tối đa (0 = không giới hạn tier), số bản giữ cho mỗi mẫu, giới hạn mẻ và vị trí. **Xem trước** đọc state mới từ game, không gọi lệnh game thay đổi trạng thái. Bộ lọc của phiên xem trước không tự ghi vào cấu hình auto.
+- So sánh **cùng `defId`**; chỉ dọn khi một món được giữ không kém ở bất kỳ thành phần `add`/`pct` hay mức cường hóa nào. Không cộng các chỉ số thành điểm đoán, không so chéo loại vũ khí/bộ trang bị. Các roll có đánh đổi và ít nhất số bản dự phòng đã chọn luôn được giữ. Vì vậy có thể giữ nhiều hơn số tối thiểu — không phải lỗi khi chưa dọn được đồ độc bản hoặc đồ khác mẫu.
+- Luôn loại khỏi danh sách dọn: đồ đang mặc/kho, khóa/yêu thích, đã cường hóa, chưa đủ cấp, ID trùng, thiếu cờ bảo vệ/roll/metadata hoặc chỉ số chưa hỗ trợ. Chỉ xét `location=bag`, `enhance=0`, `locked=false`, `favorite=false` rõ ràng. Không tự mở khóa, tháo đồ, rút kho hoặc suy đoán rằng dữ liệu thiếu là an toàn.
+- Bản xem trước có danh sách và lý do giữ/bỏ. Có thể bỏ chọn từng món. **Xác nhận bán/phân giải là thao tác không hoàn tác trong game.** Backend kiểm tra owner, hạn 120 giây, state version, bộ lọc và tập con ID một lần nữa; thay đổi state thì phải xem trước lại. `automation_runs` lưu xác nhận dùng một lần với cập nhật trạng thái nguyên tử; ID này cũng là idempotency key gửi game. Không retry tự động sau timeout/lỗi.
+- Luồng thủ công dùng lease theo tài khoản, lưu snapshot thực tế và nhật ký kết quả/ID. Không báo thành công nếu response thiếu state mới hoặc game chưa xác nhận xóa đủ danh sách. Preview dùng bảng `automation_runs` trong migration hiện có, không cần migration mới; job xem trước bỏ dở không tự thực thi khi hết hạn.
+- **Dọn không hỏi xác nhận** (`cleanupSkipConfirmation`, mặc định **false**): bật tại Túi đồ để lưu ngay riêng cho tài khoản, hoặc tại Tự động rồi lưu cấu hình. Bật tùy chọn **không chạy dọn** và không tự bật trợ lý. Sau khi bật, nút **Tự chọn và dọn ngay** tự đọc túi mới, lập một mẻ theo bộ lọc đang chọn rồi xử lý không hiện hộp xác nhận; vẫn có thể xem trước, bỏ chọn món và dọn đúng tập đã chọn. Tắt tùy chọn để dùng lại hộp xác nhận. Backend kiểm tra lại tùy chọn đã lưu khi nhận `skipConfirmation=true`; không bỏ lease, policy, version, expiry, hạn mức hay cơ chế dùng một lần. Không tự retry hoặc tự dọn tiếp các mẻ sau.
+- **Auto theo lịch** không hỏi xác nhận từng mẻ và không cần mở trang: bật `autoCleanup` cùng **Trợ lý tự động** (`enabled`) rồi lưu; cần Cron đã triển khai. Khi đã chọn `cleanupSkipConfirmation`, lưu/bật riêng auto dọn Mini cũng không hiện hộp xác nhận rủi ro. Xác nhận của các tính năng khác (tự trang bị, dùng đan, săn…) không bị bỏ qua.
+- **Nhật ký → Chi tiết dọn đồ**: có nguồn chạy, có/bỏ xác nhận, bộ lọc, tên/mẫu/ID món, ID bản được giữ, version trước/sau, ID yêu cầu, ID đã dọn và ID còn lại. Có thể tìm theo tên/ID món. Ghi riêng bắt đầu và kết quả thành công/một phần/chưa rõ; state thay đổi thì ghi đã chặn, không có món thì ghi bỏ qua. Không ghi được log bắt đầu thì không gửi lệnh dọn; timeout không được ghi là thành công. Thay đổi tùy chọn auto/bỏ xác nhận cũng được ghi log. Bản ghi bắt đầu mà chưa có kết quả **không có nghĩa đã dọn thành công** — cần đồng bộ game trước khi chạy lại.
+- Auto: bật riêng **Tự động → Trang bị & túi đồ → Dọn túi Mini** (`autoCleanup`, mặc định **false**). Các khóa `cleanupMode`, `cleanupMaxRarity`, `cleanupMaxTier`, `cleanupKeepPerDefinition`, `cleanupMaxItems`, `cleanupSlots` dùng cùng policy. Mặc định chỉ phẩm Phàm, giữ ít nhất 1 bản/mẫu, tối đa 20 món/vòng; tối đa tuyệt đối 60 món/lệnh. Có thể xem trước policy ở Túi đồ trước khi cho phép auto.
+- `autoSalvage` cũ không tự được chuyển thành dọn túi mới: tính năng cũ chỉ xử lý đồ rơi theo game, còn Mini có thể xử lý đồ có sẵn trong túi. Khi chủ động bật Mini, config tắt `autoSalvage`; worker yêu cầu đặt `settings.autoSalvageTier=0` trước lần `settle` rõ ràng tiếp theo. Nếu game tự kết toán trong lệnh thiết lập, Mini không thể đảm bảo cứu lại đồ đã bị bộ dọn gốc xử lý — nên tắt bộ dọn gốc trực tiếp trong game trước khi chuyển.
+
+Các lệnh bán/phân giải mới chỉ được kiểm thử bằng mock và trình duyệt dùng API fixtures; không thử trên tài khoản thật. `item.dispose` bị chặn ở endpoint gửi lệnh tùy ý: phải qua luồng cleanup hoặc policy auto.
 
 ### Auto mở rộng (tất cả mặc định tắt)
 

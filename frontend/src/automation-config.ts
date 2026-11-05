@@ -21,9 +21,10 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoSeasonTasks", label: "Nhiệm vụ lễ hội", description: "Chỉ nhận mốc đã xong; không tự đổi lễ phù." },
     { key: "autoTitles", label: "Danh hiệu", description: "Nhận danh hiệu đã đạt; không tự mang hoặc thay danh hiệu." },
   ] },
-  { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Chọn trang bị và giữ túi đồ gọn gàng theo thiết lập game.", flags: [
+  { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Trang bị theo game, dọn túi bằng bộ lọc Mini có kiểm soát.", flags: [
     { key: "autoEquipBest", label: "Tự trang bị", description: "Dùng bộ chọn của game. Khóa món bạn muốn giữ trước khi bật.", risk: true },
-    { key: "autoSalvage", label: "Dọn trang bị rơi", description: "Áp dụng ngưỡng phân giải hoặc bán đồ mới rơi trong game.", risk: true },
+    { key: "autoCleanup", label: "Dọn túi Mini", description: "Tự dọn theo lịch, không hỏi từng lần và ghi log từng mẻ. Chỉ dọn bản trùng cùng mẫu không hơn món giữ; bảo vệ đồ khóa/yêu thích/cường hóa.", risk: true },
+    { key: "autoSalvage", label: "Dọn đồ rơi gốc (cũ)", description: "Chỉ để tương thích thiết lập cũ. Tự tắt khi bật Dọn túi Mini; không bật cả hai bộ dọn.", risk: true },
   ] },
   { id: "alchemy", name: "Đan dược", icon: "spark", description: "Luyện và dùng đan có kiểm soát; các thao tác tiêu hao cần bật riêng.", flags: [
     { key: "autoCraft", label: "Luyện đan", description: "Kiểm tra nguyên liệu, linh thạch, số lò và giới hạn tuần.", risk: true },
