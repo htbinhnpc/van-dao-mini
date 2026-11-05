@@ -1,10 +1,8 @@
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AddAccount } from "./Auth";
 import { CleanupPanel } from "./Cleanup";
 import { CleanupLogDetails, cleanupLogSearch } from "./CleanupLogDetails";
 import { EmptyState, ErrorState, Icon, Panel, Skeleton, trapDialogFocus } from "../components";
-import { activeAutos } from "../automation-config";
-import { api, dateTime, display, errorMessage, isAbort, normalize, number, realmName } from "../lib";
+import { api, dateTime, display, errorMessage, isAbort, normalize, number } from "../lib";
 import type { Account, Config, Definition, GameMeta, LogEntry } from "../types";
 
 type Item = Definition & { kind: string; qty: unknown };
@@ -69,7 +67,3 @@ export function Logs({ accountId }: { accountId: string }) {
   </Panel>;
 }
 
-export function Accounts({ accounts, selectedId, meta, busy, onAdd, onSelect, onDelete }: { accounts: Account[]; selectedId: string; meta: GameMeta; busy: boolean; onAdd: (account: Account) => void; onSelect: (id: string) => void; onDelete: (account: Account) => void }) {
-  const [adding, setAdding] = useState(false);
-  return <><div className="account-intro"><span className="muted">{accounts.length} tài khoản đã liên kết · Cấu hình được lưu riêng</span><button className="button primary" disabled={adding || busy} onClick={() => setAdding(true)}><Icon name="plus" size={17} />Liên kết tài khoản</button></div>{(adding || !accounts.length) && <AddAccount onAdded={(account) => { onAdd(account); setAdding(false); }} onCancel={accounts.length ? () => setAdding(false) : undefined} />}<div className="account-grid">{accounts.map((account) => <section className={`panel account-card ${selectedId === account.id ? "selected" : ""}`} key={account.id}><div className="account-card-head"><span className="account-avatar">{account.label.slice(0, 1).toUpperCase()}</span><div><h2>{account.label}</h2><span>{account.gameUsername}</span></div><span className={`pill ${account.status === "active" ? "jade" : "warning"}`}><i />{account.status === "active" ? "Đã liên kết" : "Phiên cần kiểm tra"}</span></div><p className="account-realm">{realmName(account.state?.character?.realm, meta.realms)}</p><dl className="account-details"><div><dt>Trợ lý tự động</dt><dd>{account.enabled ? "Đang bật" : "Đang tắt"}</dd></div><div><dt>Tính năng đã chọn</dt><dd>{activeAutos(account.config || {}).length}</dd></div><div><dt>Lần chạy gần nhất</dt><dd>{dateTime(account.lastTickAt)}</dd></div></dl>{account.lastError && <p className="account-error">{display(account.lastError)}</p>}<div className="account-card-actions"><button className="button secondary" disabled={busy || selectedId === account.id} onClick={() => onSelect(account.id)}>{selectedId === account.id ? <><Icon name="check" size={16} />Đang chọn</> : "Chọn tài khoản"}</button><button className="text-button danger-text" disabled={busy} onClick={() => onDelete(account)}>Gỡ liên kết</button></div></section>)}</div></>;
-}

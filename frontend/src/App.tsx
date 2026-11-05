@@ -4,7 +4,8 @@ import { Brand, ConfirmDialog, ErrorState, Icon, Skeleton, Spinner } from "./com
 import { AuthScreen, AddAccount } from "./views/Auth";
 import { Overview } from "./views/Overview";
 import { Automation } from "./views/Automation";
-import { Accounts, Inventory, Logs } from "./views/Collection";
+import { Inventory, Logs } from "./views/Collection";
+import { Accounts } from "./views/AccountsView";
 import { EMPTY_META, type Account, type Config, type GameMeta, type IconName, type Section, type ServerStatus, type User } from "./types";
 
 const sections: { id: Section; label: string; icon: IconName; note: string }[] = [
@@ -130,17 +131,18 @@ export default function App() {
     if (!dirty) { void action(); return; }
     setConfirmation({ title: "Cấu hình chưa được lưu", body: "Những thay đổi vừa chọn chưa áp dụng vào game. Rời trang sẽ bỏ các thay đổi này.", label: "Bỏ thay đổi & tiếp tục", action: () => { setDirty(false); return action(); } });
   };
-  const saveConfig = async (config: Config): Promise<Config | null> => {
-    if (!selected) return null;
+  const saveConfigFor = async (accountId: string, config: Config, message = "Đã lưu cấu hình tu hành."): Promise<Config | null> => {
     let saved: Config | null = null;
     await run("save", async () => {
-      const result = await api<{ config: Config; enabled: boolean }>(`/api/v1/accounts/${selected.id}/config`, { method: "PATCH", body: JSON.stringify({ config }) });
+      const result = await api<{ config: Config; enabled: boolean }>(`/api/v1/accounts/${accountId}/config`, { method: "PATCH", body: JSON.stringify({ config }) });
       saved = result.config;
-      setAccounts((rows) => rows.map((row) => row.id === selected.id ? { ...row, config: result.config, enabled: result.enabled } : row));
+      setAccounts((rows) => rows.map((row) => row.id === accountId ? { ...row, config: result.config, enabled: result.enabled } : row));
       setDirty(false);
-    }, "Đã lưu cấu hình tu hành.");
+    }, message);
     return saved;
   };
+  const saveConfig = async (config: Config): Promise<Config | null> => selected ? saveConfigFor(selected.id, config) : null;
+  const toggleAuto = (account: Account) => { void saveConfigFor(account.id, { enabled: !account.enabled }, account.enabled ? "Đã tắt trợ lý tự động." : "Đã bật trợ lý tự động."); };
   const tick = () => {
     if (!selected) return;
     setConfirmation({ title: "Chạy một vòng tu hành?", body: `Tài khoản ${selected.label} sẽ kết toán và chạy các auto đã lưu, kể cả khi trợ lý định kỳ đang tắt. Các mục tiêu hao đã bật có thể dùng tài nguyên/lượt chơi.`, label: "Chạy một vòng", action: () => run("tick", async () => {
@@ -179,7 +181,7 @@ export default function App() {
           {selected && section === "automation" && <Automation account={selected} meta={meta} busy={busy === "save"} onSave={saveConfig} onDirtyChange={setDirty} />}
           {selected && section === "inventory" && <Inventory account={selected} meta={meta} onSaveConfig={saveConfig} onBusyChange={cleanupBusy} onState={(state) => setAccounts((rows) => rows.map((row) => row.id === selected.id ? { ...row, state } : row))} />}
           {selected && section === "logs" && <Logs accountId={selected.id} />}
-          {section === "accounts" && <Accounts accounts={accounts} selectedId={selectedId} meta={meta} busy={!!busy} onAdd={addAccount} onSelect={(id) => void loadAccounts(id)} onDelete={(account) => setConfirmation({ title: `Gỡ ${account.label}?`, body: "Chỉ gỡ liên kết và dữ liệu trợ lý trong dashboard. Nhân vật game không bị xóa. Bạn có thể liên kết lại sau.", label: "Gỡ liên kết", danger: true, action: () => run("delete", async () => {
+          {section === "accounts" && <Accounts accounts={accounts} selectedId={selectedId} meta={meta} busy={!!busy} onAdd={addAccount} onSelect={(id) => void loadAccounts(id)} onToggleAuto={toggleAuto} onSaveConfig={(accountId, config) => saveConfigFor(accountId, config)} onDelete={(account) => setConfirmation({ title: `Gỡ ${account.label}?`, body: "Chỉ gỡ liên kết và dữ liệu trợ lý trong dashboard. Nhân vật game không bị xóa. Bạn có thể liên kết lại sau.", label: "Gỡ liên kết", danger: true, action: () => run("delete", async () => {
             await api(`/api/v1/accounts/${account.id}`, { method: "DELETE" });
             setAccounts((rows) => rows.filter((row) => row.id !== account.id));
             if (selectedRef.current === account.id) { selectedRef.current = ""; setSelectedId(""); }

@@ -223,3 +223,29 @@ test("logout is reachable on mobile and desktop without changing game state", as
   await expect(page.getByRole("heading", { name: "Trở về động phủ", exact: true })).toBeVisible();
   expect(mock.mutations).toEqual([{ method: "POST", path: "/api/v1/auth/logout", body: null }]);
 });
+
+test("account card summarises the character, toggles auto and opens features in a modal", async ({ page }) => {
+  const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tài khoản").click();
+  const card = page.locator(".account-card").filter({ has: page.getByRole("heading", { name: "Thanh Vân", exact: true }) });
+  const row = (label: string) => card.locator(".account-details > div").filter({ has: page.getByText(label, { exact: true }) });
+  await expect(row("Nhân vật")).toContainText("Thanh Vân");
+  await expect(row("Tông môn")).toContainText("Chưa gia nhập tông môn");
+  await expect(row("Tốc độ tu vi")).toContainText("2,50 tu vi/giây");
+  await expect(row("Dự kiến đủ tu vi")).not.toContainText("Chưa có dữ liệu");
+  const toggle = card.getByRole("switch", { name: "Trợ lý tự động của Thanh Vân" });
+  await expect(toggle).not.toBeChecked();
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  expect(mock.mutations.filter((request) => request.method === "PATCH")).toEqual([
+    expect.objectContaining({ path: "/api/v1/accounts/account-1/config", body: { config: { enabled: true } } }),
+  ]);
+  await card.getByRole("button", { name: "Tính năng", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Tính năng · Thanh Vân" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Săn khế ấn").first()).toBeVisible();
+  const box = (await dialog.boundingBox())!, viewport = page.viewportSize()!;
+  expect(box.width).toBeGreaterThanOrEqual(Math.min(1000, viewport.width - 40));
+  await expect(dialog.getByRole("button", { name: "Lưu cấu hình" })).toBeInViewport();
+  await dialog.getByRole("button", { name: "Đóng tính năng" }).click();
+  await expect(dialog).toBeHidden();
+});
