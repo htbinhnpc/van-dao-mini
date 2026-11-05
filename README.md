@@ -57,6 +57,8 @@ field.rush
 equip.best
 item.transfer
 minor.trial
+breakthrough.trial
+breakthrough.major
 sect.task.claim
 season.task.claim
 title.claim
@@ -99,6 +101,7 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 |---|---|
 | `autoEquipBest` | Khi có đồ trong túi, gọi `equip.best`; game tự chọn. Không tự bán, phân giải, mở khóa hay thay loại vũ khí bằng lệnh riêng. Có thể đổi bộ đồ theo bộ chọn của game. |
 | `autoMinorTrial` | Chỉ `character.next=minor`, đủ tu vi, `minorGate.kind=trial` chưa đạt; tối đa 1 lần/10 phút, kể cả thua/lỗi. Không tự đột phá lớn; auto lên tầng của game áp dụng ở lần settle sau. |
+| `autoMajorBreakthrough` | **Mặc định tắt.** Chuẩn bị đan/phù đúng đại cảnh, nhận nhiệm vụ bắt buộc đã xong, rồi thử thách → đột phá ở các vòng riêng. Giữ khoảng nghỉ và khóa khi kết quả chưa chắc chắn. Xem rủi ro/giới hạn bên dưới. |
 | `autoSectTasks`, `autoSeasonTasks` | Nhận nhiệm vụ tông môn/lễ hội có `claimed=false`, đủ `current/target`; không đóng góp, mua hàng hay làm nhiệm vụ tốn vật phẩm. |
 | `autoTitles` | Chỉ nhận danh hiệu `earned=true`, `owned=false`; không tự mang/thay danh hiệu. Ba nhóm thưởng này tổng cộng tối đa 3 lệnh/vòng. Việc đeo do `autoEquipTitle` riêng. |
 | `autoEquipTitle` | Chỉ đeo danh hiệu `owned=true`, tối đa **một** `title.equip {titleId}`/vòng. Hệ lấy từ `craftBuild` nếu đã chọn, nếu không từ tông môn/vũ khí đang mặc: kiếm/thân thể dùng Công, lôi/hồn/trận dùng Pháp công. Chấm thêm crit/critDmg khi có trong `state.stats`; danh hiệu chỉ có hp/def không được coi là tăng sát thương. Không đổi nếu danh hiệu hiện tại đã tốt hơn hoặc bằng, không có dữ liệu hệ/crit/titles thì không gửi lệnh. Phản hồi phải tăng `stateVersion`, mục tiêu còn `owned` và là danh hiệu duy nhất `equipped`; sai/timeout thì dừng, không retry. |
@@ -119,7 +122,7 @@ Chọn các auto trong tab **Tự động**, lưu cấu hình riêng cho từng 
 Triển khai đặc tả `craft-professions.md` vào `api/services/craft_profession.py` (planner thuần) và worker `_craft` trong `api/services/automation.py`; không có cấu trúc worker TypeScript/economy/gear-opt của dự án được nhắc trong bản đề xuất.
 
 - Bật **Tự động → Chế tạo & đan dược → Tự chế tạo** (`autoCraft`, mặc định **false**). Hai tùy chọn con `craftMastery=true`, `craftProduce=true` chỉ có tác dụng khi bật parent; lưu cấu hình không chạy chế tạo.
-- Thứ tự: công thức nhiệm vụ đang làm → đan đại cảnh tiếp theo → công thức ưu tiên đã ghim → Dưỡng Khí Đan mục tiêu → trận kỳ tu luyện tốt nhất đã mở → cày nghề / sản xuất. Không hủy hoặc chiếm lò đang chạy. Nguyên liệu/tiền cho nhiệm vụ và đan đột phá còn thiếu được giữ khỏi các bước bổ sung/cày/sản xuất.
+- Thứ tự: công thức nhiệm vụ đang làm → đan đại cảnh tiếp theo → bảo hiểm/Bổ Khuyết Đan (khi bật auto đại cảnh và cho phép) → công thức ưu tiên đã ghim → Dưỡng Khí Đan mục tiêu → trận kỳ tu luyện tốt nhất đã mở → cày nghề / sản xuất. Không hủy hoặc chiếm lò đang chạy. Nguyên liệu/tiền cho nhiệm vụ và đan đột phá còn thiếu được giữ khỏi các bước bổ sung/cày/sản xuất.
 - **Cày nghề:** chọn công thức khả dụng có thời gian ngắn nhất cho từng nghề, so `(next-crafted-pending) × duration × (1−3%×(level−1)) / slots`. `craftLevelOrder=fastest` chọn ETA cấp kế nhỏ nhất; `all-max-first` chọn nghề còn nhiều thời gian tới max nhất (ước tính). Dồn các lò trống vào một nghề, giữ focus tới khi lên cấp, không xếp vượt số điểm cần cho cấp kế. Nghề bị thiếu nguyên liệu dư/cấp/ngân sách được bỏ qua; nếu đã xếp đủ mẻ lên cấp thì chờ kết toán.
 - **Tài nguyên:** `craftReserveStones=1000`, `craftMatFloor=20` là mặc định. Sàn nguyên liệu dùng cho bổ sung/cày/sản xuất; nhiệm vụ và đan đột phá có thể dùng nguyên liệu dự trữ của chính chúng. `craftLevelDaily=20` là **% linh thạch dư đầu ngày UTC**, không phải 20 viên. Base ngày được giữ cố định trong `automation_data.craftLevelBudget`, không tăng theo tiền kiếm thêm. Trước mỗi lệnh cày, lưu giữ chỗ cả chi phí dự kiến; timeout không hoàn lại ngân sách mù. 0% vẫn cho phép công thức miễn phí. Chỉ ngân sách cày bị giới hạn này; các mẻ nhiệm vụ/bổ sung/sản xuất vẫn tôn trọng khoản linh thạch dự phòng và ghi rõ chi phí.
 - **Túi/tồn kho:** Rèn khí nghỉ nếu túi + thành phẩm lò đang chạy đạt ≥90%, chưa biết sức chứa hoặc không đủ chỗ cho bonus. `craftInsuranceKeep=30` (10–30) giới hạn Tị Lôi Phù/Hộ Thân Trận Bàn; đủ kho thì bỏ qua nghề đó. `craftQiTarget=10`, `craftCharmTarget=2`, `craftKeepQty=10` kiểm soát các mục tiêu bổ sung/sản xuất, tính cả lò đang chạy. Đặt mục tiêu 0 để bỏ bước bổ sung/sản xuất tương ứng (không cấm cày nghề bằng công thức đó).
@@ -128,6 +131,22 @@ Triển khai đặc tả `craft-professions.md` vào `api/services/craft_profess
 - **Tab Chế tạo:** đọc `GET /api/v1/accounts/{id}/crafting` từ snapshot; **Đồng bộ lò** thêm `refresh=true` để GET state game mới. Không gửi `craft.start`. Ngân sách/focus/lý do từng job lưu trong `automation_data`, không cần migration. Worker dùng lease hiện có, tối đa 8 lượt bắt đầu chế tạo và vẫn nằm trong trần 12 lệnh/40 giây toàn vòng; lỗi/thiếu state/mẻ chưa được xác nhận thì dừng, không retry.
 
 Kiểm thử dùng mock và fixtures, **chưa thực hiện thử chế tạo 1 giờ trên tài khoản thật** như bước thử nghiệm trong bản đề xuất.
+
+### Đột phá đại cảnh giới (`breakthrough`)
+
+- Bật **Tự động → Tu luyện & hành trình → Tự đột phá đại cảnh giới** (`autoMajorBreakthrough=false` mặc định). Planner thuần ở `api/services/breakthrough.py`; worker không thay đổi phạm vi `autoMinorTrial`.
+- Dựa trên 16 cửa đột phá đã đối chiếu trong client: đúng `realmId/stage`, `character.next=major`, tu vi nguyên chính xác (không dùng float), vật liệu, `x2.btRoll`, nhiệm vụ bắt buộc. Mỗi vòng tối đa **một bước nhận nhiệm vụ/thử thách/đột phá**; chuẩn bị lò có thể chạy thêm trong ngân sách chung.
+- Tự nhận `q11_foundation_pill` và nhiệm vụ tiền đề ở trạng thái `claimable`, kể cả khi `autoQuests` tắt. Tự làm các objective chế tạo liên quan bằng công thức đã có. **Chưa tự hoàn thành mọi loại nhiệm vụ:** thiếu nguyên liệu, chưa hoàn tất chương Phá Đan Thành Anh, ba tuyến hóa phàm, hay các cửa `thien_nhan_ngu_suy`/`huyen_kiep` thì chờ và ghi lý do; không tự chọn nhánh, đánh cửa Chứng đạo hoặc mua vật tư.
+- Tự luyện đan đột phá, một loại bảo hiểm tương đương và Bổ Khuyết Đan nếu được cho phép. Tính cả thành phẩm/lò đang chạy, không xếp lặp khi đã đủ. Nếu `autoCraft` tắt, chỉ chuẩn bị đúng luồng đại cảnh (không cày nghề/filler). Vẫn giữ `craftReserveStones`; nguyên liệu vật tư đột phá trực tiếp được bảo vệ khỏi chế tạo/nâng động phủ.
+- **Thử thách:** `breakthrough.trial {}` chỉ khi chưa có `x2.btRoll.passed=bt_id`. Thắng chỉ mở nút đột phá, không tiêu bộ vật liệu; thua mất **20% vật liệu `lossOnFail`** và có thể mất tu vi. **Bảo hiểm không áp dụng cho trận này.**
+- **Đột phá:** `breakthrough.major {insurance?, topUp?}`. Thắng tiêu toàn bộ bộ vật liệu và lên đúng cảnh giới đích. Thất bại giữ đan chính, mất 20% vật liệu đánh dấu, có thể mất tu vi và phải thắng lại thử thách. Tỉ lệ theo số lần thất bại: **30 → 40 → 60 → 100%**.
+- `majorUseInsurance=true`: khi tỉ lệ <100% và cửa có rủi ro tu vi, phải có Tị Lôi Phù/Hồi Nguyên Đan/Hộ Thân Trận Bàn mới đột phá. Tiêu **một** món dù thành/bại; chỉ giữ tu vi, không giữ vật liệu. Tỉ lệ 100%/cửa không mất tu vi không tiêu bảo hiểm.
+- `majorAllowTopUp=false`: bật mới cho phép luyện/tiêu Bổ Khuyết Đan đúng loại ở ngưỡng 85/90/95% do game quy định. Không mua, không dùng tiền bù thiếu. Thử thách không gửi `topUp`; chỉ lệnh đột phá mới tiêu viên này.
+- `majorMinChance=30` (30–100): ngưỡng tối thiểu. Đặt cao hơn tỉ lệ hiện tại sẽ chờ; Mini **không tự làm thất bại để tăng tỉ lệ**. `majorRetryMinutes=30` (10–1440) áp dụng giữa các lần thử thách/đột phá, lưu trước khi gửi kể cả khi thua/lỗi.
+- Ghi `majorBreakthroughPending` trong `automation_data` **trước** lệnh; không lưu được thì không gửi. Chỉ gỡ khóa khi version tăng và state/kết quả/vật liệu khớp, đồng thời lưu snapshot. Response sai/timeout khóa cả chuẩn bị và đột phá qua các vòng sau. Sau khi kiểm tra trực tiếp game, **tắt auto và lưu rồi mới bật lại** để xác nhận mở khóa thử tiếp; lưu cấu hình không chạy ngay. Nhật ký có bước, payload, tỉ lệ và kết quả, không ghi thông tin đăng nhập.
+- Chạy thủ công khi bật auto đại cảnh cũng lấy lease như Cron; khóa dùng cập nhật có điều kiện để hai vòng không ghi đè intent. Endpoint gửi lệnh tùy ý không cho gọi hai lệnh đột phá để bỏ qua policy này.
+
+Đối chiếu client công khai 2026-11-06 và kiểm thử bằng mock/fixtures; **chưa gửi lệnh đột phá trên tài khoản game thật**. Quy tắc cuối cùng vẫn do máy chủ game xác nhận.
 
 ### Nâng phòng động phủ (`cave_rooms`)
 
@@ -138,7 +157,7 @@ Planner thuần ở `api/services/cave.py`; worker `_cave` trong `api/services/a
 - **Ưu tiên nhiệm vụ:** objective `cave_room {roomId, level}` của nhiệm vụ `active` được xét trước mọi thứ tự cấu hình. Nếu phòng đó chưa đủ tài nguyên dư, Mini chờ chứ không nâng phòng khác.
 - **Thứ tự:** `caveRoomOrder=craft` (mặc định) ưu tiên Đan Phòng, Khí Phòng, Linh Điền, Kho rồi Tụ Linh, Tàng Bảo, Tĩnh Thất; `cultivation` ưu tiên Tụ Linh/Tĩnh Thất; `balanced` chọn phòng có tỷ lệ `level/maxLevel` thấp nhất.
 - **Chi phí** lấy từ client công khai: `round(baseStones × 1.7^level)` linh thạch, `baseQty × (level+1)` nguyên liệu và `baseMinutes × (level+1)` phút. Bảy phòng: Tụ Linh (10 cấp, 300, Hàn Tinh ×4, 10 phút), Tĩnh Thất (12, 250, Thiết khoáng ×10, 8), Đan Phòng (6, 500, Linh thảo ×20, 15), Khí Phòng (5, 500, Thiết khoáng ×20, 15), Linh Điền (4, 800, Linh thảo ×30, 20), Kho (8, 200, Thú bì ×10, 5), Tàng Bảo Khố (5, 2.000, Thiết khoáng ×30, 30).
-- **Dự trữ:** luôn giữ `caveReserveStones` (mặc định 1.000) và `caveMatFloor` (mặc định 20 mỗi loại). Khi `autoCraft` bật, cộng thêm linh thạch/nguyên liệu mà các ưu tiên **Nhiệm vụ đang làm** và **Đan đột phá đại cảnh kế tiếp** cần, cùng `craftReserveStones`/`craftMatFloor`; thiếu dữ liệu chế tạo thì tạm dừng nâng phòng.
+- **Dự trữ:** luôn giữ `caveReserveStones` (mặc định 1.000) và `caveMatFloor` (mặc định 20 mỗi loại). Khi `autoCraft` hoặc `autoMajorBreakthrough` bật, cộng thêm linh thạch/nguyên liệu cho nhiệm vụ, đan đột phá, bảo hiểm/Bổ Khuyết Đan cần chuẩn bị, cùng `craftReserveStones`/`craftMatFloor`. Auto đại cảnh còn giữ bộ vật liệu đột phá trực tiếp; thiếu dữ liệu chế tạo thì tạm dừng nâng phòng.
 - **Xác nhận:** response phải tăng `stateVersion`, đúng `roomId`, cấp giữ nguyên hoặc tăng 1, `upgradeFinishAt` dương, không phòng khác đổi cấp và chỉ đúng một phòng active. Lỗi/timeout/response không xác nhận: ghi nhật ký `uncertain`, dừng vòng, không gửi lại.
 - `GET /api/v1/meta` trả `rooms` (id, tên, cấp tối đa, hiệu ứng) để UI hiển thị; state tài khoản vẫn là nguồn duy nhất cho cấp hiện tại.
 

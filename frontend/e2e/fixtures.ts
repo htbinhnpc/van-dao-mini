@@ -19,6 +19,7 @@ export const defaultConfig = {
   autoBoss: false, bossIntervalMin: 10, bossRegionId: "", autoFarm: false, farmHarvest: true,
   farmPlant: true, farmIncludeHabitats: true, farmSeedMode: "best", farmSeedId: "", farmReserveStones: 0,
   autoEquipBest: false, autoMinorTrial: false, autoSectTasks: false, autoSeasonTasks: false,
+  autoMajorBreakthrough: false, majorUseInsurance: true, majorAllowTopUp: false, majorMinChance: 30, majorRetryMinutes: 30,
   autoTitles: false, autoEquipTitle: false, autoPetAdopt: false, autoNpcTalk: false, autoNpcRewards: false,
   autoHunt: false, huntPetId: "", huntReserveRuns: 0, huntIntervalMin: 10,
   autoEncounter: false, encounterAllowCost: true, autoArena: false, arenaMinPowerEdge: 5000, arenaMaxRefresh: 3, arenaMaxFights: 3,

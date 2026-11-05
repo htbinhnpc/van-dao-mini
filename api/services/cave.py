@@ -50,7 +50,7 @@ ROOM_ORDER = ("tu_linh", "tinh_that", "dan_phong", "khi_phong", "linh_dien", "kh
 CRAFT_ORDER = ("dan_phong", "khi_phong", "linh_dien", "kho", "tu_linh", "tang_bao", "tinh_that")
 CULTIVATION_ORDER = ("tu_linh", "tinh_that", "dan_phong", "khi_phong", "linh_dien", "kho", "tang_bao")
 ORDER_PRESETS = {"craft": CRAFT_ORDER, "cultivation": CULTIVATION_ORDER}
-PRIORITY_REASONS = {"Nhiệm vụ đang làm", "Đan đột phá đại cảnh kế tiếp"}
+PRIORITY_REASONS = {"Nhiệm vụ đang làm", "Đan đột phá đại cảnh kế tiếp", "Bảo hiểm đột phá đại cảnh", "Bổ Khuyết Đan đột phá"}
 MATERIAL_NAMES = {
     "item_frost_crystal": "Hàn Tinh", "item_iron_ore": "Thiết khoáng",
     "item_spirit_herb": "Linh thảo", "item_beast_hide": "Thú bì",
@@ -205,7 +205,7 @@ def plan_cave_upgrade(state: dict, config: dict, meta: dict, *, now_ms: int | No
     reserve_stones = integer(config.get("caveReserveStones", 1000))
     floor = integer(config.get("caveMatFloor", 20))
     reserve_materials: Counter = Counter()
-    if config.get("autoCraft"):
+    if config.get("autoCraft") or config.get("autoMajorBreakthrough"):
         # Keep enough for craft quests and the next breakthrough; missing data
         # must never authorize spending that could starve those priorities.
         reserves = _craft_reserves(state, config, meta)
@@ -215,6 +215,12 @@ def plan_cave_upgrade(state: dict, config: dict, meta: dict, *, now_ms: int | No
         craft_stones, reserve_materials = reserves
         reserve_stones += craft_stones + integer(config.get("craftReserveStones", 1000))
         floor = max(floor, integer(config.get("craftMatFloor", 20)))
+    if config.get("autoMajorBreakthrough"):
+        from api.services.breakthrough import next_major
+        major = next_major(state, at_cap=False)
+        if major:
+            for item in major["materials"]:
+                reserve_materials[item["itemId"]] += item["qty"]
     result["reserve"] = {"stones": reserve_stones, "materials": dict(reserve_materials)}
 
     def action_for(room_id: str, reason: str) -> dict:

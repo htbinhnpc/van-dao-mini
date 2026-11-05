@@ -64,6 +64,25 @@ test("title auto saves only after explicit confirmation", async ({ page }) => {
   expect(mock.mutations[0].body.config).toMatchObject({ autoEquipTitle: true, autoTitles: false });
 });
 
+test("major breakthrough is opt-in with subordinate protection and risk confirmation", async ({ page }) => {
+  const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tự động").click();
+  await expect(page.getByRole("switch", { name: "Tự đột phá đại cảnh giới", exact: true })).not.toBeChecked();
+  await expect(page.getByRole("switch", { name: "Cho phép Bổ Khuyết Đan", exact: true })).toBeDisabled();
+  await page.getByRole("switch", { name: "Tự đột phá đại cảnh giới", exact: true }).check();
+  await expect(page.getByRole("switch", { name: "Yêu cầu bảo hiểm đột phá", exact: true })).toBeChecked();
+  await page.getByRole("switch", { name: "Cho phép Bổ Khuyết Đan", exact: true }).check();
+  await page.getByLabel("Tỉ lệ đột phá tối thiểu (%)", { exact: false }).fill("40");
+  await page.getByLabel("Khoảng nghỉ đột phá (phút)", { exact: false }).fill("60");
+  await page.getByRole("button", { name: "Lưu cấu hình", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("Tự đột phá đại cảnh giới");
+  await expect(page.getByRole("dialog")).toContainText("Cho phép Bổ Khuyết Đan");
+  expect(mock.mutations).toHaveLength(0);
+  await page.getByRole("button", { name: "Xác nhận & lưu", exact: true }).click();
+  await expect(page.getByText("Đã lưu cấu hình tu hành.", { exact: true })).toBeVisible();
+  expect(mock.mutations).toHaveLength(1);
+  expect(mock.mutations[0].body.config).toMatchObject({ autoMajorBreakthrough: true, majorUseInsurance: true, majorAllowTopUp: true, majorMinChance: 40, majorRetryMinutes: 60, autoMinorTrial: false, autoCraft: false });
+});
+
 test("risky auto needs a target and explicit confirmation before saving", async ({ page }, info) => {
   const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tự động").click();
   await page.getByRole("switch", { name: "Săn khế ấn", exact: true }).check();

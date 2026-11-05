@@ -37,6 +37,8 @@ ALLOWED_COMMANDS = frozenset(
         "equip.best",
         "item.transfer",
         "minor.trial",
+        "breakthrough.trial",
+        "breakthrough.major",
         "sect.task.claim",
         "season.task.claim",
         "title.claim",

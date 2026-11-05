@@ -11,17 +11,20 @@ import time
 from collections import Counter
 from datetime import datetime, timezone
 
+from api.services.breakthrough import CHANCES, INSURANCE, TOP_UP, loss_pct, natural, next_major, roll_state
+
 PROFESSIONS = {"alchemy": "Luyện đan", "forging": "Rèn khí", "talisman": "Chế phù", "array": "Trận pháp"}
 CRAFTED_TO_REACH = (0, 3, 8, 15, 25, 40, 60, 85, 115, 150)
 MASTERY_RECIPES = {"alchemy": "recipe_qi_pill", "forging": "recipe_iron_sword",
                    "talisman": "recipe_aid_thunder_ward", "array": "recipe_aid_guard_array"}
 BREAKTHROUGH = dict(zip(
-    ("ngung_khi", "truc_co", "ket_dan", "nguyen_anh", "hoa_than", "anh_bien", "van_dinh", "am_hu", "duong_thuc", "khuy_niet", "tinh_niet", "thien_nhan_ngu_suy", "khong_niet", "khong_linh", "huyen_kiep", "khong_kiep"),
+    ("ngung_khi", "truc_co", "ket_dan", "nguyen_anh", "hoa_than", "anh_bien", "van_dinh", "am_hu", "duong_thuc", "khuy_niet", "tinh_niet", "toai_niet", "khong_niet", "khong_linh", "khong_huyen", "khong_kiep"),
     ("recipe_foundation_pill", "recipe_core_pill", "recipe_nascent_pill", "recipe_soul_pill", "recipe_transform_pill", "recipe_summit_pill", "recipe_amhu_pill", "recipe_duongthuc_pill", "recipe_khuyniet_pill", "recipe_tinhniet_pill", "recipe_toainiet_pill", "recipe_khongniet_pill", "recipe_khonglinh_pill", "recipe_khonghuyen_pill", "recipe_khongkiep_pill", "recipe_dapthien_pill")))
 SECT_BUILDS = {"sect_thanh_van": "sword", "sect_loi_dinh": "thunder", "sect_thiet_son": "body", "sect_hon_dang": "soul", "sect_cam_van": "formation"}
 WEAPON_BUILDS = {"weapon": "sword", "staff": "thunder", "gauntlet": "body", "lantern": "soul", "banner": "formation"}
 CULTIVATION_CHARMS = {"x2_talisman_05": 5, "charm_arr_tu_linh": 10}
 UNLOCK_DUNGEONS = {f"x2_recipe_{n:03}": f"x2_dungeon_{(n - 31) // 2 + 1:02}" for n in range(31, 51)}
+URGENT_REASONS = {"Nhiệm vụ đang làm", "Đan đột phá đại cảnh kế tiếp", "Bảo hiểm đột phá đại cảnh", "Bổ Khuyết Đan đột phá"}
 
 
 def integer(value, default: int = 0) -> int:
@@ -124,6 +127,10 @@ def character_build(state: dict, config: dict) -> str:
 def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
     recipes = meta.get("recipes", {})
     result: list[dict] = []
+    major = next_major(state, at_cap=False) if config.get("autoMajorBreakthrough") else None
+    if config.get("_majorPreparationOnly") and not major:
+        return result
+    required = (meta.get("quests", {}).get((major or {}).get("requiredQuestId")) or {}).get("order", 0)
     def add(recipe_id: str, needed: int, reason: str, batches: bool = False):
         recipe = recipes.get(recipe_id)
         if recipe and needed > 0:
@@ -131,8 +138,12 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
             if count:
                 result.append({"recipe": recipe, "count": count, "reason": reason, "target": None if batches else needed})
 
-    for quest in state.get("quests", []):
+    for quest in state.get("quests") or []:
         if not isinstance(quest, dict) or quest.get("status") != "active":
+            continue
+        if config.get("_majorPreparationOnly") and not (required and 0 < meta.get("quests", {}).get(quest.get("id"), {}).get("order", 0) <= required):
+            continue
+        if config.get("_majorPreparationOnly") and natural(quest.get("current")) is None:
             continue
         objective = meta.get("quests", {}).get(quest.get("id"), {}).get("objective", {})
         counter = objective.get("counter", "")
@@ -146,6 +157,27 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
     realm = character.get("realm") or {}
     realm_id = realm.get("realmId") if isinstance(realm, dict) else realm
     add(BREAKTHROUGH.get(realm_id, ""), 1, "Đan đột phá đại cảnh kế tiếp")
+    if major:
+        target = major["to"]["realmId"]
+        roll = roll_state(state, major)
+        if config.get("majorUseInsurance", True) and loss_pct(target) > 0 and roll and CHANCES[min(roll[1], 3)] < 100:
+            options = [r for r in recipes.values() if (r.get("output") or {}).get("itemId") in INSURANCE]
+            # The three aids are interchangeable; stock/queued output of any one
+            # is enough. Cheapest currently affordable aid first, never all three.
+            if not any(owned_output(state, r) > 0 for r in options):
+                options = [r for r in options if integer(r.get("reqLevel")) <= integer(character.get("level"))]
+                options.sort(key=lambda r: (any(integer((state.get("materials") or {}).get(i["itemId"])) < integer(i["qty"]) for i in r.get("inputs", [])), integer(r.get("stones")), integer(r.get("durationMs")), r["id"]))
+                if options:
+                    add(options[0]["id"], 1, "Bảo hiểm đột phá đại cảnh")
+        top = TOP_UP.get(target)
+        if config.get("majorAllowTopUp") and top:
+            exp, need = natural(character.get("exp")), natural(character.get("expNeed"))
+            if exp is not None and need and exp < need and exp * 100 >= need * top[1]:
+                recipe = next((r for r in recipes.values() if (r.get("output") or {}).get("itemId") == top[0]), None)
+                if recipe:
+                    add(recipe["id"], 1, "Bổ Khuyết Đan đột phá")
+    if config.get("_majorPreparationOnly"):
+        return result
     if config.get("craftRecipeId"):
         add(config["craftRecipeId"], integer(config.get("craftKeepQty", 10)) or 1, "Công thức ưu tiên đã chọn")
     add("recipe_qi_pill", integer(config.get("craftQiTarget", 10)), "Bổ sung Dưỡng Khí Đan")
@@ -159,6 +191,8 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
 def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = None, *, now_ms: int | None = None) -> dict:
     """Plan the next command. Worker re-plans after every confirmed state."""
     data = data or {}
+    if config.get("autoMajorBreakthrough") and not config.get("autoCraft"):
+        config = {**config, "autoCraft": True, "_majorPreparationOnly": True}
     now_ms = now_ms if now_ms is not None else int(time.time() * 1000)
     crafting = state.get("crafting") or {}
     jobs = crafting.get("jobs")
@@ -171,7 +205,7 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
     budget = daily_budget(state, config, data, now_ms)
     ps = {key: progress(state, key) for key in PROFESSIONS}
     all_max = all(p and p["maxed"] for p in ps.values())
-    result = {"phase": "production" if all_max else "leveling" if all(ps.values()) else "unknown", "slots": slots, "freeSlots": free,
+    result = {"phase": "breakthrough" if config.get("_majorPreparationOnly") else "production" if all_max else "leveling" if all(ps.values()) else "unknown", "slots": slots, "freeSlots": free,
               "budget": budget, "build": character_build(state, config), "professions": [], "action": None,
               "reason": "", "blocked": [], "jobs": [{**j, "name": recipes.get(j["recipeId"], {}).get("name", j["recipeId"]),
               "reason": (data.get("craftJobs") or {}).get(str(j.get("id")), {}).get("reason", "Lò đang chạy theo state game")} for j in jobs]}
@@ -183,15 +217,27 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
     if not config.get("autoCraft"):
         result["phase"], result["reason"] = "disabled", "Tự chế tạo đang tắt; xem tiến độ không gửi lệnh game."
         return result
+    if config.get("autoMajorBreakthrough") and data.get("majorBreakthroughPending"):
+        result["reason"] = "Đột phá/chế tạo lần trước chưa xác nhận; đang khóa chuẩn bị, không retry."
+        return result
+    if config.get("autoMajorBreakthrough") and (type(state.get("stateVersion")) is not int or state["stateVersion"] < 1):
+        result["reason"] = "Thiếu stateVersion hợp lệ; chưa được phép chuẩn bị đột phá."
+        return result
+    if config.get("autoMajorBreakthrough") and (not isinstance(state.get("materials"), dict)
+                                                or any(natural(value) is None for value in state["materials"].values())):
+        result["reason"] = "Chưa có kho vật liệu hợp lệ để chuẩn bị đột phá; không đoán tồn kho."
+        return result
     if not free:
         result["reason"] = "Lò đang bận hoặc thiếu dữ liệu lò hợp lệ."
         return result
     priority = priorities(state, config, meta)
     floor = integer(config.get("craftMatFloor", 20))
     reserve_materials: Counter = Counter()
+    major = next_major(state, at_cap=False) if config.get("autoMajorBreakthrough") else None
+    direct_reserve = {item["itemId"]: item["qty"] for item in major["materials"]} if major else {}
     reserve_stones = 0
     for entry in priority:
-        if entry["reason"] not in {"Nhiệm vụ đang làm", "Đan đột phá đại cảnh kế tiếp"}:
+        if entry["reason"] not in URGENT_REASONS:
             continue
         for item in entry["recipe"].get("inputs", []):
             reserve_materials[item["itemId"]] += integer(item.get("qty")) * entry["count"]
@@ -230,7 +276,7 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
                 return 0, "Nguyên liệu công thức không hợp lệ"
             inputs[item["itemId"]] += item["qty"]
         for item_id, quantity in inputs.items():
-            available_qty = max(0, integer((state.get("materials") or {}).get(item_id)) - (0 if urgent else floor) - (reserve_materials[item_id] if filler else 0))
+            available_qty = max(0, integer((state.get("materials") or {}).get(item_id)) - (0 if urgent else floor) - (reserve_materials[item_id] if filler else 0) - direct_reserve.get(item_id, 0))
             count = min(count, available_qty // quantity)
             if not count:
                 return 0, "Thiếu nguyên liệu dư trên sàn dự trữ"
@@ -269,11 +315,14 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
         recipe = entry["recipe"]
         if all_max and any(j["recipeId"] == recipe["id"] for j in jobs):
             continue
-        urgent = entry["reason"] in {"Nhiệm vụ đang làm", "Đan đột phá đại cảnh kế tiếp"}
+        urgent = entry["reason"] in URGENT_REASONS
         count, reason = available(recipe, filler=not urgent, urgent=urgent, target=None if urgent else entry["target"])
         if count:
             return choose(recipe, min(count, entry["count"], 1 if all_max else 8), "priority", entry["reason"])
         result["blocked"].append({"name": recipe.get("name", recipe["id"]), "reason": reason})
+    if config.get("_majorPreparationOnly"):
+        result["reason"] = "Chờ lò/tài nguyên cho đột phá; không cày nghề hay sản xuất ngoài luồng khi Tự chế tạo đang tắt."
+        return result
     if not all(ps.values()):
         result["reason"] = "Chưa đủ dữ liệu 4 tay nghề; không suy đoán nghề đã max."
         return result

@@ -6,6 +6,9 @@ export const AUTO_GROUPS: AutoGroup[] = [
   { id: "cultivation", name: "Tu luyện & hành trình", icon: "compass", description: "Giữ nhịp tu hành, chọn hoạt động và điểm săn phù hợp.", flags: [
     { key: "autoMinor", label: "Lên tiểu tầng", description: "Dùng thiết lập lên tầng tự động của game khi đủ tu vi." },
     { key: "autoMinorTrial", label: "Thử thách tiểu cảnh giới", description: "Chỉ thử khi đủ điều kiện. Cách nhau ít nhất 10 phút; không đột phá lớn." },
+    { key: "autoMajorBreakthrough", label: "Tự đột phá đại cảnh giới", description: "Tự luyện đan cần thiết, chuẩn bị phù/đan bảo hiểm, nhận nhiệm vụ bắt buộc đã xong, vượt thử thách rồi đột phá. Có thể mất 20% vật liệu đánh dấu và tu vi khi thua. Không tự mua, chọn nhánh truyện, hóa phàm hay đánh cửa Chứng đạo.", risk: true },
+    { key: "majorUseInsurance", label: "Yêu cầu bảo hiểm đột phá", description: "Nếu có rủi ro mất tu vi: chỉ đột phá khi có một phù/đan/trận bảo hiểm. Tiêu cả khi thành công; không bảo vệ vật liệu hoặc trận thử thách." },
+    { key: "majorAllowTopUp", label: "Cho phép Bổ Khuyết Đan", description: "Tự luyện và tiêu một viên đúng loại khi tu vi đạt ngưỡng 85/90/95% của game. Không bù bằng linh thạch hay tự mua.", risk: true },
     { key: "autoActivity", label: "Giữ hoạt động & điểm săn", description: "Áp dụng hoạt động đã chọn ở mỗi vòng tự động. Săn yêu thú sẽ chọn bãi cho nhiều tu vi nhất trong số bãi đã mở và đủ cấp tối thiểu." },
     { key: "autoFallbackHunt", label: "Lùi điểm săn khi thua", description: "Khi game báo thua ở bãi, tạm bỏ bãi đó (30 phút, hoặc sớm hơn khi lực chiến tăng 10%) và chọn bãi nhiều tu vi kế tiếp; hết bãi thì bế quan." },
     { key: "autoBoss", label: "Đánh boss khu vực", description: "Chỉ đánh lại boss đã vượt, đủ cấp và hết hồi chiêu.", risk: true },
@@ -56,6 +59,6 @@ export const AUTO_GROUPS: AutoGroup[] = [
   ] },
 ];
 export const FLAGS = AUTO_GROUPS.flatMap((group) => group.flags);
-const subordinate = new Set(["craftMastery", "craftProduce", "encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
+const subordinate = new Set(["majorUseInsurance", "majorAllowTopUp", "craftMastery", "craftProduce", "encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
 export const activeAutos = (config: Config) => FLAGS.filter((flag) => !subordinate.has(flag.key) && config[flag.key]);
 export const configEqual = (left: Config, right: Config) => JSON.stringify(Object.keys(left).sort().map((key) => [key, left[key]])) === JSON.stringify(Object.keys(right).sort().map((key) => [key, right[key]]));

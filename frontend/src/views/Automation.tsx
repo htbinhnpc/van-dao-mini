@@ -35,6 +35,7 @@ export function Automation({ account, meta, busy, onSave, onDirtyChange }: { acc
     && !(flag.key === "autoCleanup" && config.cleanupSkipConfirmation === true)
     && (flag.key !== "farmPlant" || config.autoFarm) && (flag.key !== "autoUseExp" || config.autoUse)
     && (!["craftMastery", "craftProduce"].includes(flag.key) || config.autoCraft)
+    && (flag.key !== "majorAllowTopUp" || config.autoMajorBreakthrough)
     && (!baseline[flag.key] || (config.enabled && !baseline.enabled)));
   const persist = async () => {
     if (saving.current || invalidHunt) return;
@@ -46,6 +47,7 @@ export function Automation({ account, meta, busy, onSave, onDirtyChange }: { acc
     } finally { saving.current = false; }
   };
   const subordinate: Record<string, boolean> = {
+    majorUseInsurance: !config.autoMajorBreakthrough, majorAllowTopUp: !config.autoMajorBreakthrough,
     autoSalvage: !!config.autoCleanup,
     craftMastery: !config.autoCraft, craftProduce: !config.autoCraft,
     encounterAllowCost: !config.autoEncounter,
@@ -64,6 +66,7 @@ export function Automation({ account, meta, busy, onSave, onDirtyChange }: { acc
         {!groups.length && <EmptyState icon="search" title="Chưa tìm thấy tính năng">Thử từ khóa khác, hoặc chọn nhóm Tất cả.</EmptyState>}
         {groups.map((group) => <section className="panel auto-group" key={group.id} aria-label={group.name}><header className="auto-group-head"><span className="group-emblem"><Icon name={group.icon} size={23} /></span><div><h2>{group.name}</h2><p>{group.description}</p></div><span className="group-count">{group.flags.filter((flag) => config[flag.key]).length}/{group.flags.length}</span></header><div className="toggle-list">{group.flags.map((flag) => <Toggle key={flag.key} flag={flag} value={!!config[flag.key]} disabled={subordinate[flag.key]} onChange={(value) => change(flag.key, value)} />)}</div>
           {!needle && <div className="group-settings">
+            {group.id === "cultivation" && <><div className="field-grid"><Field label="Tỉ lệ đột phá tối thiểu (%)" hint="Game tăng 30 → 40 → 60 → 100% sau mỗi lần thất bại. Đặt cao hơn tỉ lệ hiện tại sẽ chờ, không tự đánh để nâng tỉ lệ.">{numeric("majorMinChance", 30, 30, 100)}</Field><Field label="Khoảng nghỉ đột phá (phút)" hint="Áp dụng cả thử thách và đột phá; mỗi vòng chỉ một bước.">{numeric("majorRetryMinutes", 30, 10, 1440)}</Field></div><p className="settings-note"><Icon name="shield" size={16} />Auto đại cảnh tự chế đúng vật phẩm cần, kể cả khi Tự chế tạo tắt; vẫn giữ linh thạch dự trữ chế tạo. Bảo hiểm không áp dụng cho trận thử thách. Khi kết quả chưa xác nhận, auto tự khóa: kiểm tra game, tắt và lưu rồi mới bật lại để cho phép thử tiếp.</p></>}
             {group.id === "equipment" && <Toggle flag={{ key: "cleanupSkipConfirmation", label: "Dọn không hỏi xác nhận", description: "Bỏ hộp xác nhận riêng cho dọn Mini và khi cho phép auto dọn. Không bỏ xác nhận các tính năng khác. Mỗi mẻ vẫn kiểm tra bộ lọc, bảo vệ đồ và ghi nhật ký chi tiết. Chỉ áp dụng sau khi lưu." }} value={config.cleanupSkipConfirmation === true} onChange={(value) => change("cleanupSkipConfirmation", value)} />}
             {group.id === "cultivation" && <div className="field-grid"><Field label="Hoạt động chính"><select value={config.activityType || "seclusion"} onChange={(event) => change("activityType", event.target.value)}>{Object.values(meta.activities).length ? Object.values(meta.activities).map((activity) => <option key={activity.id} value={activity.id}>{activity.name}</option>) : <option value={config.activityType || "seclusion"}>{config.activityType || "Bế quan"}</option>}</select></Field><Field label="Điểm săn" hint="Để tự chọn: ưu tiên điểm phù hợp đã mở."><select value={config.huntSpotId || ""} onChange={(event) => change("huntSpotId", event.target.value)}><option value="">Tự chọn điểm phù hợp</option>{Object.values(meta.spots).map((spot) => <option key={spot.id} value={spot.id}>{spot.name} · cấp {spot.reqLevel ?? "—"}</option>)}</select></Field><Field label="Nhịp đánh mỗi boss (phút)" hint="0: chỉ dựa vào hồi chiêu trong game.">{numeric("bossIntervalMin", 10, 0, 1440)}</Field><Field label="Vùng boss ưu tiên"><select value={config.bossRegionId || ""} onChange={(event) => change("bossRegionId", event.target.value)}><option value="">Tất cả vùng đã vượt</option>{Object.values(meta.regions).map((region) => <option key={region.id} value={region.id}>{region.name}</option>)}</select></Field></div>}
             {group.id === "rewards" && <p className="settings-note"><Icon name="shield" size={16} />Chỉ nhận phần thưởng đủ điều kiện. Không tự mua hay quyên góp.</p>}

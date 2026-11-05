@@ -21,9 +21,10 @@ from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.cleanup import config_rules, plan_cleanup
 from api.services.cave import plan_cave_upgrade, validate_upgrade_response
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
-from api.services.craft_profession import plan_crafting, progress
+from api.services.craft_profession import URGENT_REASONS, plan_crafting, progress
 from api.services.session_crypto import decrypt_session
 from api.services.titles import plan_title_equip, validate_equip_response
+from api.services.breakthrough import plan_breakthrough, validate_trial_response, validate_major_response
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
 with META_PATH.open(encoding="utf-8") as meta_file:
@@ -49,6 +50,12 @@ class IncompleteDisposal(ValueError):
 
 class PreparationDeferred(ValueError):
     pass
+
+
+class UnconfirmedBreakthrough(ValueError):
+    def __init__(self, message: str, state: dict):
+        super().__init__(message)
+        self.state = state
 
 
 def _can_command() -> bool:
@@ -100,7 +107,7 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     budget = _tick_budget.get()
     if budget:
         budget.attempts += 1
-    details = audit if command in {"craft.start", "cave.upgrade", "title.equip"} else None
+    details = audit if command in {"craft.start", "cave.upgrade", "title.equip", "breakthrough.trial", "breakthrough.major", "quest.claim"} else None
     if command == "item.dispose":
         details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
                    "confirmation": "not_required", "requestedCount": len(payload["itemIds"]), "stateVersionBefore": state.get("stateVersion")}
@@ -124,7 +131,22 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
         if any(e.get("id") in payload["itemIds"] for e in remaining if isinstance(e, dict)):
             raise IncompleteDisposal(next_state)
     outcome = result.get("result") or {}
-    lost = outcome.get("win") is False or outcome.get("won") is False or outcome.get("success") is False
+    if command in {"breakthrough.trial", "breakthrough.major"} or (audit or {}).get("source") == "major.quest":
+        try:
+            if command == "breakthrough.trial":
+                validate_trial_response(state, next_state, outcome)
+            elif command == "breakthrough.major":
+                validate_major_response(state, next_state, outcome, payload)
+            else:
+                quests = next_state.get("quests")
+                if (type(next_state.get("stateVersion")) is not int or next_state["stateVersion"] <= state["stateVersion"]
+                        or not isinstance(quests, list) or not any(isinstance(q, dict) and q.get("id") == payload["questId"]
+                        and q.get("status") == "claimed" for q in quests)):
+                    raise ValueError("Game chưa xác nhận nhận nhiệm vụ bắt buộc.")
+        except (ValueError, TypeError, KeyError) as exc:
+            raise UnconfirmedBreakthrough(str(exc), next_state) from exc
+        details = {**(audit or {}), "status": "confirmed", "outcome": {key: outcome.get(key) for key in ("trialWon", "success", "lost", "chance", "nextChance", "insurance")}}
+    lost = outcome.get("win") is False or outcome.get("won") is False or outcome.get("success") is False or outcome.get("trialWon") is False
     if command == "arena.fight":
         if outcome.get("won") is not None:
             delta = outcome.get("ratingDelta")
@@ -267,6 +289,42 @@ async def _minor_trial(client: GameClient, state: dict, config: dict, account: d
     # Persist before attempting, so losing or a network failure cannot spam a trial.
     await _remember_attempt(account, "minorTrialLastAttemptAt", now)
     return await _best_effort(client, state, "minor.trial", {}, account, "Thử thách tiểu cảnh giới")
+
+
+async def _major_breakthrough(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    """One action; persist an uncertainty lock BEFORE sending any mutation."""
+    if not config.get("autoMajorBreakthrough") or not _can_command():
+        return state
+    now = int(time.time() * 1000)
+    plan = plan_breakthrough(state, config, account.get("automation_data"), now_ms=now, meta=META)
+    action = plan["action"]
+    if not action:
+        await log(account, "warning" if plan["phase"] == "uncertain" else "info", "breakthrough.plan", plan["reason"], details=plan)
+        return state
+    command, payload = action["command"], action["payload"]
+    audit = {**action, "chance": plan["chance"], "source": "major.quest" if command == "quest.claim" else "autoMajorBreakthrough"}
+    try:
+        data = {**(account.get("automation_data") or {}), "majorBreakthroughPending": {**audit, "at": now, "stateVersion": state.get("stateVersion")}}
+        if command != "quest.claim":
+            data["majorBreakthroughLastAttemptAt"] = now
+        old_data = json.dumps(account.get("automation_data") or {}, separators=(",", ":"), ensure_ascii=False)
+        if not await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}&automation_data=eq.{filter_value(old_data)}", {"automation_data": data}):
+            raise ValueError("Chưa lưu được khóa/khoảng nghỉ đột phá; chưa gửi lệnh.")
+        account["automation_data"] = data
+        await log(account, "info", command, action["reason"], details={**audit, "status": "started"})
+        state = await _command(client, state, command, payload, account, action["reason"], audit=audit)
+        data = {**data, "majorBreakthroughPending": None}
+        if not await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state, "automation_data": data}):
+            raise ValueError("Chưa lưu được kết quả đột phá đã xác nhận; giữ khóa để kiểm tra.")
+        account["automation_data"] = data
+    except Exception as exc:
+        if isinstance(exc, UnconfirmedBreakthrough):
+            state = exc.state
+        budget = _tick_budget.get()
+        if budget:
+            budget.stopped, budget.error = True, f"{command}: {exc}"[:500]
+        await log(account, "warning", "breakthrough.plan", f"Dừng đột phá, không retry: {str(exc)[:300]}", details={**audit, "status": "uncertain"})
+    return state
 
 
 async def _npc(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -429,12 +487,20 @@ async def _cave(client: GameClient, state: dict, config: dict, account: dict) ->
 
 
 async def _craft(client: GameClient, state: dict, config: dict, account: dict) -> dict:
-    if not config.get("autoCraft"):
+    if not config.get("autoCraft") and not config.get("autoMajorBreakthrough"):
         return state
+    if config.get("autoMajorBreakthrough") and (account.get("automation_data") or {}).get("majorBreakthroughPending"):
+        return state
+    if not config.get("autoCraft"):
+        config = {**config, "autoCraft": True, "_majorPreparationOnly": True}
 
     async def store(values: dict) -> None:
         data = {**(account.get("automation_data") or {}), **values}
-        rows = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"automation_data": data})
+        query = f"id=eq.{filter_value(account['id'])}"
+        if config.get("autoMajorBreakthrough"):
+            old_data = json.dumps(account.get("automation_data") or {}, separators=(",", ":"), ensure_ascii=False)
+            query += f"&automation_data=eq.{filter_value(old_data)}"
+        rows = await patch_rows("game_accounts", query, {"automation_data": data})
         if not rows:
             raise ValueError("Chưa lưu được ngân sách/trạng thái chế tạo; không gửi thêm lệnh.")
         account["automation_data"] = data
@@ -449,6 +515,9 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
             await log(account, "info", "craft.plan", plan["reason"], details={"phase": plan["phase"], "blocked": plan["blocked"][:12]})
             break
         try:
+            major_preparation = config.get("autoMajorBreakthrough") and action["reason"] in URGENT_REASONS
+            if major_preparation:
+                await store({"majorBreakthroughPending": {"command": "craft.start", "recipeId": action["recipeId"], "stateVersion": state.get("stateVersion")}})
             if action["phase"] == "mastery":
                 # Reserve BEFORE sending, even on timeout. Do not refund an
                 # uncertain attempt and accidentally exceed the daily budget.
@@ -472,7 +541,11 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
             for job in added:
                 reasons[job["id"]] = {"recipeId": action["recipeId"], "reason": action["reason"], "phase": action["phase"]}
             await store({"craftJobs": reasons})
-            await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+            saved = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+            if major_preparation:
+                if not saved:
+                    raise ValueError("Chưa lưu được snapshot chuẩn bị đột phá; giữ khóa để kiểm tra.")
+                await store({"majorBreakthroughPending": None})
             await log(account, "success", "craft.plan", f"Đã xác nhận {len(added)} mẻ: {action['name']}", details={**action, "status": "succeeded", "jobIds": [j["id"] for j in added]})
         except Exception as exc:
             budget = _tick_budget.get()
@@ -709,6 +782,7 @@ async def _run_account_tick(account: dict) -> dict:
     if not config.get("autoCleanup"):
         state = await _equipment(client, state, config, account)
     state = await _cleanup(client, state, config, account)
+    state = await _major_breakthrough(client, state, config, account)
     state = await _minor_trial(client, state, config, account)
     state = await _activity(client, state, config, account)
     state = await _pets(client, state, config, account)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hmac
+import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -49,6 +50,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "craftLevelDaily": (0, 100), "craftReserveStones": (0, 10**18), "craftMatFloor": (0, 999999),
         "craftInsuranceKeep": (10, 30), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
         "caveReserveStones": (0, 10**18), "caveMatFloor": (0, 999999),
+        "majorMinChance": (30, 100), "majorRetryMinutes": (10, 1440),
     }
     for key, (minimum, maximum) in limits.items():
         try:
@@ -222,7 +224,7 @@ async def save_config(account_id: str, update: ConfigUpdate, user: dict = Depend
     account = await owned_account(user["id"], account_id)
     previous = await account_config(account_id)
     config = _config_for_update(previous, update.config)
-    await patch_rows("account_configs", f"account_id=eq.{filter_value(account_id)}", {"config": config, "updated_at": datetime.now(timezone.utc).isoformat()})
+    saved = await patch_rows("account_configs", f"account_id=eq.{filter_value(account_id)}", {"config": config, "updated_at": datetime.now(timezone.utc).isoformat()})
     await patch_rows(
         "game_accounts",
         f"id=eq.{filter_value(account_id)}&user_id=eq.{filter_value(user['id'])}",
@@ -232,6 +234,23 @@ async def save_config(account_id: str, update: ConfigUpdate, user: dict = Depend
             "updated_at": datetime.now(timezone.utc).isoformat(),
         },
     )
+    if update.config.get("autoMajorBreakthrough") is False:
+        # Only acknowledge AFTER the disabled config is stored, and never while
+        # a leased worker may still be awaiting the game. CAS protects new data.
+        data = dict(account.get("automation_data") or {})
+        if data.pop("majorBreakthroughPending", None):
+            if not saved:
+                raise HTTPException(502, "Chưa xác nhận lưu cấu hình tắt; giữ khóa đột phá.")
+            now = filter_value(datetime.now(timezone.utc).isoformat())
+            old_data = filter_value(json.dumps(account["automation_data"], separators=(",", ":"), ensure_ascii=False))
+            cleared = await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&automation_data=eq.{old_data}&or=(lease_until.is.null,lease_until.lt.{now})", {"automation_data": data})
+            if not cleared:
+                raise HTTPException(409, "Đã lưu tắt auto nhưng vòng đang xử lý/trạng thái đã đổi. Giữ khóa; chờ rồi lưu tắt lại trước khi bật.")
+            await insert_one("activity_logs", {
+                "account_id": account_id, "level": "warning", "action": "breakthrough.config",
+                "message": "Đã tắt auto và mở khóa lần đột phá chưa xác nhận. Kiểm tra game trước khi bật lại.",
+                "details": {"status": "acknowledged"},
+            })
     if any(previous.get(key, False) != config[key] for key in ("cleanupSkipConfirmation", "autoCleanup")):
         await insert_one("activity_logs", {
             "account_id": account_id, "level": "info", "action": "cleanup.config",
@@ -263,6 +282,8 @@ async def send_command(account_id: str, request: CommandRequest, user: dict = De
         raise HTTPException(400, "Dùng chức năng Dọn túi Mini để kiểm tra bộ lọc và bảo vệ đồ trước khi bán/phân giải.")
     if request.command == "arena.fight":
         raise HTTPException(400, "Đấu trường chỉ chạy qua auto để áp dụng điều kiện lực chiến và giới hạn lượt.")
+    if request.command in {"breakthrough.trial", "breakthrough.major"}:
+        raise HTTPException(400, "Đột phá đại cảnh chỉ chạy qua auto để kiểm tra điều kiện, bảo hiểm và khóa chống retry.")
     if request.command not in ALLOWED_COMMANDS:
         raise HTTPException(400, "Lệnh không nằm trong danh sách cho phép.")
     account = await owned_account(user["id"], account_id)
@@ -290,7 +311,20 @@ async def send_command(account_id: str, request: CommandRequest, user: dict = De
 async def manual_tick(account_id: str, user: dict = Depends(current_user)) -> dict:
     account = await owned_account(user["id"], account_id)
     account["config"] = await account_config(account_id)
-    result = await run_account_tick(account, manual=True)
+    major = account["config"].get("autoMajorBreakthrough")
+    if major:
+        now = datetime.now(timezone.utc)
+        lease_until = (now + timedelta(seconds=55)).isoformat()
+        leased = await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&or=(lease_until.is.null,lease_until.lt.{filter_value(now.isoformat())})",
+                                  {"lease_until": lease_until})
+        if not leased:
+            raise HTTPException(409, "Tài khoản đang có vòng xử lý; chưa chạy thêm đột phá.")
+        account = {**account, **leased[0], "config": account["config"]}
+    try:
+        result = await run_account_tick(account, manual=True)
+    finally:
+        if major:
+            await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&lease_until=eq.{filter_value(lease_until)}", {"lease_until": None})
     if result.get("error"):
         raise HTTPException(502, f"Đã dừng auto an toàn: {result['error']}")
     return {"ok": True, **result}
@@ -337,6 +371,7 @@ async def automation_cron(request: Request, authorization: str | None = Header(d
         )
         if not leased:
             continue
+        candidate = {**candidate, **leased[0]}
         try:
             config = await account_config(candidate["id"])
             candidate["config"] = config

@@ -11,7 +11,7 @@ type CraftStatus = { stateVersion: number | null; lastTickAt?: string | null; pl
   jobs: { id: string; name: string; recipeId: string; finishAt?: number; reason: string }[];
   blocked: { name: string; reason: string }[];
 } };
-const phases: Record<string, string> = { leveling: "Cày tay nghề", production: "Sản xuất", unknown: "Chưa đủ dữ liệu tay nghề", disabled: "Tự chế tạo đang tắt" };
+const phases: Record<string, string> = { breakthrough: "Chuẩn bị đột phá đại cảnh", leveling: "Cày tay nghề", production: "Sản xuất", unknown: "Chưa đủ dữ liệu tay nghề", disabled: "Tự chế tạo đang tắt" };
 const builds: Record<string, string> = { sword: "Kiếm tu", thunder: "Lôi tu", body: "Thể tu", soul: "Hồn tu", formation: "Trận tu", unknown: "Chưa xác định" };
 const eta = (ms: number | null) => ms == null ? "Chưa tính được" : duration(ms / 1000);
 
