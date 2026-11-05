@@ -44,6 +44,7 @@ ALLOWED_COMMANDS = frozenset(
         "hunt.run",
         "item.dispose",
         "arena.fight",
+        "encounter.resolve",
     }
 )
 

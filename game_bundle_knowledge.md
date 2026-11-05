@@ -169,6 +169,20 @@ Ngưng Khí → Trúc Cơ → Kết Đan → Nguyên Anh → Hóa Thần → Anh
 ### Chiến đấu
 71 kỹ năng (`basic`/`active`) có `mpCost, cooldownMs, castMs, targeting`, `effects[{type, school: physical|magic, coef}]`, `iconId`, `vfxId`; 51 loại quái (`archetype`, `level`, `regionId`, hệ số `hp/atk/def`, `speed`, `eva`); 29 trạng thái (`shock burn freeze silence stun bleed shield regen slow frenzy armor_break` + các ấn kiếm ý/điện/cương/hồn/cấm/sát). Trận mô phỏng ở **server**; client phát lại log từ `/api/battles/{id}` bằng `scene` (Phaser).
 
+### Kỳ ngộ ở trang Bí cảnh (`encounter.resolve`)
+Theo chữ trên giao diện: kỳ ngộ xuất hiện theo số chu kỳ săn (**khoảng 400 chu kỳ một lần**), chờ chọn tối đa **3** cái. `state.encounters` là danh sách `{id, defId}`; chọn bằng `POST /api/cmd/encounter.resolve` `{encounterId, choice:'a'|'b'}`; lịch sử ở `state.encounterLog`. Bảng định nghĩa (declaration `pi` trong `i18n`, 6 kỳ ngộ, `minLevel` là cấp xuất hiện):
+
+| Kỳ ngộ (`defId`) | Cấp | Phương án a | Phương án b |
+|---|---:|---|---|
+| Hạc bị thương (`enc_wounded_crane`) | 1 | **+8 cảm ngộ** + 2 Khí đan, tốn 5 Linh thảo | 60 linh thạch |
+| Bia đá cũ (`enc_old_stele`) | 5 | **+12 cảm ngộ** | 12 Thiết khoáng |
+| Thương nhân lạc đường (`enc_lost_merchant`) | 8 | 300 linh thạch | 4 Khí đan, tốn 100 linh thạch |
+| Động phủ bỏ hoang (`enc_sealed_cave`) | 16 | **+20 cảm ngộ** | 10 Hàn tinh |
+| Tu sĩ hấp hối (`enc_dying_cultivator`) | 20 | **+35 cảm ngộ**, tốn 1 Tụ Linh Đan | 4.000 linh thạch |
+| Kiếm ảnh dưới trăng (`enc_moonlit_duel`) | 25 | **+30 cảm ngộ** | 10 Nguyệt thạch |
+
+Năm trên sáu kỳ ngộ có phương án cảm ngộ; riêng Thương nhân lạc đường thì không. Mini tự chọn theo bảng này (`api/services/encounters.py`, auto `autoEncounter`).
+
 ### Mở rộng V2 (bảng `da`, nguồn `docs/VAN_DAO_MO_RONG_V2_CLAUDE_CODE.txt`)
 40 linh thú `x2_pet_001..040` (tối đa 3 dạng tiến hóa; `hunt` `x2_hunt_01..10` theo cảnh giới Trúc Cơ → Không Kiếp, `perRun` 4→20, `contract` 20→480 khế ấn); 24 dược liệu (`hours` 2→30); 100 công thức (nghề luyện đan/luyện khí…, `profLevel`, `inputs`, `stones`, `minutes`); 100 trang bị / 10 bộ `x2_set_01..10` (2/4/6 món); 12 bí cảnh `x2_dungeon_01..12` (`band` 3→10, nhiều phòng + boss); 16 chương `x2_ch_01..16` (Nguyên Anh → Đạp Thiên); 9 sao Cổ Thần; 12 NPC đạo hữu; 24 pháp bảo; 12 boss bản đồ + 12 world boss; 12 bản nguyên + 24 tổ hợp; 12 bộ công pháp / 60 kỹ năng `x2_skill_*`; 24 ngoại hình; 30 vật liệu; 16 ý cảnh; 10 mỏ; 5 suy + 9 kiếp; 8 vật liệu phụ.
 

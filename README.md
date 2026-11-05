@@ -63,6 +63,7 @@ npc.claim
 hunt.run
 item.dispose
 arena.fight
+encounter.resolve
 ```
 
 Không chỉnh sửa dữ liệu máy chủ hay vượt qua giới hạn của game. Trên Vercel, Cron xử lý lần lượt các tài khoản đến hạn và dừng trước deadline Function; các tài khoản còn lại tiếp tục ở lượt Cron sau. Nhịp gọi Cron thực tế do `vercel.json` quyết định.
@@ -100,6 +101,7 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 | `autoNpcTalk` | Tối đa 2 đạo hữu đã gặp/vòng, chưa trò chuyện ngày và thiện cảm dưới 1000; không tặng quà hay tự chọn quan hệ. |
 | `autoNpcRewards` | Tối đa 2 quà mốc thiện cảm/vòng; dùng state mới sau trò chuyện và bỏ qua mốc đã nhận. |
 | `autoHunt` | Bắt buộc chọn `huntPetId` trong 40 linh thú khế ấn; đủ cấp, còn lượt trên `huntReserveRuns`, chưa đủ khế ấn và chưa thu nhận. Tối đa 1 lượt/vòng, chờ `huntIntervalMin` (mặc định 10 phút) kể cả thua. Không mua thêm lượt. |
+| `autoEncounter` | Kỳ ngộ ở trang Bí cảnh (xuất hiện khoảng mỗi 400 chu kỳ săn, chờ tối đa 3): `encounter.resolve` `{encounterId, choice}` cho từng mục trong `state.encounters`. **Ưu tiên phương án cho cảm ngộ**: Bia đá cũ (+12), Động phủ bỏ hoang (+20), Kiếm ảnh dưới trăng (+30), Tu sĩ hấp hối (+35, tốn 1 Tụ Linh Đan), Hạc bị thương (+8, tốn 5 Linh thảo). Thương nhân lạc đường không có phương án cảm ngộ nên chọn 300 linh thạch (không tốn gì). `encounterAllowCost=false` chỉ cho phép phương án không tốn vật phẩm. Thiếu vật phẩm trả phí thì chọn phương án miễn phí; kỳ ngộ lạ (chưa có trong bảng) bị bỏ qua, không đoán. Tối đa 3 lệnh/vòng, không gửi lại cùng một `encounterId`. Bảng lấy từ client game (`api/services/encounters.py`). |
 | `autoArena` | Đấu hạng đấu trường (`arena.fight` với `ranked:true`), cấp ≥ 10, còn `rankedLeft`. Đọc bảng bằng `GET /api/arena?pick=N`; chỉ chọn đối thủ **cùng nhóm cảnh giới** có `power` thấp hơn `state.power` của bạn ít nhất `arenaMinPowerEdge` (mặc định 5.000), ưu tiên chênh lệch lớn nhất (rồi điểm hạng cao hơn). Không có ai phù hợp thì "làm mới" bằng cách tăng `pick`, tối đa `arenaMaxRefresh` lần (mặc định 3); vẫn không có thì không đánh và nghỉ 15 phút. Tối đa `arenaMaxFights` trận/vòng (mặc định 3); không luận bàn, không mua đồ bằng điểm. Không biết `state.power` thì không đánh. Thua thì tránh đánh lại người đó 1 giờ. Lực chiến chỉ là chỉ báo ước tính của server; `arena.fight` bị chặn ở endpoint gửi lệnh tùy ý. |
 
 Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng **tối đa 12 lệnh**, chỉ bắt đầu lệnh trong cửa sổ 40 giây. Phần chưa chạy để vòng sau. Nếu lệnh lỗi, timeout, xung đột version hoặc phản hồi thiếu state, dừng phần còn lại và lưu lỗi; không retry lệnh có tác dụng phụ với key mới. Lịch sử khoảng nghỉ lưu trong `automation_data`, không chỉ giữ trong RAM. Các kiểm thử dùng mock, chưa bật/thử auto mới trên tài khoản game thật.

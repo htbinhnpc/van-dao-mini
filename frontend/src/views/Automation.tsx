@@ -46,6 +46,7 @@ export function Automation({ account, meta, busy, onSave, onDirtyChange }: { acc
   };
   const subordinate: Record<string, boolean> = {
     autoSalvage: !!config.autoCleanup,
+    encounterAllowCost: !config.autoEncounter,
     autoFallbackHunt: !config.autoActivity, autoUseBuffs: !config.autoUse,
     autoUseOnlyBest: !config.autoUse, autoUseExp: !config.autoUse,
     farmHarvest: !config.autoFarm, farmPlant: !config.autoFarm, farmIncludeHabitats: !config.autoFarm,

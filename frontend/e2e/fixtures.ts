@@ -18,7 +18,7 @@ export const defaultConfig = {
   autoEquipBest: false, autoMinorTrial: false, autoSectTasks: false, autoSeasonTasks: false,
   autoTitles: false, autoPetAdopt: false, autoNpcTalk: false, autoNpcRewards: false,
   autoHunt: false, huntPetId: "", huntReserveRuns: 0, huntIntervalMin: 10,
-  autoArena: false, arenaMinPowerEdge: 5000, arenaMaxRefresh: 3, arenaMaxFights: 3,
+  autoEncounter: false, encounterAllowCost: true, autoArena: false, arenaMinPowerEdge: 5000, arenaMaxRefresh: 3, arenaMaxFights: 3,
 };
 export const sampleState = {
   stateVersion: 127, serverNow: 1793790385866, power: 18940,

@@ -13,6 +13,7 @@ from typing import Any
 
 from api.database import filter_value, insert_one, patch_rows
 from api.routes.accounts import DEFAULT_CONFIG
+from api.services.encounters import ENCOUNTERS, plan as plan_encounters
 from api.services.farming import rank_spots, update_losses
 from api.services.arena import ARENA_MIN_LEVEL, last_fight_lost, my_power, pick_opponent, ranked_left
 from api.services.game_client import GameClient
@@ -447,6 +448,31 @@ async def _boss(client: GameClient, state: dict, config: dict, account: dict) ->
     return result
 
 
+async def _encounters(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    """Kỳ ngộ: resolve waiting encounters, preferring the choice that gives cảm ngộ (insight)."""
+    if not config.get("autoEncounter"):
+        return state
+    allow_cost = bool(config.get("encounterAllowCost", True))
+    tried: set[str] = set()
+    for _ in range(3):
+        if not _can_command():
+            break
+        # Re-plan each time (a paid choice changes what we own); never re-send an id this tick.
+        todo = [t for t in plan_encounters(state, allow_cost=allow_cost, limit=10) if t[0] not in tried]
+        if not todo:
+            break
+        encounter_id, choice, def_id = todo[0]
+        tried.add(encounter_id)
+        picked = ENCOUNTERS[def_id]["choices"][choice]
+        reward = "cảm ngộ" if picked.get("insight") else "linh thạch/vật phẩm"
+        before = state
+        state = await _best_effort(client, state, "encounter.resolve", {"encounterId": encounter_id, "choice": choice}, account,
+                                   f"Kỳ ngộ {ENCOUNTERS[def_id]['name']}: chọn {choice.upper()} ({reward})")
+        if state is before:  # failed or budget stop
+            break
+    return state
+
+
 async def _arena(client: GameClient, state: dict, config: dict, account: dict) -> dict:
     """Ranked arena: fight only opponents we out-power by ``arenaMinPowerEdge``; refresh the list when none fit."""
     if not config.get("autoArena") or not _can_command():
@@ -585,6 +611,7 @@ async def _run_account_tick(account: dict) -> dict:
     state = await _settings(client, state, config, account)
     state = await _claim_ready(client, state, config, account)
     state = await _extra_rewards(client, state, config, account)
+    state = await _encounters(client, state, config, account)
     state = await _equipment(client, state, config, account)
     state = await _cleanup(client, state, config, account)
     state = await _minor_trial(client, state, config, account)

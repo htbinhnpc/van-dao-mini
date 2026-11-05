@@ -19,6 +19,8 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoX2Daily", label: "Quà mở rộng ngày", description: "Nhận phần thưởng ngày của bản mở rộng." },
     { key: "autoSectTasks", label: "Nhiệm vụ tông môn", description: "Chỉ nhận thưởng; không quyên góp hay tiêu vật tư làm nhiệm vụ." },
     { key: "autoSeasonTasks", label: "Nhiệm vụ lễ hội", description: "Chỉ nhận mốc đã xong; không tự đổi lễ phù." },
+    { key: "autoEncounter", label: "Kỳ ngộ bí cảnh", description: "Tự chọn thưởng kỳ ngộ (khoảng 400 chu kỳ săn một lần, chờ tối đa 3), ưu tiên cảm ngộ; kỳ ngộ không có cảm ngộ thì chọn phần thưởng không tốn vật phẩm.", risk: true },
+    { key: "encounterAllowCost", label: "Cho phép tiêu vật phẩm để lấy cảm ngộ", description: "Hạc bị thương tốn 5 Linh thảo, Tu sĩ hấp hối tốn 1 Tụ Linh Đan. Tắt thì chỉ chọn phương án không tốn gì. Chỉ có tác dụng khi đã bật Kỳ ngộ." },
     { key: "autoTitles", label: "Danh hiệu", description: "Nhận danh hiệu đã đạt; không tự mang hoặc thay danh hiệu." },
   ] },
   { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Trang bị theo game, dọn túi bằng bộ lọc Mini có kiểm soát.", flags: [
@@ -50,6 +52,6 @@ export const AUTO_GROUPS: AutoGroup[] = [
   ] },
 ];
 export const FLAGS = AUTO_GROUPS.flatMap((group) => group.flags);
-const subordinate = new Set(["autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
+const subordinate = new Set(["encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
 export const activeAutos = (config: Config) => FLAGS.filter((flag) => !subordinate.has(flag.key) && config[flag.key]);
 export const configEqual = (left: Config, right: Config) => JSON.stringify(Object.keys(left).sort().map((key) => [key, left[key]])) === JSON.stringify(Object.keys(right).sort().map((key) => [key, right[key]]));
