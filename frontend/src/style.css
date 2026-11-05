@@ -498,7 +498,7 @@ input[aria-invalid=true], select[aria-invalid=true] { border-color: #c69568; }
   .app-shell { display: block; }
   .sidebar { position: fixed; height: auto; top: auto; bottom: 0; left: 0; right: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); border-right: 0; border-top: 1px solid #42524c; background: #132029f5; backdrop-filter: blur(18px); }
   .sidebar > .brand, .sidebar-divider, .sidebar-bottom { display: none; }
-  .sidebar nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+  .sidebar nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
   .nav-item { min-height: 55px; padding: 7px 2px 5px; gap: 4px; font-size: 9px; flex-direction: column; justify-content: center; border-radius: 6px; }
   .nav-item .icon { width: 19px; height: 19px; }
   .nav-item.active::before { display: none; } .nav-dot { display: none; }
@@ -647,6 +647,25 @@ input[aria-invalid=true], select[aria-invalid=true] { border-color: #c69568; }
   .account-card-head .pill { margin-left: 0; }
   .auth-story h1 { font-size: 28px; }
 }
+.crafting-page { display: grid; gap: 22px; }
+.craft-loading { display: flex; gap: 10px; align-items: center; padding: 24px 0; }
+.craft-phase { margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: #72bea40a; }
+.craft-phase p { margin: 8px 0; }
+.craft-professions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.craft-profession { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
+.craft-profession .row { justify-content: space-between; flex-wrap: wrap; }
+.craft-profession h3, .craft-furnaces h3 { margin: 0; font-size: 14px; }
+.craft-profession progress { display: block; width: 100%; height: 10px; margin-top: 15px; accent-color: var(--jade); }
+.craft-profession small, .craft-furnaces small, .craft-phase small, .craft-next small { color: var(--muted); line-height: 1.7; }
+.craft-budget { display: flex; flex-wrap: wrap; gap: 20px 40px; padding: 18px 0; }
+.craft-budget dt { color: var(--muted); font-size: 12px; }.craft-budget dd { margin: 5px 0 0; }
+.craft-next { padding: 16px; border-left: 3px solid var(--jade); background: #72bea40a; }
+.craft-next h3 { margin: 0; font-size: 14px; }
+.craft-blocked { margin-top: 20px; }.craft-blocked li { margin: 10px 0; overflow-wrap: anywhere; }
+.craft-furnaces { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.craft-furnaces li { display: flex; align-items: flex-start; gap: 15px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.craft-furnaces li > div { min-width: 0; overflow-wrap: anywhere; }.craft-furnaces li > span { flex-shrink: 0; }
+@media (max-width: 680px) { .craft-professions { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

@@ -20,7 +20,8 @@ Mini client cho **Vấn Đạo: Nghịch Mệnh** — bảng chỉ số nhân v�
   - Tự lùi điểm săn khi thua, hoặc về bế quan nếu không còn điểm phù hợp.
   - Tự nhận nhiệm vụ, thưởng ngày/tuần, thành tựu, thư có quà và gói mở rộng ngày.
   - Tự dọn trang bị rơi theo ngưỡng phẩm cấp (phân giải hoặc bán).
-  - **Tự luyện đan:** chọn một công thức cụ thể hoặc để hệ thống tự chọn đan tốt nhất có thể luyện; tôn trọng cấp, nguyên liệu, linh thạch, số lò trống và giới hạn tuần. Có thể đặt số lượng muốn giữ để tránh luyện thừa.
+  - **Tự chế tạo 4 nghề:** ưu tiên nhiệm vụ/đột phá, bổ sung đan/trận kỳ, rồi dồn lò cho nghề nhanh lên cấp kế nhất; khi cả 4 nghề max, mỗi lò một công thức khác nhau. Có ngân sách cày/ngày, dự trữ nguyên liệu/linh thạch, giới hạn tồn kho và bảo vệ túi gần đầy.
+  - **Chế tạo:** tab riêng hiển thị 4 cấp nghề, tiến độ, ETA, ngân sách, món đang chế và lý do chọn/chặn. Xem/đồng bộ chỉ đọc, không bắt đầu mẻ.
   - **Tự dùng đan:** ưu tiên đan tăng tốc tu vi tốt nhất đang có, chỉ dùng khi buff sắp hết và không vượt thời lượng tối đa của game. Có thể bật thêm đan tu vi trực tiếp và chế độ chỉ dùng loại tốt nhất.
   - **Tự đánh boss khu vực:** đánh lần lượt tất cả boss của vùng đã hạ lần đầu khi hồi chiêu kết thúc và đủ cấp. Mỗi boss có nhịp cục bộ riêng (mặc định 10 phút, đặt 0 để chỉ theo hồi chiêu game); có thể ghim một boss nếu muốn tập trung.
   - **Tự gieo/thu hoạch:** thu ô chín trước, sau đó gieo giống hợp lệ trong Linh Điền và các Sinh cảnh đã mở; có thể đặt giống ưu tiên và khoản linh thạch dự phòng.
@@ -109,9 +110,24 @@ Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng 
 
 Chọn các auto trong tab **Tự động**, lưu cấu hình riêng cho từng tài khoản, rồi dùng **Chạy ngay** để chạy một vòng theo cấu hình đã lưu. Cron chỉ chạy khi tài khoản bật trợ lý; nhịp thực tế còn phụ thuộc lịch Cron của môi trường triển khai (cấu hình Vercel hiện tại là mỗi ngày một lần).
 
-### Cơ chế luyện/dùng đan
+### Chế tạo & tay nghề (`craft_profession`)
 
-- **Tự luyện đan** chỉ gọi `craft.start` với `{ recipeId, count }`. Trước khi gửi lệnh, client kiểm tra cấp nhân vật, nguyên liệu, linh thạch, số lò trống và giới hạn mẻ/tuần. Nếu chọn “Tự chọn”, client ưu tiên đan tăng tốc tu vi có `ratePct` cao nhất đang luyện được, sau đó mới tới đan tu vi trực tiếp.
+Triển khai đặc tả `craft-professions.md` vào `api/services/craft_profession.py` (planner thuần) và worker `_craft` trong `api/services/automation.py`; không có cấu trúc worker TypeScript/economy/gear-opt của dự án được nhắc trong bản đề xuất.
+
+- Bật **Tự động → Chế tạo & đan dược → Tự chế tạo** (`autoCraft`, mặc định **false**). Hai tùy chọn con `craftMastery=true`, `craftProduce=true` chỉ có tác dụng khi bật parent; lưu cấu hình không chạy chế tạo.
+- Thứ tự: công thức nhiệm vụ đang làm → đan đại cảnh tiếp theo → công thức ưu tiên đã ghim → Dưỡng Khí Đan mục tiêu → trận kỳ tu luyện tốt nhất đã mở → cày nghề / sản xuất. Không hủy hoặc chiếm lò đang chạy. Nguyên liệu/tiền cho nhiệm vụ và đan đột phá còn thiếu được giữ khỏi các bước bổ sung/cày/sản xuất.
+- **Cày nghề:** chọn công thức khả dụng có thời gian ngắn nhất cho từng nghề, so `(next-crafted-pending) × duration × (1−3%×(level−1)) / slots`. `craftLevelOrder=fastest` chọn ETA cấp kế nhỏ nhất; `all-max-first` chọn nghề còn nhiều thời gian tới max nhất (ước tính). Dồn các lò trống vào một nghề, giữ focus tới khi lên cấp, không xếp vượt số điểm cần cho cấp kế. Nghề bị thiếu nguyên liệu dư/cấp/ngân sách được bỏ qua; nếu đã xếp đủ mẻ lên cấp thì chờ kết toán.
+- **Tài nguyên:** `craftReserveStones=1000`, `craftMatFloor=20` là mặc định. Sàn nguyên liệu dùng cho bổ sung/cày/sản xuất; nhiệm vụ và đan đột phá có thể dùng nguyên liệu dự trữ của chính chúng. `craftLevelDaily=20` là **% linh thạch dư đầu ngày UTC**, không phải 20 viên. Base ngày được giữ cố định trong `automation_data.craftLevelBudget`, không tăng theo tiền kiếm thêm. Trước mỗi lệnh cày, lưu giữ chỗ cả chi phí dự kiến; timeout không hoàn lại ngân sách mù. 0% vẫn cho phép công thức miễn phí. Chỉ ngân sách cày bị giới hạn này; các mẻ nhiệm vụ/bổ sung/sản xuất vẫn tôn trọng khoản linh thạch dự phòng và ghi rõ chi phí.
+- **Túi/tồn kho:** Rèn khí nghỉ nếu túi + thành phẩm lò đang chạy đạt ≥90%, chưa biết sức chứa hoặc không đủ chỗ cho bonus. `craftInsuranceKeep=30` (10–30) giới hạn Tị Lôi Phù/Hộ Thân Trận Bàn; đủ kho thì bỏ qua nghề đó. `craftQiTarget=10`, `craftCharmTarget=2`, `craftKeepQty=10` kiểm soát các mục tiêu bổ sung/sản xuất, tính cả lò đang chạy. Đặt mục tiêu 0 để bỏ bước bổ sung/sản xuất tương ứng (không cấm cày nghề bằng công thức đó).
+- **Sản xuất:** chỉ khi **cả 4 nghề có `next=null` rõ ràng**; không đoán max từ cấp 10 hoặc dữ liệu thiếu. Mỗi lần `craft.start` đặt đúng 1 mẻ, không lặp công thức đang chạy; replan từ state mới để không tiêu trùng tài nguyên. Ưu tiên đan tu luyện, đan trực tiếp thuộc dải cấp cao nhất đã mở, trận kỳ và vũ khí cùng hệ có tier cao hơn/ô trống. `craftBuild=auto` nhận từ tông môn/vũ khí, hoặc chọn rõ sword/thunder/body/soul/formation. Metadata chưa đủ để so vũ khí x2, gear-opt hay định giá chợ: **không đoán chỉ số, không tự rèn loại chưa biết, không tự đăng chợ**. Bùa chiến đấu không tự sản xuất nếu chưa có dữ liệu nhu cầu trận cụ thể. Các lò không có lựa chọn đủ điều kiện được để trống.
+- **Client khác bản đề xuất:** bundle công khai 2026-11-05 hiển thị bonus +1 ở cấp 5/+2 ở cấp 10 **cho cả Rèn khí**. Mini tính bonus đó khi dự trù tồn kho/túi. `next` lấy từ state là dữ liệu quyết định; mốc 115/150 trong tài liệu chỉ phục vụ ETA tương lai có ghi là ước tính.
+- **Tab Chế tạo:** đọc `GET /api/v1/accounts/{id}/crafting` từ snapshot; **Đồng bộ lò** thêm `refresh=true` để GET state game mới. Không gửi `craft.start`. Ngân sách/focus/lý do từng job lưu trong `automation_data`, không cần migration. Worker dùng lease hiện có, tối đa 8 lượt bắt đầu chế tạo và vẫn nằm trong trần 12 lệnh/40 giây toàn vòng; lỗi/thiếu state/mẻ chưa được xác nhận thì dừng, không retry.
+
+Kiểm thử dùng mock và fixtures, **chưa thực hiện thử chế tạo 1 giờ trên tài khoản thật** như bước thử nghiệm trong bản đề xuất.
+
+### Cơ chế dùng đan
+
+- **Tự chế tạo** chỉ gọi `craft.start` với `{ recipeId, count }`; không thêm lệnh rush/cancel/mua nguyên liệu. Các giới hạn và ưu tiên tay nghề được mô tả ở trên.
 - **Tự dùng đan** chỉ gọi `item.use` với `{ itemId, qty: 1 }`, mỗi vòng tối đa một đan. Với đan buff, client đọc `state.buffs` và chỉ dùng khi thời gian còn lại thấp hơn ngưỡng cấu hình, đồng thời không dùng nếu sẽ vượt `maxTotalMs` của game. Mặc định chỉ dùng loại tốt nhất đang có để không tiêu đan thấp hơn vô ích.
 - Đan tu vi trực tiếp (`cultivation_exp`) mặc định **tắt** vì thường là đan sự kiện quý; bật rõ trong tab Tự động nếu muốn dùng tự động.
 - Các thao tác này đều là lệnh chính thức, không can thiệp bộ nhớ game hay dữ liệu máy chủ.

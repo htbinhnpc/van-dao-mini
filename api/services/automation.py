@@ -20,6 +20,7 @@ from api.services.game_client import GameClient
 from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.cleanup import config_rules, plan_cleanup
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
+from api.services.craft_profession import plan_crafting, progress
 from api.services.session_crypto import decrypt_session
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
@@ -97,7 +98,7 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     budget = _tick_budget.get()
     if budget:
         budget.attempts += 1
-    details = None
+    details = audit if command == "craft.start" else None
     if command == "item.dispose":
         details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
                    "confirmation": "not_required", "requestedCount": len(payload["itemIds"]), "stateVersionBefore": state.get("stateVersion")}
@@ -367,56 +368,58 @@ async def _activity(client: GameClient, state: dict, config: dict, account: dict
 
 
 async def _craft(client: GameClient, state: dict, config: dict, account: dict) -> dict:
-    crafting = state.get("crafting") or {}
-    if not config.get("autoCraft") or not crafting:
+    if not config.get("autoCraft"):
         return state
-    free = max(0, int(_num(crafting.get("slots"))) - len(crafting.get("jobs") or []))
-    if free == 0:
-        return state
-    materials = state.get("materials") or {}
-    recipes = META.get("recipes", {})
-    items = META.get("items", {})
-    level = _num((state.get("character") or {}).get("level"))
-    stones = _num((state.get("wallet") or {}).get("spirit_stone"))
-    candidates = []
-    for recipe in recipes.values():
-        output_item = items.get((recipe.get("output") or {}).get("itemId"), {})
-        use = output_item.get("use") or {}
-        if use.get("type") not in {"cultivation_buff", "cultivation_exp"}:
-            continue
-        if config.get("craftRecipeId") and recipe.get("id") != config["craftRecipeId"]:
-            continue
-        if level < _num(recipe.get("reqLevel")) or stones < _num(recipe.get("stones")):
-            continue
-        if any(_num(materials.get(i.get("itemId"))) < _num(i.get("qty")) for i in recipe.get("inputs", [])):
-            continue
-        limit = recipe.get("weekLimit")
-        if limit is not None and _num((crafting.get("weekUsed") or {}).get(recipe["id"])) >= _num(limit):
-            continue
-        score = _num(use.get("ratePct"), _num(use.get("exp")))
-        candidates.append((score, recipe))
-    if not candidates:
-        return state
-    recipe = max(candidates, key=lambda item: item[0])[1]
-    output_id = (recipe.get("output") or {}).get("itemId")
-    existing = _num(materials.get(output_id)) + sum(
-        _num(job.get("recipeId") == recipe["id"]) * _num((recipe.get("output") or {}).get("qty"), 1)
-        for job in crafting.get("jobs", [])
-    )
-    keep = max(0, int(_num(config.get("craftKeepQty", 10))))
-    input_limits = [int(_num(materials.get(i.get("itemId"))) // max(1, _num(i.get("qty"), 1))) for i in recipe.get("inputs", [])]
-    by_inputs = min(input_limits) if input_limits else free
-    cost = _num(recipe.get("stones"))
-    by_stones = int(stones // cost) if cost else free
-    week_limit = recipe.get("weekLimit")
-    by_week = free if week_limit is None else max(
-        0,
-        int(_num(week_limit) - _num((crafting.get("weekUsed") or {}).get(recipe["id"]))),
-    )
-    count = max(0, min(free, 8, keep - int(existing) if keep else free, by_inputs, by_stones, by_week))
-    if not count:
-        return state
-    return await _best_effort(client, state, "craft.start", {"recipeId": recipe["id"], "count": count}, account, f"Luyện {recipe.get('name', recipe['id'])} ×{count}")
+
+    async def store(values: dict) -> None:
+        data = {**(account.get("automation_data") or {}), **values}
+        rows = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"automation_data": data})
+        if not rows:
+            raise ValueError("Chưa lưu được ngân sách/trạng thái chế tạo; không gửi thêm lệnh.")
+        account["automation_data"] = data
+
+    # At most eight starts, and still inside the global 12-command/time budget.
+    for _ in range(8):
+        if not _can_command():
+            break
+        plan = plan_crafting(state, config, META, account.get("automation_data") or {})
+        action = plan["action"]
+        if not action:
+            await log(account, "info", "craft.plan", plan["reason"], details={"phase": plan["phase"], "blocked": plan["blocked"][:12]})
+            break
+        try:
+            if action["phase"] == "mastery":
+                # Reserve BEFORE sending, even on timeout. Do not refund an
+                # uncertain attempt and accidentally exceed the daily budget.
+                budget = {**plan["budget"], "spent": plan["budget"]["spent"] + action["stones"]}
+                budget["remaining"] = max(0, budget["limit"] - budget["spent"])
+                await store({"craftLevelBudget": budget, "craftLevelFocus": {"profession": action["profession"], "level": progress(state, action["profession"])["level"]}})
+            await log(account, "info", "craft.start", f"{action['reason']}: {action['name']} ×{action['count']} (−{action['stones']} linh thạch)", details={**action, "status": "started"})
+            before = state
+            next_state = await _command(client, state, "craft.start", {"recipeId": action["recipeId"], "count": action["count"]}, account,
+                                        f"{action['reason']}: {action['name']} ×{action['count']}", audit={**action, "status": "responded"})
+            new_jobs = (next_state.get("crafting") or {}).get("jobs")
+            if (type(next_state.get("stateVersion")) is not int or next_state["stateVersion"] <= before.get("stateVersion", 0)
+                    or not isinstance(new_jobs, list) or any(not isinstance(job, dict) or not isinstance(job.get("id"), str) for job in new_jobs)):
+                raise ValueError("Phản hồi chế tạo thiếu state/version/danh sách lò mới; dừng, không retry.")
+            state = next_state
+            previous_ids = {job.get("id") for job in before["crafting"]["jobs"]}
+            added = [job for job in new_jobs if job["id"] not in previous_ids and job.get("recipeId") == action["recipeId"]]
+            if len(added) != action["count"] or len({job["id"] for job in new_jobs}) != len(new_jobs):
+                raise ValueError("Game chưa xác nhận đủ số mẻ đã yêu cầu; giữ state mới và dừng, không retry.")
+            reasons = {str(job["id"]): ((account.get("automation_data") or {}).get("craftJobs") or {}).get(str(job["id"]), {}) for job in new_jobs}
+            for job in added:
+                reasons[job["id"]] = {"recipeId": action["recipeId"], "reason": action["reason"], "phase": action["phase"]}
+            await store({"craftJobs": reasons})
+            await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+            await log(account, "success", "craft.plan", f"Đã xác nhận {len(added)} mẻ: {action['name']}", details={**action, "status": "succeeded", "jobIds": [j["id"] for j in added]})
+        except Exception as exc:
+            budget = _tick_budget.get()
+            if budget:
+                budget.stopped, budget.error = True, f"craft.start: {exc}"[:500]
+            await log(account, "warning", "craft.plan", f"Dừng chế tạo, không retry: {str(exc)[:300]}", details={**action, "status": "uncertain"})
+            break
+    return state
 
 
 async def _use_pill(client: GameClient, state: dict, config: dict, account: dict) -> dict:

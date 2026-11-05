@@ -6,11 +6,13 @@ import { Overview } from "./views/Overview";
 import { Automation } from "./views/Automation";
 import { Inventory, Logs } from "./views/Collection";
 import { Accounts } from "./views/AccountsView";
+import { Crafting } from "./views/Crafting";
 import { EMPTY_META, type Account, type Config, type GameMeta, type IconName, type Section, type ServerStatus, type User } from "./types";
 
 const sections: { id: Section; label: string; icon: IconName; note: string }[] = [
   { id: "overview", label: "Tổng quan", icon: "compass", note: "Hành trình tu đạo" },
   { id: "inventory", label: "Túi đồ", icon: "bag", note: "Hành trang của bạn" },
+  { id: "crafting", label: "Chế tạo", icon: "leaf", note: "Tay nghề & lò chế tạo" },
   { id: "automation", label: "Tự động", icon: "spark", note: "Trợ lý tu hành" },
   { id: "accounts", label: "Tài khoản", icon: "users", note: "Các đạo hữu đồng hành" },
   { id: "logs", label: "Nhật ký", icon: "scroll", note: "Dấu chân tu hành" },
@@ -180,6 +182,7 @@ export default function App() {
           {selected && section === "overview" && <Overview account={selected} meta={meta} busy={!!busy} maintenance={server.status === "maintenance"} onTick={tick} onNavigate={(next) => setSection(next)} />}
           {selected && section === "automation" && <Automation account={selected} meta={meta} busy={busy === "save"} onSave={saveConfig} onDirtyChange={setDirty} />}
           {selected && section === "inventory" && <Inventory account={selected} meta={meta} onSaveConfig={saveConfig} onBusyChange={cleanupBusy} onState={(state) => setAccounts((rows) => rows.map((row) => row.id === selected.id ? { ...row, state } : row))} />}
+          {selected && section === "crafting" && <Crafting account={selected} onSettings={() => setSection("automation")} />}
           {selected && section === "logs" && <Logs accountId={selected.id} />}
           {section === "accounts" && <Accounts accounts={accounts} selectedId={selectedId} meta={meta} busy={!!busy} onAdd={addAccount} onSelect={(id) => void loadAccounts(id)} onToggleAuto={toggleAuto} onSaveConfig={(accountId, config) => saveConfigFor(accountId, config)} onDelete={(account) => setConfirmation({ title: `Gỡ ${account.label}?`, body: "Chỉ gỡ liên kết và dữ liệu trợ lý trong dashboard. Nhân vật game không bị xóa. Bạn có thể liên kết lại sau.", label: "Gỡ liên kết", danger: true, action: () => run("delete", async () => {
             await api(`/api/v1/accounts/${account.id}`, { method: "DELETE" });

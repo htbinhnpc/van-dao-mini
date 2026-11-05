@@ -12,6 +12,8 @@ export const defaultConfig = {
   autoSalvageMode: "salvage", autoActivity: false, activityType: "farm", huntSpotId: "",
   autoQuests: true, autoDaily: true, autoWeekly: false, autoAchievements: false, autoMail: true,
   autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 10,
+  craftMastery: true, craftLevelOrder: "fastest", craftLevelDaily: 20, craftProduce: true, craftReserveStones: 1000,
+  craftMatFloor: 20, craftInsuranceKeep: 30, craftQiTarget: 10, craftCharmTarget: 2, craftBuild: "auto",
   autoUse: false, autoUseBuffs: true, autoUseExp: false, autoUseOnlyBest: true, useThresholdMin: 15,
   autoBoss: false, bossIntervalMin: 10, bossRegionId: "", autoFarm: false, farmHarvest: true,
   farmPlant: true, farmIncludeHabitats: true, farmSeedMode: "best", farmSeedId: "", farmReserveStones: 0,
@@ -36,10 +38,10 @@ export const meta = {
   stats: bundledMeta.stats, slots: bundledMeta.slots, rarities: bundledMeta.rarities,
   equipment: Object.fromEntries(Object.entries(bundledMeta.equipment).map(([id, item]: any) => [id, { id, name: item.name, slot: item.slot, rarity: item.rarity, reqLevel: item.reqLevel }])),
   seeds: bundledMeta.seeds, regions: bundledMeta.regions, quests: bundledMeta.quests,
-  recipes: Object.fromEntries(Object.entries(bundledMeta.recipes).filter(([, recipe]: any) => ["cultivation_buff", "cultivation_exp"].includes(bundledMeta.items[recipe.output?.itemId]?.use?.type))),
+  recipes: Object.fromEntries(Object.entries(bundledMeta.recipes).map(([id, recipe]: any) => [id, { id, name: recipe.name, reqLevel: recipe.reqLevel }])),
   huntTargets: { x2_pet_001: { id: "x2_pet_001", name: "Bích Nhĩ Linh Thỏ", reqLevel: 16, contractSeals: 20 }, x2_pet_033: { id: "x2_pet_033", name: "Thiên Cấm Huyền Xà", reqLevel: 62, contractSeals: 360 } },
 };
-type Options = { authenticated?: boolean; empty?: boolean; maintenance?: boolean; saveFailures?: number; authFailure?: boolean; bootFailures?: number; metaFailures?: number; itemFailure?: boolean; itemHtml?: boolean; holdItems?: Promise<void>; cleanup?: boolean; cleanupConflict?: boolean; cleanupFailure?: boolean; cleanupEmpty?: boolean; holdCleanup?: Promise<void> };
+type Options = { authenticated?: boolean; empty?: boolean; maintenance?: boolean; saveFailures?: number; authFailure?: boolean; bootFailures?: number; metaFailures?: number; itemFailure?: boolean; itemHtml?: boolean; holdItems?: Promise<void>; cleanup?: boolean; cleanupConflict?: boolean; cleanupFailure?: boolean; cleanupEmpty?: boolean; holdCleanup?: Promise<void>; craftMax?: boolean; craftFailure?: boolean; craftUnknown?: boolean; holdCraft?: Promise<void> };
 export async function mockApi(page: Page, options: Options = {}) {
   let authenticated = options.authenticated !== false;
   let saveFailures = options.saveFailures || 0, bootFailures = options.bootFailures || 0, metaFailures = options.metaFailures || 0;
@@ -81,6 +83,21 @@ export async function mockApi(page: Page, options: Options = {}) {
     const accountId = path.split("/")[4], account = accounts.find((row) => row.id === accountId);
     if (method === "DELETE" && account) { accounts = accounts.filter((row) => row.id !== accountId); return reply({ ok: true }); }
     if (!account) return reply({ detail: "Không tìm thấy fixture" }, 404);
+    if (path.endsWith("/crafting")) {
+      if (options.holdCraft) await options.holdCraft;
+      if (options.craftFailure) return reply({ detail: "Không đọc được trạng thái chế tạo" }, 502);
+      return reply({ stateVersion: account.state.stateVersion, lastTickAt: account.lastTickAt, plan: {
+        phase: options.craftUnknown ? "unknown" : options.craftMax ? "production" : "leveling", slots: 4, freeSlots: 3, build: "sword",
+        reason: options.craftMax ? "Sản xuất: mỗi lò một công thức khác nhau, hợp cấp/hệ tu" : "Dồn lò cày Rèn khí cấp 4 → cấp kế",
+        budget: { day: "2026-11-05", limit: 20000, spent: 45, remaining: 19955 },
+        action: options.craftUnknown ? null : { recipeId: "recipe_iron_sword", name: "Rèn Thanh Khê Thiết Kiếm", count: options.craftMax ? 1 : 3, profession: "forging", reason: "Nguyên liệu dư, túi còn chỗ", stones: 45, durationMs: 40950, phase: "mastery" },
+        professions: Object.entries({ alchemy: "Luyện đan", forging: "Rèn khí", talisman: "Chế phù", array: "Trận pháp" }).map(([id, name]) => ({ id, name,
+          known: !options.craftUnknown, level: options.craftMax ? 10 : 4, crafted: options.craftMax ? 150 : 20, next: options.craftMax ? null : 25,
+          maxed: !!options.craftMax, pending: id === "forging" ? 1 : 0, nextEtaMs: options.craftMax ? 0 : 45000, maxEtaMs: options.craftMax ? 0 : 3600000 })),
+        jobs: [{ id: "forge-1", recipeId: "recipe_iron_sword", name: "Rèn Thanh Khê Thiết Kiếm", finishAt: Date.now() + 60000, reason: "Dồn lò cày Rèn khí" }],
+        blocked: [{ name: "Chế phù", reason: "Thiếu nguyên liệu dư trên sàn dự trữ" }],
+      } });
+    }
     if (path.endsWith("/cleanup/preview")) { cleanupRules[accountId] = body.rules; return reply({
       previewId: options.cleanupEmpty ? null : "11111111-1111-4111-8111-111111111111", expiresAt: Math.floor(Date.now() / 1000) + 120,
       state: account.state,

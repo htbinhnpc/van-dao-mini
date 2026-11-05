@@ -16,6 +16,7 @@ from api.services.automation import run_account_tick
 from api.services.game_client import ALLOWED_COMMANDS, GameAPIError, GameClient
 from api.services.game_rules import HUNT_TARGETS
 from api.services.cleanup import config_rules
+from api.services.craft_profession import plan_crafting
 from api.services.session_crypto import decrypt_session
 
 router = APIRouter()
@@ -44,6 +45,8 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "farmReserveStones": (0, 10**18), "huntReserveRuns": (0, 12),
         "huntIntervalMin": (1, 1440), "autoSalvageTier": (0, 7),
         "arenaMinPowerEdge": (0, 10**12), "arenaMaxRefresh": (0, 10), "arenaMaxFights": (1, 10),
+        "craftLevelDaily": (0, 100), "craftReserveStones": (0, 10**18), "craftMatFloor": (0, 999999),
+        "craftInsuranceKeep": (10, 30), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
     }
     for key, (minimum, maximum) in limits.items():
         try:
@@ -65,6 +68,13 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         raise HTTPException(422, "Chế độ dọn trang bị không hợp lệ.")
     if result["farmSeedMode"] not in {"best", "fast"}:
         raise HTTPException(422, "Chế độ chọn giống không hợp lệ.")
+    if result["craftLevelOrder"] not in ("fastest", "all-max-first"):
+        raise HTTPException(422, "Thứ tự cày nghề không hợp lệ.")
+    if result["craftBuild"] not in ("auto", "sword", "thunder", "body", "soul", "formation"):
+        raise HTTPException(422, "Hệ tu chế tạo không hợp lệ.")
+    from api.services.automation import META
+    if not isinstance(result["craftRecipeId"], str) or (result["craftRecipeId"] and result["craftRecipeId"] not in META.get("recipes", {})):
+        raise HTTPException(422, "Công thức chế tạo không hợp lệ.")
     try:
         config_rules(result)
     except ValidationError as exc:
@@ -121,8 +131,6 @@ async def game_metadata() -> dict:
         "recipes": {
             key: {field: value.get(field) for field in ("id", "name", "reqLevel")}
             for key, value in META.get("recipes", {}).items()
-            if (META.get("items", {}).get((value.get("output") or {}).get("itemId"), {}).get("use") or {}).get("type")
-            in {"cultivation_buff", "cultivation_exp"}
         },
         "seeds": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("seeds", {}).items()},
         "regions": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("regions", {}).items()},
@@ -154,6 +162,16 @@ async def get_state(account_id: str, refresh: bool = True, user: dict = Depends(
     account = await owned_account(user["id"], account_id)
     state = await _account_state(account) if refresh else account.get("state_snapshot")
     return {"ok": True, "state": state, "config": await account_config(account_id)}
+
+
+@router.get("/accounts/{account_id}/crafting")
+async def crafting_status(account_id: str, refresh: bool = False, user: dict = Depends(current_user)) -> dict:
+    account = await owned_account(user["id"], account_id)
+    state = await _account_state(account) if refresh else account.get("state_snapshot") or {}
+    config = await account_config(account_id)
+    from api.services.automation import META
+    return {"ok": True, "plan": plan_crafting(state, config, META, account.get("automation_data") or {}),
+            "stateVersion": state.get("stateVersion"), "serverNow": state.get("serverNow"), "lastTickAt": account.get("last_tick_at")}
 
 
 @router.get("/accounts/{account_id}/items")

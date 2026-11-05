@@ -131,6 +131,15 @@ Tùy chọn Mini `cleanupSkipConfirmation=false` mặc định, lưu riêng từ
 
 Audit: lưu intent trước lệnh hủy đồ, rồi kết quả có ID đã dọn/còn lại, rules, tên/mẫu/ID và witness giữ lại, version, nguồn và chế độ xác nhận. Nếu ghi intent lỗi thì không gửi command. Phân biệt started/succeeded/partial/uncertain/blocked/skipped/configured, không suy diễn timeout thành thành công. Không ghi session/cookie hay toàn bộ state vào nhật ký cleanup. UI hiển thị chi tiết và hỗ trợ tìm ID món.
 
+## Chế tạo/tay nghề Mini (2026-11-05)
+
+- Đặc tả đầu vào là `craft-professions.md` (tên người dùng gọi là `craft_profession.md`). Planner tại `api/services/craft_profession.py`; endpoint đọc riêng `/api/v1/accounts/{id}/crafting` áp dụng kiểm tra owner như các endpoint account khác. Metadata public `/meta` cung cấp tên/cấp mở của mọi công thức, không chỉ đan tu luyện.
+- Chỉ GET và phân tích tĩnh `/assets/main-BNARi4Kn.js` và `/assets/i18n-B6UHPwZV.js`, không đọc `.env`, cookie hoặc state tài khoản thật. `qp` gửi `craft.start` `{recipeId}` hoặc `{recipeId,count:8}` với guard; Mini gửi count đã tính lại trong 1–8. State client dùng `professions[p]={level,crafted,next}`, `crafting={slots,jobs,weekUsed}`, job có `id,recipeId,finishAt`; `bagCapacity` là sức chứa trang bị trong túi.
+- `Vi` phân nghề: 2 công thức bảo hiểm riêng, mapping charm → talisman/array, đồ → forging, còn lại → alchemy. `Hi` trả `floor(level/5)`; `Kp` cộng bonus cả thành phẩm đồ. UI nói mỗi mẻ hoàn tất cộng 1 điểm, tốc độ +3% mỗi cấp sau cấp 1. Khác với câu "không áp dụng Rèn khí" trong đề xuất, client hiện áp dụng bonus cho cả forging.
+- Bộ chọn Mini không giả định cấp 10 đã max: cần đủ 4 record hợp lệ, mỗi record có `next:null`. Thiếu thông tin thì chỉ xét các ưu tiên nhiệm vụ/bổ sung đã biết, không chạy filler/sản xuất. Tất cả ETA tới max có ghi ước tính; ngưỡng suy ra 115/150 không quyết định chi tiêu.
+- Lưu `craftLevelBudget` (ngày UTC/base/limit/spent), `craftLevelFocus` và `craftJobs` trong `automation_data`. Debit cày trước lệnh, không refund timeout; log intent trước lệnh, kiểm tra version và đủ ID job mới sau phản hồi. Chưa xác nhận đủ mẻ thì dừng, không tự gửi lại. Các handler khác vẫn dùng ngân sách chung 12 lệnh/40 giây; không nới trần game.
+- Chưa có economy/gear-opt/market-price trong repo này: dùng sàn tài nguyên, dự trữ đầu vào nhiệm vụ/đột phá và tiêu chí vũ khí cùng hệ/tier đã biết. Không tự bán sản phẩm hoặc chấm sức mạnh chéo chỉ số. Chưa chạy lệnh chế tạo trên tài khoản thật.
+
 ## Thông tin đăng nhập
 
 Thông tin đăng nhập đã được cung cấp trong hội thoại và dùng cho đúng một lần thử login; không ghi lại giá trị đó trong tài liệu hay log. Nếu đây là mật khẩu đang dùng thật, nên đổi mật khẩu sau khi trao đổi trong chat.

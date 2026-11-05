@@ -28,8 +28,10 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoCleanup", label: "Dọn túi Mini", description: "Mặc đồ mạnh nhất theo game, chuyển cường hóa cao nhất cùng ô (có phí), rồi dọn đồ không mặc trong bộ lọc; không giữ 1 bản/mẫu. Bảo vệ đồ khóa/yêu thích và cường hóa chưa chuyển được.", risk: true },
     { key: "autoSalvage", label: "Dọn đồ rơi gốc (cũ)", description: "Chỉ để tương thích thiết lập cũ. Tự tắt khi bật Dọn túi Mini; không bật cả hai bộ dọn.", risk: true },
   ] },
-  { id: "alchemy", name: "Đan dược", icon: "spark", description: "Luyện và dùng đan có kiểm soát; các thao tác tiêu hao cần bật riêng.", flags: [
-    { key: "autoCraft", label: "Luyện đan", description: "Kiểm tra nguyên liệu, linh thạch, số lò và giới hạn tuần.", risk: true },
+  { id: "alchemy", name: "Chế tạo & đan dược", icon: "spark", description: "Ưu tiên nhiệm vụ/đột phá, cày tuần tự 4 nghề, rồi sản xuất mỗi lò một món.", flags: [
+    { key: "autoCraft", label: "Tự chế tạo", description: "Có thể tiêu linh thạch và nguyên liệu cho cả 4 nghề. Tôn trọng sàn tài nguyên, lò trống và giới hạn tuần.", risk: true },
+    { key: "craftMastery", label: "Cày tay nghề", description: "Dồn lò trống cho một nghề chưa max; tính lại khi lên cấp. Chỉ dùng tài nguyên dư và ngân sách cày/ngày.", risk: true },
+    { key: "craftProduce", label: "Sản xuất sau khi max", description: "Chỉ khi cả 4 nghề có next=null: mỗi lò một công thức khác nhau, hợp cấp/hệ tu và trần tồn kho.", risk: true },
     { key: "autoUse", label: "Dùng đan", description: "Tối đa một đan mỗi vòng, không vượt thời lượng buff.", risk: true },
     { key: "autoUseBuffs", label: "Cho phép đan tăng tốc", description: "Chỉ có tác dụng khi đã bật Dùng đan." },
     { key: "autoUseOnlyBest", label: "Giữ buff tốt nhất", description: "Tránh dùng thêm khi buff cùng loại vẫn còn hiệu lực." },
@@ -52,6 +54,6 @@ export const AUTO_GROUPS: AutoGroup[] = [
   ] },
 ];
 export const FLAGS = AUTO_GROUPS.flatMap((group) => group.flags);
-const subordinate = new Set(["encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
+const subordinate = new Set(["craftMastery", "craftProduce", "encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
 export const activeAutos = (config: Config) => FLAGS.filter((flag) => !subordinate.has(flag.key) && config[flag.key]);
 export const configEqual = (left: Config, right: Config) => JSON.stringify(Object.keys(left).sort().map((key) => [key, left[key]])) === JSON.stringify(Object.keys(right).sort().map((key) => [key, right[key]]));
