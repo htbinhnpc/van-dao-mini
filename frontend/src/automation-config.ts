@@ -21,7 +21,8 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoSeasonTasks", label: "Nhiệm vụ lễ hội", description: "Chỉ nhận mốc đã xong; không tự đổi lễ phù." },
     { key: "autoEncounter", label: "Kỳ ngộ bí cảnh", description: "Tự chọn thưởng kỳ ngộ (khoảng 400 chu kỳ săn một lần, chờ tối đa 3), ưu tiên cảm ngộ; kỳ ngộ không có cảm ngộ thì chọn phần thưởng không tốn vật phẩm.", risk: true },
     { key: "encounterAllowCost", label: "Cho phép tiêu vật phẩm để lấy cảm ngộ", description: "Hạc bị thương tốn 5 Linh thảo, Tu sĩ hấp hối tốn 1 Tụ Linh Đan. Tắt thì chỉ chọn phương án không tốn gì. Chỉ có tác dụng khi đã bật Kỳ ngộ." },
-    { key: "autoTitles", label: "Danh hiệu", description: "Nhận danh hiệu đã đạt; không tự mang hoặc thay danh hiệu." },
+    { key: "autoTitles", label: "Danh hiệu", description: "Nhận danh hiệu đã đạt; việc đeo do tùy chọn riêng bên dưới." },
+    { key: "autoEquipTitle", label: "Tự đeo danh hiệu tốt nhất", description: "Chỉ đeo danh hiệu đã sở hữu có sát thương cao nhất cho hệ đang chơi. Hệ vật lý dùng Công, hệ pháp thuật dùng Pháp công; danh hiệu bạo kích chỉ được chấm khi biết crit/critDmg. Thiếu dữ liệu thì không đổi.", risk: true },
   ] },
   { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Trang bị theo game, dọn túi bằng bộ lọc Mini có kiểm soát.", flags: [
     { key: "autoEquipBest", label: "Tự trang bị", description: "Dùng bộ chọn của game. Khóa món bạn muốn giữ trước khi bật.", risk: true },

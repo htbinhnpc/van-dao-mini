@@ -40,6 +40,7 @@ ALLOWED_COMMANDS = frozenset(
         "sect.task.claim",
         "season.task.claim",
         "title.claim",
+        "title.equip",
         "pet.adopt",
         "npc.talk",
         "npc.claim",

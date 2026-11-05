@@ -16,7 +16,7 @@ from api.services.game_rules import HUNT_TARGETS
 
 NEW_FLAGS = (
     "autoEquipBest", "autoMinorTrial", "autoSectTasks", "autoSeasonTasks",
-    "autoTitles", "autoPetAdopt", "autoNpcTalk", "autoNpcRewards", "autoHunt",
+    "autoTitles", "autoEquipTitle", "autoPetAdopt", "autoNpcTalk", "autoNpcRewards", "autoHunt",
     "autoCleanup",
 )
 
@@ -98,7 +98,7 @@ class AutomationTests(unittest.IsolatedAsyncioTestCase):
         state = {"stateVersion": 10, "equipment": [{"location": "bag"}],
                  "pets": [{"id": "pet_cloud_fox", "owned": False, "canAdopt": True}],
                  "npcs": [{"id": "elder", "met": True, "talked": False, "affinity": 100, "claimed": []}]}
-        for handler in (auto._equipment, auto._minor_trial, auto._extra_rewards, auto._pets, auto._npc):
+        for handler in (auto._equipment, auto._minor_trial, auto._extra_rewards, auto._titles, auto._pets, auto._npc):
             result = await handler(self.client, state, DEFAULT_CONFIG, self.account)
             self.assertIs(result, state)
         self.client.command.assert_not_awaited()

@@ -42,6 +42,7 @@ DEFAULT_CONFIG = {
     "autoSectTasks": False,
     "autoSeasonTasks": False,
     "autoTitles": False,
+    "autoEquipTitle": False,
     "autoPetAdopt": False,
     "autoNpcTalk": False,
     "autoNpcRewards": False,

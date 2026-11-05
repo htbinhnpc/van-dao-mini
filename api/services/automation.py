@@ -23,6 +23,7 @@ from api.services.cave import plan_cave_upgrade, validate_upgrade_response
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
 from api.services.craft_profession import plan_crafting, progress
 from api.services.session_crypto import decrypt_session
+from api.services.titles import plan_title_equip, validate_equip_response
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
 with META_PATH.open(encoding="utf-8") as meta_file:
@@ -99,7 +100,7 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     budget = _tick_budget.get()
     if budget:
         budget.attempts += 1
-    details = audit if command in {"craft.start", "cave.upgrade"} else None
+    details = audit if command in {"craft.start", "cave.upgrade", "title.equip"} else None
     if command == "item.dispose":
         details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
                    "confirmation": "not_required", "requestedCount": len(payload["itemIds"]), "stateVersionBefore": state.get("stateVersion")}
@@ -206,6 +207,36 @@ async def _extra_rewards(client: GameClient, state: dict, config: dict, account:
                   if t.get("id") and t.get("earned") is True and t.get("owned") is False]
     for command, payload, label in tasks[:3]:
         state = await _best_effort(client, state, command, payload, account, label)
+    return state
+
+
+async def _titles(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    """Equip at most one best-damage title, never guessing missing state."""
+    if not config.get("autoEquipTitle") or not _can_command():
+        return state
+    plan = plan_title_equip(state, config, META)
+    action = plan["action"]
+    if not action:
+        await log(account, "info", "title.plan", plan["reason"],
+                  details={"phase": plan["phase"], "build": plan["build"],
+                           "damageStat": plan["damageStat"], "scores": plan["scores"]})
+        return state
+    label = f"{action['reason']}: {action['name']}"
+    try:
+        await log(account, "info", "title.equip", label, details={**action, "status": "started"})
+        before = state
+        state = await _command(client, before, "title.equip", {"titleId": action["titleId"]}, account, label,
+                               audit={**action, "status": "responded"})
+        validate_equip_response(before, state, action["titleId"])
+        await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+        await log(account, "success", "title.plan", f"Game đã xác nhận đeo danh hiệu {action['name']}.",
+                  details={**action, "status": "succeeded"})
+    except Exception as exc:
+        budget = _tick_budget.get()
+        if budget:
+            budget.stopped, budget.error = True, f"title.equip: {exc}"[:500]
+        await log(account, "warning", "title.plan", f"Dừng đeo danh hiệu, không retry: {str(exc)[:300]}",
+                  details={**action, "status": "uncertain"})
     return state
 
 
@@ -673,6 +704,7 @@ async def _run_account_tick(account: dict) -> dict:
     state = await _settings(client, state, config, account)
     state = await _claim_ready(client, state, config, account)
     state = await _extra_rewards(client, state, config, account)
+    state = await _titles(client, state, config, account)
     state = await _encounters(client, state, config, account)
     if not config.get("autoCleanup"):
         state = await _equipment(client, state, config, account)

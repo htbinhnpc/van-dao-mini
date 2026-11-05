@@ -171,6 +171,7 @@ Tất cả lệnh mới dùng `POST /api/cmd/{command}` như wrapper `rt` trong 
 | `sect.task.claim` | `{taskId}` | `state.sect.id`, `state.sectExtra.tasks`: chưa nhận, `current>=target`. Khác `sect.task` của nhánh Cầu Ma, có thể tiêu vật tư. |
 | `season.task.claim` | `{taskId}` | `state.season.tasks`: chưa nhận, `current>=target`. Không tự đổi lễ phù. |
 | `title.claim` | `{titleId}` | Component `Ed`, `state.ascend.titles`: `earned && !owned`; không tự gọi `title.equip`. |
+| `title.equip` | `{titleId}` hoặc `{titleId:null}` | Component `Ed`: chỉ hiện nút Mang khi `owned && !equipped`; nút Gỡ gửi `titleId:null`. Chỉ danh hiệu `equipped` mới cộng chỉ số. Auto `autoEquipTitle` chỉ đeo mục tiêu `owned`, chấm sát thương theo hệ/crit từ `state.stats`, không gỡ và không đoán khi thiếu dữ liệu. |
 | `pet.adopt` | `{petId}` | `state.pets`: `canAdopt && !owned`. Hợp khế có thể dùng khế ấn; mặc định tắt. |
 | `npc.talk` | `{npcId}` | Component đạo hữu: `met`, `talked`; trò chuyện lần đầu ngày +8 thiện cảm. Auto bỏ qua thiện cảm đã 1000. |
 | `npc.claim` | `{npcId,tierId}` | `met`, `affinity>=tier.need`, `!claimed.includes(tier.id)`. Bảng `Xi`: acquainted=100, close=250, trusted=450, confidant=700, bonded=1000. |

@@ -60,6 +60,7 @@ minor.trial
 sect.task.claim
 season.task.claim
 title.claim
+title.equip
 pet.adopt
 npc.talk
 npc.claim
@@ -99,7 +100,8 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 | `autoEquipBest` | Khi có đồ trong túi, gọi `equip.best`; game tự chọn. Không tự bán, phân giải, mở khóa hay thay loại vũ khí bằng lệnh riêng. Có thể đổi bộ đồ theo bộ chọn của game. |
 | `autoMinorTrial` | Chỉ `character.next=minor`, đủ tu vi, `minorGate.kind=trial` chưa đạt; tối đa 1 lần/10 phút, kể cả thua/lỗi. Không tự đột phá lớn; auto lên tầng của game áp dụng ở lần settle sau. |
 | `autoSectTasks`, `autoSeasonTasks` | Nhận nhiệm vụ tông môn/lễ hội có `claimed=false`, đủ `current/target`; không đóng góp, mua hàng hay làm nhiệm vụ tốn vật phẩm. |
-| `autoTitles` | Chỉ nhận danh hiệu `earned=true`, `owned=false`; không tự mang/thay danh hiệu. Ba nhóm thưởng này tổng cộng tối đa 3 lệnh/vòng. |
+| `autoTitles` | Chỉ nhận danh hiệu `earned=true`, `owned=false`; không tự mang/thay danh hiệu. Ba nhóm thưởng này tổng cộng tối đa 3 lệnh/vòng. Việc đeo do `autoEquipTitle` riêng. |
+| `autoEquipTitle` | Chỉ đeo danh hiệu `owned=true`, tối đa **một** `title.equip {titleId}`/vòng. Hệ lấy từ `craftBuild` nếu đã chọn, nếu không từ tông môn/vũ khí đang mặc: kiếm/thân thể dùng Công, lôi/hồn/trận dùng Pháp công. Chấm thêm crit/critDmg khi có trong `state.stats`; danh hiệu chỉ có hp/def không được coi là tăng sát thương. Không đổi nếu danh hiệu hiện tại đã tốt hơn hoặc bằng, không có dữ liệu hệ/crit/titles thì không gửi lệnh. Phản hồi phải tăng `stateVersion`, mục tiêu còn `owned` và là danh hiệu duy nhất `equipped`; sai/timeout thì dừng, không retry. |
 | `autoPetAdopt` | Tối đa 1 linh thú/vòng khi `canAdopt=true`, `owned=false`; có thể tiêu khế ấn hợp khế. Không tự xuất chiến, nuôi hay tiến hóa. |
 | `autoNpcTalk` | Tối đa 2 đạo hữu đã gặp/vòng, chưa trò chuyện ngày và thiện cảm dưới 1000; không tặng quà hay tự chọn quan hệ. |
 | `autoNpcRewards` | Tối đa 2 quà mốc thiện cảm/vòng; dùng state mới sau trò chuyện và bỏ qua mốc đã nhận. |

@@ -53,6 +53,17 @@ test("cave auto saves room order and reserves only after confirmation", async ({
   expect(mock.mutations[0].body.config).toMatchObject({ autoCaveUpgrade: true, caveRoomOrder: "balanced", caveReserveStones: 2500 });
 });
 
+test("title auto saves only after explicit confirmation", async ({ page }) => {
+  const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tự động").click();
+  await page.getByRole("switch", { name: "Tự đeo danh hiệu tốt nhất", exact: true }).check();
+  await page.getByRole("button", { name: "Lưu cấu hình", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("Tự đeo danh hiệu tốt nhất");
+  await page.getByRole("button", { name: "Xác nhận & lưu", exact: true }).click();
+  await expect(page.getByText("Đã lưu cấu hình tu hành.", { exact: true })).toBeVisible();
+  expect(mock.mutations).toHaveLength(1);
+  expect(mock.mutations[0].body.config).toMatchObject({ autoEquipTitle: true, autoTitles: false });
+});
+
 test("risky auto needs a target and explicit confirmation before saving", async ({ page }, info) => {
   const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tự động").click();
   await page.getByRole("switch", { name: "Săn khế ấn", exact: true }).check();

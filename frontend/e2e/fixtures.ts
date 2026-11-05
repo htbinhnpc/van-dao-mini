@@ -19,7 +19,7 @@ export const defaultConfig = {
   autoBoss: false, bossIntervalMin: 10, bossRegionId: "", autoFarm: false, farmHarvest: true,
   farmPlant: true, farmIncludeHabitats: true, farmSeedMode: "best", farmSeedId: "", farmReserveStones: 0,
   autoEquipBest: false, autoMinorTrial: false, autoSectTasks: false, autoSeasonTasks: false,
-  autoTitles: false, autoPetAdopt: false, autoNpcTalk: false, autoNpcRewards: false,
+  autoTitles: false, autoEquipTitle: false, autoPetAdopt: false, autoNpcTalk: false, autoNpcRewards: false,
   autoHunt: false, huntPetId: "", huntReserveRuns: 0, huntIntervalMin: 10,
   autoEncounter: false, encounterAllowCost: true, autoArena: false, arenaMinPowerEdge: 5000, arenaMaxRefresh: 3, arenaMaxFights: 3,
 };
@@ -38,6 +38,11 @@ export const sampleState = {
     { id: "tang_bao", level: 0, upgradeFinishAt: Date.now() + 600000 },
   ], fields: [{ plot: 1, finishAt: 100 }, { plot: 2, finishAt: 100 }, { plot: 3, finishAt: 9999999999999 }] },
   quests: [{ id: Object.keys(bundledMeta.quests)[4], status: "active", current: 2, target: 5 }, { id: Object.keys(bundledMeta.quests)[5], status: "claimable", current: 1, target: 1 }],
+  ascend: { titles: [
+    { id: "tru_yeu_su", owned: true, earned: true, equipped: true },
+    { id: "kim_ton", owned: true, earned: true, equipped: false },
+    { id: "thien_ton", owned: false, earned: true, equipped: false },
+  ] },
 };
 export const meta = {
   realms: bundledMeta.realms, activities: bundledMeta.activities, spots: bundledMeta.spots,
