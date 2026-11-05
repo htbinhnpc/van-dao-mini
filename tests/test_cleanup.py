@@ -15,6 +15,7 @@ from api.routes.accounts import DEFAULT_CONFIG
 from api.routes.dashboard import CommandRequest, _config_for_update, send_command
 from api.services import automation
 from api.services.cleanup import CleanupRules, config_rules, plan_cleanup
+from api.services.equipment import PreparationError, enhancement_cap, prepare_equipment
 
 
 def gear(item_id, add=0, **patches):
@@ -49,51 +50,52 @@ class PlannerTests(unittest.TestCase):
         self.assertIs(_config_for_update({"autoSalvage": True}, {})["autoCleanup"], False)
         config = _config_for_update({"autoSalvage": True}, {"autoCleanup": True})
         self.assertFalse(config["autoSalvage"])
-        self.assertEqual(config_rules(config).maxRarity, "pham")
+        self.assertEqual(config_rules(config).maxRarity, "dao")
+        self.assertEqual(config_rules(config).keepPerDefinition, 0)
 
-    def test_keeps_best_duplicate_and_disposes_only_weaker_same_definition(self):
-        snapshot = state(gear("strong", 10), gear("weak", 3), gear("middle", 5))
+    def test_keeps_only_equipped_and_no_spares_even_with_old_config(self):
+        snapshot = state(gear("worn", 10, location="equipped"), gear("weak", 3), gear("middle", 5))
         before = copy.deepcopy(snapshot)
-        self.assertEqual(selected(snapshot), ["middle", "weak"])
+        self.assertEqual(selected(snapshot), ["weak", "middle"])
         self.assertEqual(snapshot, before)
-        self.assertEqual(selected(snapshot, keepPerDefinition=2), ["weak"])
+        self.assertEqual(selected(snapshot, keepPerDefinition=1), ["weak", "middle"])
 
-    def test_keeps_all_stat_tradeoffs_instead_of_guessing_combat_score(self):
+    def test_disposes_tradeoffs_and_unique_definitions_not_selected_by_game(self):
         a = gear("atk", 10)
         b = gear("crit", subs=[{"stat": "crit", "add": .2}])
         c = gear("weak", 5)
-        self.assertEqual(selected(state(a, b, c)), ["weak"])
+        self.assertEqual(selected(state(gear("worn", location="equipped"), a, b, c)), ["atk", "crit", "weak"])
 
-    def test_equal_rolls_are_deterministic_and_keep_at_least_one(self):
-        self.assertEqual(selected(state(gear("first", 5), gear("second", 5))), ["second"])
+    def test_equal_rolls_keep_only_equipped_but_empty_slot_fails_closed(self):
+        self.assertEqual(selected(state(gear("first", 5, location="equipped"), gear("second", 5))), ["second"])
         self.assertEqual(selected(state(gear("only", 5))), [])
 
     def test_never_uses_a_disposed_item_as_the_keeper(self):
-        plan = plan_cleanup(state(gear("first", 9), gear("second", 7), gear("third", 3)), CleanupRules(), automation.META)
+        plan = plan_cleanup(state(gear("first", 9, location="equipped"), gear("second", 7), gear("third", 3)), CleanupRules(), automation.META)
         ids = {item["id"] for item in plan["items"]}
         for item in plan["items"]:
             self.assertNotIn(item["keptItemId"], ids)
 
-    def test_different_base_set_weapon_and_tier_never_justify_disposal(self):
+    def test_different_base_set_and_tier_are_disposed_if_not_equipped(self):
         high = gear("high", 99, defId="equip_t2_weapon")
         low = gear("low", 1)
-        self.assertEqual(selected(state(high, low), maxRarity="dao"), [])
+        self.assertEqual(selected(state(gear("worn", location="equipped"), high, low)), ["high", "low"])
 
     def test_equipped_locked_favorite_and_enhanced_are_always_retained(self):
         variations = [{"location": "equipped"}, {"locked": True}, {"favorite": True}, {"enhance": 1}]
         for variation in variations:
             with self.subTest(variation=variation):
-                snapshot = state(gear("strong", 10), gear("protected", 1, **variation))
+                snapshot = state(gear("strong", 10, location="equipped"), gear("protected", 1, **variation))
                 self.assertNotIn("protected", selected(snapshot))
 
-    def test_known_protected_equipment_can_be_witness_but_vault_cannot(self):
+    def test_only_equipped_items_can_be_keepers(self):
         self.assertEqual(selected(state(gear("equipped", 10, location="equipped"), gear("weak", 1))), ["weak"])
         self.assertEqual(selected(state(gear("vault", 10, location="vault"), gear("weak", 1))), [])
 
-    def test_future_gear_and_unknown_metadata_are_retained(self):
-        snapshot = state(gear("good", 10, defId="equip_t2_weapon"), gear("weak", 1, defId="equip_t2_weapon"))
+    def test_future_gear_is_not_spared_but_unknown_metadata_is_retained(self):
+        snapshot = state(gear("good", 10, location="equipped"), gear("weak", 1, defId="equip_t2_weapon"))
         snapshot["character"]["level"] = 1
-        self.assertEqual(selected(snapshot, maxRarity="dao"), [])
+        self.assertEqual(selected(snapshot, maxRarity="dao"), ["weak"])
         self.assertEqual(selected(state(gear("good", 10, defId="missing"), gear("weak", 1, defId="missing"))), [])
 
     def test_missing_or_malformed_flags_and_rolls_fail_closed(self):
@@ -105,7 +107,7 @@ class PlannerTests(unittest.TestCase):
                    {"sockets": [{"effect": "rare"}]}, {"unknownGameField": 1}]
         for change in changes:
             with self.subTest(change=change):
-                self.assertNotIn("bad", selected(state(gear("good", 50), gear("bad", 1, **change))))
+                self.assertNotIn("bad", selected(state(gear("good", 50, location="equipped"), gear("bad", 1, **change))))
         item = gear("missing", 1); del item["favorite"]
         self.assertEqual(selected(state(gear("good", 50), item)), [])
 
@@ -116,19 +118,19 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(selected({"equipment": None}), [])
 
     def test_rarity_tier_and_slot_filters_are_distinct(self):
-        snapshot = state(gear("good", 10, defId="equip_t2_weapon"), gear("weak", 1, defId="equip_t2_weapon"))
-        self.assertEqual(selected(snapshot), [])
+        snapshot = state(gear("good", 10, defId="equip_t2_weapon", location="equipped"), gear("weak", 1, defId="equip_t2_weapon"))
+        self.assertEqual(selected(snapshot, maxRarity="pham"), [])
         self.assertEqual(selected(snapshot, maxRarity="linh"), ["weak"])
         self.assertEqual(selected(snapshot, maxRarity="linh", maxTier=1), [])
         self.assertEqual(selected(snapshot, maxRarity="linh", slots=["robe"]), [])
 
     def test_multiple_modifier_entries_and_pct_are_compared_separately(self):
-        a = gear("a", subs=[{"stat": "atk", "add": 2}, {"stat": "atk", "add": 3}, {"stat": "hp", "pct": .05}])
+        a = gear("a", location="equipped", subs=[{"stat": "atk", "add": 2}, {"stat": "atk", "add": 3}, {"stat": "hp", "pct": .05}])
         b = gear("b", subs=[{"stat": "atk", "add": 4}, {"stat": "hp", "pct": .04}])
         self.assertEqual(selected(state(a, b)), ["b"])
 
     def test_batch_limit_does_not_select_its_keepers(self):
-        snapshot = state(*[gear(str(i), i) for i in range(70)])
+        snapshot = state(gear("69", 69, location="equipped"), *[gear(str(i), i) for i in range(69)])
         plan = plan_cleanup(snapshot, CleanupRules(maxItems=20), automation.META)
         self.assertEqual(len(plan["items"]), 20)
         self.assertEqual(plan["candidateCount"], 69)
@@ -136,7 +138,7 @@ class PlannerTests(unittest.TestCase):
         self.assertNotIn("69", {item["id"] for item in plan["items"]})
 
     def test_invalid_rules_are_rejected_not_coerced(self):
-        changes = [{"mode": "delete"}, {"maxRarity": "bad"}, {"keepPerDefinition": 0}, {"maxItems": 61},
+        changes = [{"mode": "delete"}, {"maxRarity": "bad"}, {"keepPerDefinition": -1}, {"maxItems": 61},
                    {"maxTier": -1}, {"maxItems": True}, {"slots": ["bad"]}, {"slots": ["weapon", "weapon"]}]
         for change in changes:
             with self.subTest(change=change), self.assertRaises(ValidationError):
@@ -145,9 +147,75 @@ class PlannerTests(unittest.TestCase):
             _config_for_update({}, {"cleanupMaxItems": "20"})
 
 
+class EquipmentPreparationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_game_selects_gear_then_highest_enhance_transfers_before_disposal(self):
+        snapshot = state(gear("old", enhance=4, location="equipped"), gear("best", defId="equip_t2_weapon"), gear("other", enhance=2))
+        calls = []
+
+        async def send(current, name, payload, label):
+            calls.append((name, payload))
+            result = copy.deepcopy(current)
+            result["stateVersion"] += 1
+            by_id = {item["id"]: item for item in result["equipment"]}
+            if name == "equip.best":
+                by_id["old"]["location"] = "bag"
+                by_id["best"]["location"] = "equipped"
+            elif name == "item.transfer":
+                source, target = by_id[payload["fromId"]], by_id[payload["toId"]]
+                source["enhance"], target["enhance"] = target["enhance"], source["enhance"]
+            return result
+
+        prepared = await prepare_equipment(snapshot, automation.META, send)
+        self.assertEqual(calls, [("equip.best", {}), ("item.transfer", {"fromId": "old", "toId": "best"})])
+        self.assertEqual(selected(prepared), ["old", "other"])
+        self.assertEqual(prepared["equipment"][1]["enhance"], 4)
+        self.assertEqual(snapshot["equipment"][0]["enhance"], 4)
+
+    async def test_failed_or_unconfirmed_transfer_aborts_without_disposal(self):
+        snapshot = state(gear("worn", location="equipped"), gear("donor", enhance=3))
+        for failure in (TimeoutError("uncertain"), ValueError("not enough stones"), None):
+            calls = []
+
+            async def send(current, name, payload, label):
+                calls.append(name)
+                if name == "item.transfer" and failure:
+                    raise failure
+                return {**copy.deepcopy(current), "stateVersion": current["stateVersion"] + 1}
+
+            with self.subTest(failure=failure), self.assertRaises(PreparationError):
+                await prepare_equipment(snapshot, automation.META, send)
+            self.assertEqual(calls, ["equip.best", "item.transfer"])
+
+    async def test_cap_does_not_truncate_donor_and_planner_keeps_it(self):
+        snapshot = state(gear("worn", location="equipped"), gear("donor", enhance=8))
+        send = AsyncMock(side_effect=lambda current, *args: {**current, "stateVersion": current["stateVersion"] + 1})
+        prepared = await prepare_equipment(snapshot, automation.META, send)
+        self.assertEqual(send.await_count, 1)
+        self.assertEqual(selected(prepared), [])
+
+    async def test_locked_favorite_and_vault_donors_are_not_transferred_or_disposed(self):
+        for changes in ({"locked": True}, {"favorite": True}, {"location": "vault"}):
+            snapshot = state(gear("worn", location="equipped"), gear("donor", enhance=4, **changes))
+            send = AsyncMock(side_effect=lambda current, *args: {**current, "stateVersion": current["stateVersion"] + 1})
+            prepared = await prepare_equipment(snapshot, automation.META, send)
+            self.assertTrue(all(call.args[1] != "item.transfer" for call in send.await_args_list))
+            self.assertEqual(selected(prepared), [])
+
+    async def test_missing_state_and_unchanged_version_abort(self):
+        snapshot = state(gear("bag"))
+        for response in (None, {}, snapshot, {"stateVersion": 11}):
+            with self.subTest(response=response), self.assertRaises(PreparationError):
+                await prepare_equipment(snapshot, automation.META, AsyncMock(return_value=response))
+
+    def test_expansion_caps_follow_realm_stage_counts_not_fallback_levels(self):
+        definition = automation.META["equipment"]["x2_eq_001"]
+        for level, cap in ((15, 0), (16, 5), (23, 5), (24, 10), (42, 15), (58, 15), (59, 20)):
+            self.assertEqual(enhancement_cap(definition, {"character": {"level": level}}, automation.META), cap)
+
+
 class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.snapshot = state(gear("keeper", 10), gear("weak", 2), gear("locked", 1, locked=True))
+        self.snapshot = state(gear("keeper", 10, location="equipped"), gear("weak", 2), gear("locked", 1, locked=True))
         self.account = {"id": "account-1", "user_id": "user-1"}
         self.user = {"id": "user-1"}
         self.run = None
@@ -188,23 +256,54 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
             return [copy.deepcopy(self.run)]
         return []
 
-    async def command(self, name, payload, *, expected_version, idempotency_key):
-        self.assertEqual(name, "item.dispose")
+    async def command(self, name, payload, *, expected_version, idempotency_key=None):
         self.assertEqual(expected_version, self.snapshot["stateVersion"])
-        self.assertEqual(idempotency_key, self.run["id"])
         self.calls.append((name, payload))
-        self.snapshot["equipment"] = [item for item in self.snapshot["equipment"] if item["id"] not in payload["itemIds"]]
+        if name == "item.dispose":
+            self.assertEqual(idempotency_key, self.run["id"])
+            self.snapshot["equipment"] = [item for item in self.snapshot["equipment"] if item["id"] not in payload["itemIds"]]
+        elif name != "equip.best":
+            raise AssertionError(f"Unexpected command: {name}")
         self.snapshot["stateVersion"] += 1
         return {"state": copy.deepcopy(self.snapshot)}
 
     async def preview(self, **rules):
-        return await routes.preview_cleanup("account-1", routes.PreviewRequest(rules=CleanupRules(**rules)), self.user)
+        result = await routes.preview_cleanup("account-1", routes.PreviewRequest(rules=CleanupRules(**rules), prepareEquipment=True), self.user)
+        # Tests below focus on disposal after the equipment preparation phase.
+        self.client.command.reset_mock()
+        self.calls.clear()
+        return result
 
     def execution(self, ids=None, *, skip=False):
         return routes.ExecuteRequest(previewId=self.run["id"], itemIds=ids or ["weak"], skipConfirmation=skip)
 
     def audit_logs(self):
-        return [call.args[1] for call in self.inserts.await_args_list if call.args[0] == "activity_logs"]
+        return [call.args[1] for call in self.inserts.await_args_list if call.args[0] == "activity_logs" and call.args[1]["action"] == "cleanup.manual"]
+
+    async def test_explicit_preparation_is_required_and_old_previews_are_rejected(self):
+        with self.assertRaises(HTTPException) as error:
+            await routes.preview_cleanup("account-1", routes.PreviewRequest(), self.user)
+        self.assertEqual(error.exception.status_code, 422)
+        self.client.command.assert_not_awaited()
+        await self.preview()
+        self.run["cursor"]["type"] = "cleanup_v1"
+        with self.assertRaises(HTTPException):
+            await routes.execute_cleanup("account-1", self.execution(), self.user)
+        self.client.command.assert_not_awaited()
+
+    async def test_preparation_is_leased_and_preview_uses_confirmed_new_loadout(self):
+        result = await routes.preview_cleanup("account-1", routes.PreviewRequest(prepareEquipment=True), self.user)
+        self.assertEqual(self.calls, [("equip.best", {})])
+        self.assertEqual(result["plan"]["stateVersion"], 11)
+        self.assertEqual(result["plan"]["rules"]["keepPerDefinition"], 0)
+        self.assertTrue(any("state_snapshot" in call.args[2] for call in self.db.await_args_list))
+
+    async def test_preparation_failure_never_creates_disposal_preview_or_retries(self):
+        self.client.command.side_effect = TimeoutError("uncertain")
+        with self.assertRaises(HTTPException):
+            await routes.preview_cleanup("account-1", routes.PreviewRequest(prepareEquipment=True), self.user)
+        self.assertIsNone(self.run)
+        self.assertEqual(self.client.command.await_count, 1)
 
     async def test_quick_cleanup_requires_saved_opt_in_for_this_account(self):
         await self.preview()
@@ -233,8 +332,8 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(details["confirmation"], "skipped")
         self.assertEqual(details["mode"], "sell")
         self.assertEqual(details["removedIds"], ["weak"])
-        self.assertEqual(details["stateVersionBefore"], 10)
-        self.assertEqual(details["stateVersionAfter"], 11)
+        self.assertEqual(details["stateVersionBefore"], 11)
+        self.assertEqual(details["stateVersionAfter"], 12)
         self.assertEqual(details["items"][0]["keptItemId"], "keeper")
         self.assertIn("không hỏi xác nhận", logs[-1]["message"])
 
@@ -269,8 +368,8 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_quick_empty_preview_logs_skip_without_sending_command(self):
         self.config["cleanupSkipConfirmation"] = True
-        self.snapshot = state(gear("only", 10))
-        result = await routes.preview_cleanup("account-1", routes.PreviewRequest(skipConfirmation=True), self.user)
+        self.snapshot = state(gear("only", 10, location="equipped"))
+        result = await routes.preview_cleanup("account-1", routes.PreviewRequest(skipConfirmation=True, prepareEquipment=True), self.user)
         self.assertIsNone(result["previewId"])
         self.assertEqual(self.audit_logs()[-1]["details"]["status"], "skipped")
         self.client.command.assert_not_awaited()
@@ -290,11 +389,11 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(details["removedIds"], ["weak"])
         self.assertEqual(details["remainingIds"], ["another"])
 
-    async def test_preview_only_reads_game_and_binds_state_rules_ids_and_account(self):
+    async def test_preview_binds_post_preparation_state_rules_ids_and_account(self):
         result = await self.preview()
         self.assertEqual([item["id"] for item in result["plan"]["items"]], ["weak"])
         self.assertEqual(self.run["account_id"], "account-1")
-        self.assertEqual(self.run["cursor"]["stateVersion"], 10)
+        self.assertEqual(self.run["cursor"]["stateVersion"], 11)
         self.assertEqual(self.run["status"], "queued")
         self.assertGreater(self.run["cursor"]["expiresAt"], time.time())
         self.client.command.assert_not_awaited()
@@ -304,7 +403,7 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
         result = await self.preview()
         self.assertIsNone(result["previewId"])
         self.assertEqual(result["plan"]["items"], [])
-        self.inserts.assert_not_awaited()
+        self.assertIsNone(self.run)
         self.client.command.assert_not_awaited()
 
     async def test_user_can_dispose_only_a_selected_subset_of_the_preview(self):
@@ -392,7 +491,8 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(HTTPException):
             await routes.execute_cleanup("account-1", self.execution(), self.user)
         self.assertEqual(self.run["status"], "failed")
-        await self.preview(); self.client.command.return_value = {"state": {**self.snapshot, "stateVersion": 11}}
+        self.client.command.side_effect = self.command
+        await self.preview(); self.client.command.side_effect = None; self.client.command.return_value = {"state": {**self.snapshot, "stateVersion": self.snapshot["stateVersion"] + 1}}
         with self.assertRaises(HTTPException):
             await routes.execute_cleanup("account-1", self.execution(), self.user)
         self.assertEqual(self.run["status"], "partial")
@@ -429,25 +529,58 @@ class CleanupConfigTests(unittest.IsolatedAsyncioTestCase):
 
 
 class AutoCleanupTests(unittest.IsolatedAsyncioTestCase):
+    async def test_transfer_failure_stops_before_disposal_and_keeps_last_confirmed_state(self):
+        snapshot = state(gear("worn", location="equipped"), gear("donor", enhance=4))
+        prepared = {**snapshot, "stateVersion": 11}
+        client = AsyncMock()
+        client.command.side_effect = [{"state": prepared}, TimeoutError("uncertain")]
+        budget = automation.TickBudget()
+        token = automation._tick_budget.set(budget)
+        try:
+            with patch.object(automation, "log", AsyncMock()), patch.object(automation, "patch_rows", AsyncMock()):
+                result = await automation._cleanup(client, snapshot, {"autoCleanup": True}, {"id": "a"})
+        finally:
+            automation._tick_budget.reset(token)
+        self.assertEqual([call.args[0] for call in client.command.await_args_list], ["equip.best", "item.transfer"])
+        self.assertEqual(result["stateVersion"], 11)
+        self.assertTrue(budget.stopped)
+        self.assertIn("uncertain", budget.error)
+
+    async def test_budget_exhaustion_during_preparation_never_disposes(self):
+        snapshot = state(gear("worn", location="equipped"), gear("donor", enhance=4))
+        client = AsyncMock()
+        client.command.return_value = {"state": {**snapshot, "stateVersion": 11}}
+        budget = automation.TickBudget(attempts=11)
+        token = automation._tick_budget.set(budget)
+        try:
+            with patch.object(automation, "log", AsyncMock()), patch.object(automation, "patch_rows", AsyncMock()):
+                result = await automation._cleanup(client, snapshot, {"autoCleanup": True}, {"id": "a"})
+        finally:
+            automation._tick_budget.reset(token)
+        self.assertEqual([call.args[0] for call in client.command.await_args_list], ["equip.best"])
+        self.assertEqual(result["stateVersion"], 11)
+        self.assertIsNone(budget.error)
+
     async def test_empty_auto_plan_logs_skip_and_never_sends_command(self):
         client = AsyncMock()
         with patch.object(automation, "log", AsyncMock()) as logs:
-            await automation._cleanup(client, state(gear("only", 1)), {"autoCleanup": True}, {"id": "a"})
+            await automation._cleanup(client, state(gear("only", 1, location="equipped")), {"autoCleanup": True}, {"id": "a"})
         client.command.assert_not_awaited()
         self.assertEqual(logs.await_args.kwargs["details"]["status"], "skipped")
 
     async def test_auto_records_rules_items_and_success_without_per_batch_confirmation(self):
-        snapshot = state(gear("keep", 10), gear("weak", 2))
+        snapshot = state(gear("keep", 10, location="equipped"), gear("weak", 2))
         client = AsyncMock()
-        client.command.return_value = {"state": state(gear("keep", 10)) | {"stateVersion": 11}}
-        with patch.object(automation, "log", AsyncMock()) as logs:
+        client.command.side_effect = [{"state": {**snapshot, "stateVersion": 11}}, {"state": state(gear("keep", 10, location="equipped")) | {"stateVersion": 12}}]
+        with patch.object(automation, "log", AsyncMock()) as logs, patch.object(automation, "patch_rows", AsyncMock()):
             await automation._cleanup(client, snapshot, {"autoCleanup": True}, {"id": "a"})
-        self.assertEqual([call.kwargs["details"]["status"] for call in logs.await_args_list], ["started", "succeeded"])
+        disposal_logs = [call for call in logs.await_args_list if call.args[2] == "item.dispose"]
+        self.assertEqual([call.kwargs["details"]["status"] for call in disposal_logs], ["started", "succeeded"])
         details = logs.await_args.kwargs["details"]
         self.assertEqual(details["items"][0]["id"], "weak")
         self.assertEqual(details["confirmation"], "not_required")
         self.assertEqual(details["removedIds"], ["weak"])
-        self.assertEqual(details["rules"]["keepPerDefinition"], 1)
+        self.assertEqual(details["rules"]["keepPerDefinition"], 0)
 
     async def test_partial_auto_disposal_keeps_new_state_but_stops_remaining_commands(self):
         old = state(gear("keep", 10), gear("weak", 2))
@@ -466,7 +599,7 @@ class AutoCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.command.await_count, 1)
 
     async def test_auto_cleanup_disables_native_before_settle_and_sends_one_batch(self):
-        snapshot = state(gear("keep", 10), gear("weak", 2))
+        snapshot = state(gear("keep", 10, location="equipped"), gear("weak", 2))
         snapshot["settings"]["autoSalvageTier"] = 7
         calls = []
         client = AsyncMock(); client.get_state.return_value = snapshot
@@ -483,7 +616,7 @@ class AutoCleanupTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(automation, "GameClient", return_value=client), patch.object(automation, "decrypt_session", return_value="mock"), patch.object(automation, "log", AsyncMock()), patch.object(automation, "patch_rows", AsyncMock(return_value=[])):
             result = await automation.run_account_tick({"id": "account-1", "enabled": True, "config": {"autoCleanup": True, "autoSalvage": True}})
         self.assertTrue(result["completed"])
-        self.assertEqual([name for name, _ in calls], ["settings.set", "settle", "item.dispose"])
+        self.assertEqual([name for name, _ in calls], ["settings.set", "settle", "equip.best", "item.dispose"])
         self.assertEqual(calls[0][1]["autoSalvageTier"], 0)
         self.assertEqual(calls[-1][1]["itemIds"], ["weak"])
 

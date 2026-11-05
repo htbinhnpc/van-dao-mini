@@ -23,7 +23,7 @@ export function CleanupLogDetails({ log }: { log: LogEntry }) {
     {data.confirmation != null && <div><dt>Xác nhận</dt><dd>{confirmation}</dd></div>}
     {(data.mode != null || rules.mode != null) && <div><dt>Cách xử lý</dt><dd>{(data.mode || rules.mode) === "sell" ? "Bán lấy linh thạch" : "Phân giải"}</dd></div>}
     {data.stateVersionBefore != null && <div><dt>State version</dt><dd>{display(data.stateVersionBefore)} → {data.stateVersionAfter == null ? "chưa xác nhận" : display(data.stateVersionAfter)}</dd></div>}
-    {Object.keys(rules).length > 0 && <div><dt>Bộ lọc</dt><dd>Phẩm tối đa: {display(rules.maxRarity)} · tier: {rules.maxTier === 0 ? "không giới hạn" : display(rules.maxTier)} · giữ/mẫu: {display(rules.keepPerDefinition)} · tối đa: {display(rules.maxItems)} món · vị trí: {strings(rules.slots).join(", ") || "tất cả"}</dd></div>}
+    {Object.keys(rules).length > 0 && <div><dt>Bộ lọc</dt><dd>Phẩm tối đa: {display(rules.maxRarity)} · tier: {rules.maxTier === 0 ? "không giới hạn" : display(rules.maxTier)} · {rules.keepPerDefinition === 0 ? "chỉ giữ đồ đang mặc (và đồ được bảo vệ)" : `giữ/mẫu: ${display(rules.keepPerDefinition)}`} · tối đa: {display(rules.maxItems)} món · vị trí: {strings(rules.slots).join(", ") || "tất cả"}</dd></div>}
     {data.cleanupSkipConfirmation != null && <div><dt>Bỏ hỏi xác nhận</dt><dd>{data.cleanupSkipConfirmation === true ? "Bật" : "Tắt"}</dd></div>}
     {data.autoCleanup != null && <div><dt>Auto dọn</dt><dd>{data.autoCleanup === true ? "Bật" : "Tắt"}</dd></div>}
     {ids.length > 0 && <div><dt>ID yêu cầu ({ids.length})</dt><dd><code>{ids.join(", ")}</code></dd></div>}

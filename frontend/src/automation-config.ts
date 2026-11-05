@@ -25,7 +25,7 @@ export const AUTO_GROUPS: AutoGroup[] = [
   ] },
   { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Trang bị theo game, dọn túi bằng bộ lọc Mini có kiểm soát.", flags: [
     { key: "autoEquipBest", label: "Tự trang bị", description: "Dùng bộ chọn của game. Khóa món bạn muốn giữ trước khi bật.", risk: true },
-    { key: "autoCleanup", label: "Dọn túi Mini", description: "Tự dọn theo lịch, không hỏi từng lần và ghi log từng mẻ. Chỉ dọn bản trùng cùng mẫu không hơn món giữ; bảo vệ đồ khóa/yêu thích/cường hóa.", risk: true },
+    { key: "autoCleanup", label: "Dọn túi Mini", description: "Mặc đồ mạnh nhất theo game, chuyển cường hóa cao nhất cùng ô (có phí), rồi dọn đồ không mặc trong bộ lọc; không giữ 1 bản/mẫu. Bảo vệ đồ khóa/yêu thích và cường hóa chưa chuyển được.", risk: true },
     { key: "autoSalvage", label: "Dọn đồ rơi gốc (cũ)", description: "Chỉ để tương thích thiết lập cũ. Tự tắt khi bật Dọn túi Mini; không bật cả hai bộ dọn.", risk: true },
   ] },
   { id: "alchemy", name: "Đan dược", icon: "spark", description: "Luyện và dùng đan có kiểm soát; các thao tác tiêu hao cần bật riêng.", flags: [

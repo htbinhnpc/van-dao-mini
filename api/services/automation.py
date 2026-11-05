@@ -19,6 +19,7 @@ from api.services.arena import ARENA_MIN_LEVEL, last_fight_lost, my_power, pick_
 from api.services.game_client import GameClient
 from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.cleanup import config_rules, plan_cleanup
+from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
 from api.services.session_crypto import decrypt_session
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
@@ -41,6 +42,10 @@ class IncompleteDisposal(ValueError):
     def __init__(self, state: dict):
         super().__init__("Game chưa xác nhận dọn đủ danh sách; đã giữ state mới và dừng vòng, không thử lại mù.")
         self.state = state
+
+
+class PreparationDeferred(ValueError):
+    pass
 
 
 def _can_command() -> bool:
@@ -106,6 +111,8 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     next_state = result.get("state")
     if not isinstance(next_state, dict) or not next_state.get("stateVersion"):
         raise ValueError("Game command response thiếu state/stateVersion; dừng vòng để tránh dùng state cũ.")
+    if command == "item.transfer":
+        validate_equipment_response(state, next_state, command, payload)
     if command == "item.dispose":
         remaining = next_state.get("equipment")
         if (type(next_state.get("stateVersion")) is not int or next_state["stateVersion"] <= state.get("stateVersion", 0)
@@ -293,15 +300,37 @@ async def _cleanup(client: GameClient, state: dict, config: dict, account: dict)
     if not config.get("autoCleanup") or not _can_command():
         return state
     rules = config_rules(config)
+
+    async def send(current: dict, name: str, payload: dict, label: str) -> dict:
+        if not _can_command():
+            raise PreparationDeferred("Hết ngân sách chuẩn bị trang bị; để vòng sau, chưa dọn.")
+        await log(account, "info", name, f"{label}: bắt đầu chuẩn bị dọn túi.", details={"status": "started", "source": "cleanup.prepare", **payload})
+        next_state = await _command(client, current, name, payload, account, label)
+        validate_equipment_response(current, next_state, name, payload)
+        await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": next_state})
+        return next_state
+
+    try:
+        state = await prepare_equipment(state, META, send)
+    except PreparationError as exc:
+        budget = _tick_budget.get()
+        if budget:
+            if not isinstance(exc.__cause__, PreparationDeferred):
+                budget.error = f"cleanup.prepare: {exc}"[:500]
+            budget.stopped = True
+        await log(account, "warning", "cleanup.prepare", f"Dừng trước khi dọn: {exc}")
+        return exc.state
+    if not _can_command():
+        return state
     plan = plan_cleanup(state, rules, META)
     ids = [item["id"] for item in plan["items"]]
     audit = {"rules": rules.model_dump(), "scanned": plan["scanned"], "summary": plan["summary"],
              "items": [{key: item[key] for key in ("id", "name", "defId", "keptItemId")} for item in plan["items"]]}
     if not ids:
-        await log(account, "info", "item.dispose", f"Dọn túi Mini (tự động): đã xét {plan['scanned']} món, không có bản trùng phù hợp; không gửi lệnh dọn.",
+        await log(account, "info", "item.dispose", f"Dọn túi Mini (tự động): đã xét {plan['scanned']} món, không có đồ dư phù hợp; không gửi lệnh dọn.",
                   details={**audit, "source": "autoCleanup", "confirmation": "not_required", "mode": rules.mode, "status": "skipped", "itemIds": []})
         return state
-    label = f"Dọn túi Mini: {'bán' if rules.mode == 'sell' else 'phân giải'} {len(ids)} bản trùng yếu hơn"
+    label = f"Dọn túi Mini: {'bán' if rules.mode == 'sell' else 'phân giải'} {len(ids)} món không mặc"
     return await _best_effort(client, state, "item.dispose", {"itemIds": ids, "mode": rules.mode}, account, label, audit=audit)
 
 
@@ -612,7 +641,8 @@ async def _run_account_tick(account: dict) -> dict:
     state = await _claim_ready(client, state, config, account)
     state = await _extra_rewards(client, state, config, account)
     state = await _encounters(client, state, config, account)
-    state = await _equipment(client, state, config, account)
+    if not config.get("autoCleanup"):
+        state = await _equipment(client, state, config, account)
     state = await _cleanup(client, state, config, account)
     state = await _minor_trial(client, state, config, account)
     state = await _activity(client, state, config, account)

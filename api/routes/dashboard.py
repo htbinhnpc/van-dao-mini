@@ -236,7 +236,7 @@ async def sync_config(account_id: str, user: dict = Depends(current_user)) -> di
 
 @router.post("/accounts/{account_id}/command")
 async def send_command(account_id: str, request: CommandRequest, user: dict = Depends(current_user)) -> dict:
-    if request.command == "item.dispose":
+    if request.command in {"item.dispose", "item.transfer"}:
         raise HTTPException(400, "Dùng chức năng Dọn túi Mini để kiểm tra bộ lọc và bảo vệ đồ trước khi bán/phân giải.")
     if request.command == "arena.fight":
         raise HTTPException(400, "Đấu trường chỉ chạy qua auto để áp dụng điều kiện lực chiến và giới hạn lượt.")

@@ -23,6 +23,8 @@ test("quick cleanup opts in without running, then disposes one fresh batch and s
   const requests = mock.mutations.filter((request) => request.path.includes("/cleanup/"));
   expect(requests.map((request) => request.path.split("/").at(-1))).toEqual(["preview", "execute"]);
   expect(requests[0].body.skipConfirmation).toBe(true);
+  expect(requests[0].body.prepareEquipment).toBe(true);
+  expect(requests[0].body.rules.keepPerDefinition).toBe(0);
   expect(requests[1].body).toMatchObject({ itemIds: ["weak-1", "weak-2"], skipConfirmation: true });
   await nav(page, "Nhật ký").click();
   await page.getByLabel("Tìm nhật ký", { exact: true }).fill("weak-2");
@@ -64,7 +66,7 @@ test("failed preference save never enables quick disposal", async ({ page }) => 
 test("quick mode also honors a manually reduced preview selection without a dialog", async ({ page }) => {
   const mock = await mockApi(page, { cleanup: true }); await openDashboard(page); await nav(page, "Túi đồ").click();
   await enableQuickCleanup(page);
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
   await page.getByRole("checkbox", { name: "Dọn Thanh Khê Thiết Kiếm weak-2", exact: true }).uncheck();
   await page.getByRole("button", { name: "Phân giải 1 món đã chọn", exact: true }).click();
   await expect(page.getByText(/Đã phân giải 1 món/)).toBeVisible();
@@ -92,7 +94,7 @@ test("quick cleanup does not execute an empty plan", async ({ page }) => {
   const mock = await mockApi(page, { cleanup: true, cleanupEmpty: true }); await openDashboard(page); await nav(page, "Túi đồ").click();
   await enableQuickCleanup(page);
   await page.getByRole("button", { name: "Tự chọn và dọn ngay", exact: true }).click();
-  await expect(page.getByText("Không có bản trùng phù hợp; chưa gửi lệnh bán/phân giải.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Đã chuẩn bị trang bị; không có đồ dư phù hợp để bán/phân giải.", { exact: true })).toBeVisible();
   expect(mock.mutations.filter((request) => request.path.endsWith("/cleanup/execute"))).toHaveLength(0);
 });
 
@@ -110,9 +112,12 @@ test("opting out of cleanup confirmations never skips other risky feature confir
   expect(mock.mutations.filter((request) => request.method === "PATCH")).toHaveLength(1);
 });
 
-test("cleanup preview is non-destructive, explains kept gear and requires confirmation", async ({ page }, info) => {
+test("cleanup prepares equipment with fee warning, then requires confirmation to dispose", async ({ page }, info) => {
   const mock = await mockApi(page, { cleanup: true }); await openDashboard(page); await nav(page, "Túi đồ").click();
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await expect(page.getByRole("spinbutton", { name: "Giữ ít nhất mỗi mẫu" })).toHaveCount(0);
+  await expect(page.locator(".cleanup-protection")).toContainText("Chuyển cường hóa có phí game");
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
+  expect(mock.mutations.find((request) => request.path.endsWith("/cleanup/preview"))?.body).toMatchObject({ prepareEquipment: true, rules: { keepPerDefinition: 0 } });
   await expect(page.locator(".cleanup-items li")).toHaveCount(2);
   expect(mock.mutations.filter((request) => request.path.endsWith("/cleanup/execute"))).toHaveLength(0);
   await page.getByText("Xem đồ được giữ và lý do (2)", { exact: true }).click();
@@ -140,7 +145,7 @@ test("cleanup preview is non-destructive, explains kept gear and requires confir
 
 test("changing filters or clearing the selection invalidates destructive action", async ({ page }) => {
   const mock = await mockApi(page, { cleanup: true }); await openDashboard(page); await nav(page, "Túi đồ").click();
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
   await page.getByRole("button", { name: "Bỏ chọn tất cả", exact: true }).click();
   await expect(page.getByRole("button", { name: "Phân giải 0 món đã chọn", exact: true })).toBeDisabled();
   await page.getByRole("combobox", { name: "Cách xử lý", exact: true }).selectOption("sell");
@@ -150,7 +155,7 @@ test("changing filters or clearing the selection invalidates destructive action"
 
 test("expired cleanup preview cannot be executed", async ({ page }) => {
   await page.clock.install(); const mock = await mockApi(page, { cleanup: true }); await openDashboard(page); await nav(page, "Túi đồ").click();
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
   await expect(page.locator(".cleanup-items li")).toHaveCount(2);
   await page.clock.fastForward(121_000);
   await expect(page.getByText("Đã hết hạn — xem trước lại", { exact: true })).toBeVisible();
@@ -161,7 +166,7 @@ test("expired cleanup preview cannot be executed", async ({ page }) => {
 for (const scenario of ["conflict", "failure"] as const) test(`cleanup ${scenario} clears confirmation without blindly retrying`, async ({ page }) => {
   const mock = await mockApi(page, { cleanup: true, cleanupConflict: scenario === "conflict", cleanupFailure: scenario === "failure" });
   await openDashboard(page); await nav(page, "Túi đồ").click();
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
   await page.getByRole("button", { name: "Phân giải 2 món đã chọn", exact: true }).click();
   await page.getByRole("button", { name: "Xác nhận phân giải 2 món", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText(scenario === "conflict" ? "State game đã thay đổi" : "Không xác nhận được kết quả");
@@ -173,7 +178,7 @@ for (const scenario of ["conflict", "failure"] as const) test(`cleanup ${scenari
 test("an in-flight cleanup locks account navigation and cannot be double submitted", async ({ page }) => {
   let release!: () => void; const holdCleanup = new Promise<void>((resolve) => { release = resolve; });
   const mock = await mockApi(page, { cleanup: true, holdCleanup }); await openDashboard(page); await nav(page, "Túi đồ").click();
-  await page.getByRole("button", { name: "Xem trước đồ sẽ dọn", exact: true }).click();
+  await page.getByRole("button", { name: "Mặc đồ tốt nhất & xem trước dọn", exact: true }).click();
   await page.getByRole("button", { name: "Phân giải 2 món đã chọn", exact: true }).click();
   await page.getByRole("button", { name: "Xác nhận phân giải 2 món", exact: true }).click();
   try {

@@ -1,12 +1,8 @@
-"""Conservative inventory cleanup policy. Never changes game state by itself.
-
-Compare only identical base definitions: no guessed combat score, cross-build
-weapon selection, set-bonus valuation or implicit disposal of unique gear.
-"""
+"""Keep the equipped loadout, not one spare per definition. Pure planner."""
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from decimal import Decimal, InvalidOperation
 from typing import Any, Literal
 
@@ -19,11 +15,17 @@ SLOTS = ("weapon", "robe", "head", "bracer", "belt", "boots", "ring", "pendant")
 class CleanupRules(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     mode: Literal["salvage", "sell"] = "salvage"
-    maxRarity: Literal["pham", "linh", "huyen", "dia", "thien", "tien", "dao"] = "pham"
+    maxRarity: Literal["pham", "linh", "huyen", "dia", "thien", "tien", "dao"] = "dao"
     maxTier: int = Field(default=0, ge=0, le=99)
-    keepPerDefinition: int = Field(default=1, ge=1, le=10)
+    # Accepted for old saved configs/clients; no longer reserves bag copies.
+    keepPerDefinition: int = Field(default=0, ge=0, le=10)
     maxItems: int = Field(default=20, ge=1, le=60)
     slots: list[str] = Field(default_factory=list, max_length=8)
+
+    @field_validator("keepPerDefinition")
+    @classmethod
+    def no_spares(cls, value: int) -> int:
+        return 0
 
     @field_validator("slots")
     @classmethod
@@ -36,9 +38,9 @@ class CleanupRules(BaseModel):
 def config_rules(config: dict) -> CleanupRules:
     return CleanupRules(
         mode=config.get("cleanupMode", "salvage"),
-        maxRarity=config.get("cleanupMaxRarity", "pham"),
+        maxRarity=config.get("cleanupMaxRarity", "dao"),
         maxTier=config.get("cleanupMaxTier", 0),
-        keepPerDefinition=config.get("cleanupKeepPerDefinition", 1),
+        keepPerDefinition=0,
         maxItems=config.get("cleanupMaxItems", 20),
         slots=config.get("cleanupSlots", []),
     )
@@ -48,10 +50,9 @@ REASONS = {
     "not_bag": "Không ở trong túi (đang mặc/kho/vị trí khác)",
     "protected": "Đã khóa hoặc đánh dấu yêu thích",
     "unknown": "Thiếu dữ liệu an toàn hoặc metadata/chỉ số chưa hỗ trợ",
-    "enhanced": "Đã cường hóa",
-    "future": "Chưa đủ cấp sử dụng",
+    "enhanced": "Cường hóa cao hơn món đang mặc; chưa chuyển được hết",
+    "empty_slot": "Chưa có món đang mặc hợp lệ ở ô này",
     "filter": "Ngoài bộ lọc phẩm chất/cấp đồ/vị trí",
-    "keep": "Giữ bản dự phòng hoặc chỉ số không kém hoàn toàn",
     "limit": "Để lại cho mẻ sau vì giới hạn số món",
 }
 
@@ -95,22 +96,26 @@ def _vector(item: dict, stats: dict) -> dict[str, Decimal] | None:
     return result
 
 
-def _dominates(keeper: dict[str, Decimal], candidate: dict[str, Decimal]) -> bool:
-    return all(keeper.get(key, Decimal(0)) >= candidate.get(key, Decimal(0)) for key in keeper.keys() | candidate.keys())
-
-
 def plan_cleanup(state: dict, rules: CleanupRules, meta: dict) -> dict:
     equipment = state.get("equipment")
     if not isinstance(equipment, list):
         equipment = []
     rows = [item for item in equipment if isinstance(item, dict)]
     counts = Counter(item.get("id") for item in rows if isinstance(item.get("id"), str))
-    level = _whole((state.get("character") or {}).get("level"))
-    groups: dict[str, list[dict]] = defaultdict(list)
+    worn = {}
+    for slot in SLOTS:
+        matches = [item for item in rows if item.get("location") == "equipped" and item.get("slot") == slot]
+        if len(matches) == 1:
+            item = matches[0]
+            definition = meta.get("equipment", {}).get(item.get("defId")) if isinstance(item.get("defId"), str) else None
+            if (isinstance(item.get("id"), str) and counts[item["id"]] == 1 and definition
+                    and definition.get("slot") == slot and _vector(item, meta.get("stats", {})) is not None):
+                worn[slot] = item
     reasons: Counter = Counter()
     if len(rows) < len(equipment):
         reasons["unknown"] += len(equipment) - len(rows)
     kept: list[dict] = []
+    candidates: list[dict] = []
     for item in rows:
         item_id = item.get("id")
         definition = meta.get("equipment", {}).get(item.get("defId")) if isinstance(item.get("defId"), str) else None
@@ -124,14 +129,13 @@ def plan_cleanup(state: dict, rules: CleanupRules, meta: dict) -> dict:
             reason = "protected"
         elif item.get("locked") is not False or item.get("favorite") is not False:
             reason = "unknown"
-        elif _whole(item.get("enhance")) != 0:
-            reason = "enhanced"
-        elif (level is None or _whole(definition.get("reqLevel")) is None
-              or item.get("slot") != definition.get("slot") or definition.get("slot") not in SLOTS
+        elif (item.get("slot") != definition.get("slot") or definition.get("slot") not in SLOTS
               or definition.get("rarity") not in RARITIES or _whole(definition.get("tier")) is None):
             reason = "unknown"
-        elif _whole(definition["reqLevel"]) > level:
-            reason = "future"
+        elif item.get("slot") not in worn:
+            reason = "empty_slot"
+        elif _whole(item.get("enhance")) > _whole(worn[item["slot"]].get("enhance")):
+            reason = "enhanced"
         elif (RARITIES.index(definition["rarity"]) > RARITIES.index(rules.maxRarity)
               or (rules.maxTier and _whole(definition["tier"]) > rules.maxTier)
               or (rules.slots and definition["slot"] not in rules.slots)):
@@ -147,29 +151,8 @@ def plan_cleanup(state: dict, rules: CleanupRules, meta: dict) -> dict:
         if reason:
             reasons[reason] += 1
             kept.append({**row, "reasonLabel": REASONS[reason]})
-        # Only known owned gear in bag/equipped can act as a witness. Stored
-        # gear in a vault or malformed/duplicated IDs cannot justify a disposal.
-        if (definition and vector is not None and isinstance(item_id, str) and counts[item_id] == 1
-                and item.get("location") in ("bag", "equipped") and item.get("slot") == definition.get("slot")):
-            groups[item["defId"]].append({"row": row, "vector": vector, "eligible": reason is None})
-
-    candidates: list[dict] = []
-    for group in groups.values():
-        dimensions = sorted({key for entry in group for key in entry["vector"]})
-        # Componentwise dominators always precede dominated rows in this order.
-        # Ordering is NOT a combat score; trade-offs never justify destruction.
-        ordered = sorted(group, key=lambda entry: tuple(entry["vector"].get(key, Decimal(0)) for key in dimensions), reverse=True)
-        witnesses = [entry for entry in ordered if not entry["eligible"]]
-        for entry in ordered:
-            if not entry["eligible"]:
-                continue
-            witness = next((other for other in witnesses if _dominates(other["vector"], entry["vector"])), None)
-            if len(witnesses) < rules.keepPerDefinition or witness is None:
-                witnesses.append(entry)
-                reasons["keep"] += 1
-                kept.append({**entry["row"], "reason": "keep", "reasonLabel": REASONS["keep"]})
-            else:
-                candidates.append({**entry["row"], "reason": "dominated_duplicate", "reasonLabel": "Bản trùng không hơn món được giữ ở bất kỳ chỉ số nào", "keptItemId": witness["row"]["id"]})
+        else:
+            candidates.append({**row, "reason": "not_equipped", "reasonLabel": "Không mặc; giữ món đang trang bị cùng ô", "keptItemId": worn[item["slot"]]["id"]})
     selected, deferred = candidates[:rules.maxItems], candidates[rules.maxItems:]
     for row in deferred:
         kept.append({**row, "reason": "limit", "reasonLabel": REASONS["limit"]})

@@ -6,9 +6,9 @@ import { expect, type Page } from "@playwright/test";
 const bundledMeta = JSON.parse(readFileSync(new URL("../../data/meta.json", import.meta.url), "utf8"));
 export const defaultConfig = {
   enabled: false, intervalMs: 60000, autoMinor: true, autoSalvage: false, autoSalvageTier: 0,
-  autoCleanup: false, cleanupMode: "salvage", cleanupMaxRarity: "pham", cleanupMaxTier: 0,
+  autoCleanup: false, cleanupMode: "salvage", cleanupMaxRarity: "dao", cleanupMaxTier: 0,
   cleanupSkipConfirmation: false,
-  cleanupKeepPerDefinition: 1, cleanupMaxItems: 20, cleanupSlots: [],
+  cleanupKeepPerDefinition: 0, cleanupMaxItems: 20, cleanupSlots: [],
   autoSalvageMode: "salvage", autoActivity: false, activityType: "farm", huntSpotId: "",
   autoQuests: true, autoDaily: true, autoWeekly: false, autoAchievements: false, autoMail: true,
   autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 10,
@@ -85,7 +85,7 @@ export async function mockApi(page: Page, options: Options = {}) {
       previewId: options.cleanupEmpty ? null : "11111111-1111-4111-8111-111111111111", expiresAt: Math.floor(Date.now() / 1000) + 120,
       state: account.state,
       plan: { stateVersion: account.state.stateVersion, scanned: account.state.equipment.length, candidateCount: 2, deferredCount: 0,
-        items: (options.cleanupEmpty ? [] : ["weak-1", "weak-2"]).map((id) => ({ id, name: "Thanh Khê Thiết Kiếm", rarity: "pham", tier: 1, slot: "weapon", reasonLabel: "Bản trùng không hơn món được giữ ở bất kỳ chỉ số nào", keptItemId: "keeper" })),
+        items: (options.cleanupEmpty ? [] : ["weak-1", "weak-2"]).map((id) => ({ id, name: "Thanh Khê Thiết Kiếm", rarity: "pham", tier: 1, slot: "weapon", reasonLabel: "Không mặc; giữ món đang trang bị cùng ô", keptItemId: "keeper" })),
         kept: [{ id: "keeper", name: "Thanh Khê Thiết Kiếm", reasonLabel: "Đang mặc" }, { id: "protected", name: "Thanh Khê Thiết Kiếm đã khóa", reasonLabel: "Đã khóa hoặc đánh dấu yêu thích" }],
         summary: [{ reason: "protected", label: "Đã khóa hoặc đánh dấu yêu thích", count: 1 }],
       },

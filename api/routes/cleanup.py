@@ -1,4 +1,4 @@
-"""Preview-bound, single-use inventory disposal. No game mutations on preview."""
+"""Prepare equipment, then preview-bound, single-use inventory disposal."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from api.routes.accounts import account_config, owned_account
 from api.security import current_user
 from api.services.automation import META
 from api.services.cleanup import CleanupRules, plan_cleanup
+from api.services.equipment import prepare_equipment, validate_equipment_response
 from api.services.game_client import GameClient
 from api.services.session_crypto import decrypt_session
 
@@ -25,6 +26,7 @@ class PreviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     rules: CleanupRules = Field(default_factory=CleanupRules)
     skipConfirmation: bool = Field(default=False, strict=True)
+    prepareEquipment: bool = Field(default=False, strict=True)
 
 
 class ExecuteRequest(BaseModel):
@@ -46,19 +48,59 @@ async def preview_cleanup(account_id: str, request: PreviewRequest, user: dict =
     account = await owned_account(user["id"], account_id)
     if request.skipConfirmation and (await account_config(account_id)).get("cleanupSkipConfirmation") is not True:
         raise HTTPException(409, "Chưa bật tùy chọn dọn không hỏi xác nhận cho tài khoản này.")
+    if not request.prepareEquipment:
+        raise HTTPException(422, "Cần cho phép mặc đồ mạnh nhất và chuyển cường hóa trước khi xem trước dọn túi.")
+    now = datetime.now(timezone.utc)
+    lease = (now + timedelta(seconds=120)).isoformat()
+    account_filter = f"id=eq.{filter_value(account_id)}&user_id=eq.{filter_value(user['id'])}"
+    leased = await patch_rows("game_accounts", f"{account_filter}&or=(lease_until.is.null,lease_until.lt.{filter_value(now.isoformat())})", {"lease_until": lease})
+    if not leased:
+        raise HTTPException(409, "Tài khoản đang có lượt xử lý khác. Chờ xong rồi thử lại.")
     try:
-        state = await GameClient(cookie=decrypt_session(account), timeout=15).get_state()
+        async with asyncio.timeout(40):
+            client = GameClient(cookie=decrypt_session(account), timeout=15)
+            state = await client.get_state()
+            if type(state.get("stateVersion")) is not int or state["stateVersion"] < 1:
+                raise ValueError("State game thiếu version.")
+
+            async def send(current: dict, name: str, payload: dict, label: str) -> dict:
+                await insert_one("activity_logs", {
+                    "account_id": account_id, "level": "info", "action": name,
+                    "message": f"{label}: bắt đầu chuẩn bị dọn túi.",
+                    "details": {"status": "started", "source": "cleanup.prepare", **payload},
+                })
+                result = await client.command(name, payload, expected_version=current["stateVersion"])
+                next_state = result.get("state")
+                validate_equipment_response(current, next_state, name, payload)
+                await patch_rows("game_accounts", account_filter, {"state_snapshot": next_state})
+                await insert_one("activity_logs", {
+                    "account_id": account_id, "level": "success", "action": name, "message": f"{label}: game đã xác nhận.",
+                    "details": {"status": "succeeded", "source": "cleanup.prepare", **payload,
+                                "stateVersionBefore": current["stateVersion"], "stateVersionAfter": next_state["stateVersion"]},
+                })
+                return next_state
+
+            state = await prepare_equipment(state, META, send)
     except Exception as exc:
-        raise HTTPException(502, "Không tải được túi mới từ game. Chưa gửi lệnh bán/phân giải.") from exc
-    if type(state.get("stateVersion")) is not int or state["stateVersion"] < 1:
-        raise HTTPException(502, "State game thiếu version; không tạo xác nhận dọn đồ.")
+        try:
+            await insert_one("activity_logs", {"account_id": account_id, "level": "warning", "action": "cleanup.prepare",
+                             "message": "Chưa hoàn tất trang bị/chuyển cường hóa; không gửi lệnh dọn. Đồng bộ game trước khi thử lại.",
+                             "details": {"status": "uncertain"}})
+        except Exception:
+            pass
+        raise HTTPException(502, "Chưa hoàn tất mặc đồ/chuyển cường hóa (có thể thiếu phí). Chưa bán/phân giải; hãy đồng bộ game và kiểm tra nhật ký.") from exc
+    finally:
+        try:
+            await patch_rows("game_accounts", f"{account_filter}&lease_until=eq.{filter_value(lease)}", {"lease_until": None})
+        except Exception:
+            pass  # Leave the expiring lease rather than masking a game outcome.
     plan = plan_cleanup(state, request.rules, META)
     expires = int(time.time()) + 120
     preview_id = None
     if plan["items"]:
         run = await insert_one("automation_runs", {
             "account_id": account_id, "status": "queued",
-            "cursor": {"type": "cleanup_v1", "stateVersion": state["stateVersion"],
+            "cursor": {"type": "cleanup_v2", "stateVersion": state["stateVersion"],
                        "rules": request.rules.model_dump(), "itemIds": [item["id"] for item in plan["items"]],
                        "expiresAt": expires},
         })
@@ -66,7 +108,7 @@ async def preview_cleanup(account_id: str, request: PreviewRequest, user: dict =
     elif request.skipConfirmation:
         await insert_one("activity_logs", {
             "account_id": account_id, "level": "info", "action": "cleanup.manual",
-            "message": f"Dọn túi Mini (không hỏi xác nhận): đã xét {plan['scanned']} món, không có bản trùng phù hợp; không gửi lệnh dọn.",
+            "message": f"Dọn túi Mini (không hỏi xác nhận): đã xét {plan['scanned']} món, không có đồ dư phù hợp; không gửi lệnh dọn.",
             "details": {"source": "quick", "confirmation": "skipped", "status": "skipped", "mode": request.rules.mode,
                         "rules": request.rules.model_dump(), "itemIds": [], "scanned": plan["scanned"], "summary": plan["summary"]},
         })
@@ -80,7 +122,7 @@ async def execute_cleanup(account_id: str, request: ExecuteRequest, user: dict =
     run_filter = f"id=eq.{filter_value(run_id)}&account_id=eq.{filter_value(account_id)}"
     run = await select_one("automation_runs", f"{run_filter}&select=*")
     cursor = (run or {}).get("cursor") or {}
-    if (not run or run.get("status") != "queued" or cursor.get("type") != "cleanup_v1"
+    if (not run or run.get("status") != "queued" or cursor.get("type") != "cleanup_v2"
             or type(cursor.get("expiresAt")) is not int or cursor["expiresAt"] <= time.time()):
         raise HTTPException(409, "Bản xem trước đã hết hạn hoặc đã dùng. Hãy xem trước lại; không gửi lại lệnh cũ.")
     approved = cursor.get("itemIds")
