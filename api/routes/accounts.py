@@ -68,6 +68,10 @@ DEFAULT_CONFIG = {
     "farmSeedMode": "best",
     "farmSeedId": "",
     "farmReserveStones": 0,
+    "autoArena": False,
+    "arenaMinPowerEdge": 5000,
+    "arenaMaxRefresh": 3,
+    "arenaMaxFights": 3,
 }
 
 

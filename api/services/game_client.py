@@ -43,6 +43,7 @@ ALLOWED_COMMANDS = frozenset(
         "npc.claim",
         "hunt.run",
         "item.dispose",
+        "arena.fight",
     }
 )
 
@@ -110,6 +111,14 @@ class GameClient:
         if not isinstance(state, dict):
             raise GameAPIError("Game API response is missing state.", status_code=502)
         return state
+
+    async def get_arena(self, pick: int = 0) -> dict[str, Any]:
+        """Read the arena board; ``pick`` is the game's refresh counter (a new value redraws opponents)."""
+        data = await self._request("GET", f"/api/arena?pick={max(0, int(pick))}")
+        arena = data.get("arena")
+        if not isinstance(arena, dict):
+            raise GameAPIError("Game API response is missing arena.", status_code=502)
+        return arena
 
     async def command(
         self,

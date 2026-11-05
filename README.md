@@ -62,6 +62,7 @@ npc.talk
 npc.claim
 hunt.run
 item.dispose
+arena.fight
 ```
 
 Không chỉnh sửa dữ liệu máy chủ hay vượt qua giới hạn của game. Trên Vercel, Cron xử lý lần lượt các tài khoản đến hạn và dừng trước deadline Function; các tài khoản còn lại tiếp tục ở lượt Cron sau. Nhịp gọi Cron thực tế do `vercel.json` quyết định.
@@ -81,6 +82,10 @@ Không chỉnh sửa dữ liệu máy chủ hay vượt qua giới hạn của g
 
 Các lệnh bán/phân giải mới chỉ được kiểm thử bằng mock và trình duyệt dùng API fixtures; không thử trên tài khoản thật. `item.dispose` bị chặn ở endpoint gửi lệnh tùy ý: phải qua luồng cleanup hoặc policy auto.
 
+### Chọn bãi săn tối ưu tu vi
+
+Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`), Mini chọn bãi có **`expPerCycle` cao nhất** trong các bãi thường thuộc vùng đã mở và đạt `reqLevel` — không dựa vào cấp khuyến nghị (`recLevel`). Bãi `x2_spot_hunt_*` và `spot_puppet_*` bị bỏ qua. Vì tu vi chỉ được cộng khi thắng, Mini thử bãi cao nhất rồi học theo `state.activity.win`: nếu game báo thua, nhớ bãi đó trong `automation_data.farmSpotLosses` và chuyển xuống bãi nhiều tu vi kế tiếp, không quay lại ngay (tránh nhảy qua lại). Bãi bị thua được thử lại sau 30 phút, hoặc sớm hơn khi `state.power` tăng ≥ 10% so với lúc thua. Nếu mọi bãi đủ điều kiện đều vừa thua thì chuyển sang bế quan. Tắt `autoFallbackHunt` để luôn ở bãi cao nhất, kể cả khi thua. Logic ở `api/services/farming.py`.
+
 ### Auto mở rộng (tất cả mặc định tắt)
 
 Đối chiếu JavaScript **công khai** của game ngày 2026-11-04 (Chrome đang khóa cache; đã dùng bundle công khai thay thế theo lựa chọn người dùng). Đây là logic/payload quan sát từ client, không phải mã xử lý trên server hoặc cam kết API ổn định. Xem bằng chứng trong `api_knowledge.md`.
@@ -95,6 +100,7 @@ Các lệnh bán/phân giải mới chỉ được kiểm thử bằng mock và 
 | `autoNpcTalk` | Tối đa 2 đạo hữu đã gặp/vòng, chưa trò chuyện ngày và thiện cảm dưới 1000; không tặng quà hay tự chọn quan hệ. |
 | `autoNpcRewards` | Tối đa 2 quà mốc thiện cảm/vòng; dùng state mới sau trò chuyện và bỏ qua mốc đã nhận. |
 | `autoHunt` | Bắt buộc chọn `huntPetId` trong 40 linh thú khế ấn; đủ cấp, còn lượt trên `huntReserveRuns`, chưa đủ khế ấn và chưa thu nhận. Tối đa 1 lượt/vòng, chờ `huntIntervalMin` (mặc định 10 phút) kể cả thua. Không mua thêm lượt. |
+| `autoArena` | Đấu hạng đấu trường (`arena.fight` với `ranked:true`), cấp ≥ 10, còn `rankedLeft`. Đọc bảng bằng `GET /api/arena?pick=N`; chỉ chọn đối thủ **cùng nhóm cảnh giới** có `power` thấp hơn `state.power` của bạn ít nhất `arenaMinPowerEdge` (mặc định 5.000), ưu tiên chênh lệch lớn nhất (rồi điểm hạng cao hơn). Không có ai phù hợp thì "làm mới" bằng cách tăng `pick`, tối đa `arenaMaxRefresh` lần (mặc định 3); vẫn không có thì không đánh và nghỉ 15 phút. Tối đa `arenaMaxFights` trận/vòng (mặc định 3); không luận bàn, không mua đồ bằng điểm. Không biết `state.power` thì không đánh. Thua thì tránh đánh lại người đó 1 giờ. Lực chiến chỉ là chỉ báo ước tính của server; `arena.fight` bị chặn ở endpoint gửi lệnh tùy ý. |
 
 Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng **tối đa 12 lệnh**, chỉ bắt đầu lệnh trong cửa sổ 40 giây. Phần chưa chạy để vòng sau. Nếu lệnh lỗi, timeout, xung đột version hoặc phản hồi thiếu state, dừng phần còn lại và lưu lỗi; không retry lệnh có tác dụng phụ với key mới. Lịch sử khoảng nghỉ lưu trong `automation_data`, không chỉ giữ trong RAM. Các kiểm thử dùng mock, chưa bật/thử auto mới trên tài khoản game thật.
 

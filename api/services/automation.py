@@ -13,6 +13,8 @@ from typing import Any
 
 from api.database import filter_value, insert_one, patch_rows
 from api.routes.accounts import DEFAULT_CONFIG
+from api.services.farming import rank_spots, update_losses
+from api.services.arena import ARENA_MIN_LEVEL, last_fight_lost, my_power, pick_opponent, ranked_left
 from api.services.game_client import GameClient
 from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.cleanup import config_rules, plan_cleanup
@@ -111,10 +113,16 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
         if any(e.get("id") in payload["itemIds"] for e in remaining if isinstance(e, dict)):
             raise IncompleteDisposal(next_state)
     outcome = result.get("result") or {}
-    lost = outcome.get("win") is False or outcome.get("success") is False
+    lost = outcome.get("win") is False or outcome.get("won") is False or outcome.get("success") is False
+    if command == "arena.fight":
+        if outcome.get("won") is not None:
+            delta = outcome.get("ratingDelta")
+            label += f" · {'Thắng' if outcome['won'] else 'Không thắng'}" + (f" ({delta:+d} điểm)" if isinstance(delta, int) and not isinstance(delta, bool) else "")
+        details = {**(audit or {}), "won": outcome.get("won"), "ratingDelta": outcome.get("ratingDelta"),
+                   "rating": outcome.get("rating"), "tokens": outcome.get("tokens")}
     if command == "settle":
         label = f"Kết toán tu vi: +{(result.get('settle') or {}).get('expGained', 0)}"
-    if details is not None:
+    if command == "item.dispose" and details is not None:
         details = {**details, "status": "succeeded", "removedIds": payload["itemIds"], "remainingIds": [], "stateVersionAfter": next_state["stateVersion"]}
         label += " (tự động, không hỏi xác nhận) · Game đã xác nhận dọn đủ danh sách"
     await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label, details=details)
@@ -191,7 +199,7 @@ async def _extra_rewards(client: GameClient, state: dict, config: dict, account:
     return state
 
 
-async def _remember_attempt(account: dict, key: str, now: int) -> None:
+async def _remember_attempt(account: dict, key: str, now: Any) -> None:
     data = {**(account.get("automation_data") or {}), key: now}
     await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"automation_data": data})
     account["automation_data"] = data
@@ -304,26 +312,24 @@ async def _activity(client: GameClient, state: dict, config: dict, account: dict
     if activity_type == "farm":
         regions = {r.get("id") for r in (state.get("regions") or []) if r.get("unlocked")}
         level = _num((state.get("character") or {}).get("level"))
-        spots = [s for s in META.get("spots", {}).values()
-                 if s.get("regionId") in regions and _num(s.get("reqLevel")) <= level]
-        current = state.get("activity") or {}
-        lost_at_spot = current.get("type") == "farm" and current.get("win") is False
-        no_fallback = False
-        if config.get("huntSpotId"):
-            spots = [s for s in spots if s.get("id") == config["huntSpotId"]]
-        if config.get("autoFallbackHunt") and lost_at_spot:
-            current_level = _num(META.get("spots", {}).get(current.get("targetId"), {}).get("reqLevel"))
-            spots = sorted([s for s in spots if _num(s.get("reqLevel")) < current_level],
-                           key=lambda s: _num(s.get("reqLevel")), reverse=True)
-            no_fallback = not spots
+        power = my_power(state)
+        now = int(time.time() * 1000)
+        stored = (account.get("automation_data") or {}).get("farmSpotLosses") or {}
+        losses = update_losses(stored, state.get("activity"), now_ms=now, power=power)
+        if losses != stored:
+            await _remember_attempt(account, "farmSpotLosses", losses)
+        spots = {k: v for k, v in META.get("spots", {}).items()
+                 if not config.get("huntSpotId") or v.get("id") == config["huntSpotId"]}
+        # Best experience first (not "recommended level"): the highest-yield spot we may enter,
+        # stepping down only past spots the game says we lose at, until a cool-down/power gain.
+        ranked = rank_spots(spots, regions, level, losses=losses, now_ms=now, power=power,
+                            avoid_losses=bool(config.get("autoFallbackHunt")))
+        if ranked:
+            payload["targetId"] = ranked[0]["id"]
+        elif rank_spots(spots, regions, level, avoid_losses=False):
+            payload = {"type": "seclusion"}  # every enterable spot was lost recently
         else:
-            spots = sorted(spots, key=lambda s: _num(s.get("expPerCycle")), reverse=True)
-        if no_fallback:
-            payload = {"type": "seclusion"}
-        elif not spots:
             return state
-        else:
-            payload["targetId"] = spots[0]["id"]
     current = state.get("activity") or {}
     if current.get("type") == payload["type"] and (activity_type != "farm" or current.get("targetId") == payload.get("targetId")):
         return state
@@ -441,6 +447,74 @@ async def _boss(client: GameClient, state: dict, config: dict, account: dict) ->
     return result
 
 
+async def _arena(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    """Ranked arena: fight only opponents we out-power by ``arenaMinPowerEdge``; refresh the list when none fit."""
+    if not config.get("autoArena") or not _can_command():
+        return state
+    data = account.get("automation_data") or {}
+    now = int(time.time() * 1000)
+    if _num(data.get("arenaIdleUntil")) > now:
+        return state
+    if _num((state.get("character") or {}).get("level")) < ARENA_MIN_LEVEL:
+        return state
+    budget = _tick_budget.get()
+
+    async def read(pick: int) -> dict:
+        request = client.get_arena(pick)
+        return await asyncio.wait_for(request, max(0.01, budget.deadline - time.monotonic())) if budget else await request
+
+    async def idle(minutes: int, key: str = "arenaIdleUntil") -> None:
+        await _remember_attempt(account, key, now + minutes * 60_000)
+
+    edge = max(0, _num(config.get("arenaMinPowerEdge"), 5000))
+    max_refresh = max(0, int(_num(config.get("arenaMaxRefresh"), 3)))
+    fights = max(1, int(_num(config.get("arenaMaxFights"), 3)))
+    avoid = {k: v for k, v in (data.get("arenaLostAt") or {}).items() if now - _num(v) < 3_600_000}
+    try:
+        for _ in range(fights):
+            power = my_power(state)
+            if power is None or not _can_command():
+                if power is None:
+                    await log(account, "warning", "arena.fight", "Đấu trường: chưa biết lực chiến của bạn (state.power); bỏ qua, không đánh mù.")
+                    await idle(30)
+                break
+            pick = 0
+            arena = await read(pick)
+            if ranked_left(arena) <= 0:
+                await idle(60)
+                break
+            target = pick_opponent(arena, power, min_edge=edge, avoid=avoid, now_ms=now)
+            while target is None and pick < max_refresh:
+                pick += 1  # "Làm mới đối thủ": the game redraws 5 of the 20 closest by rating
+                arena = await read(pick)
+                target = pick_opponent(arena, power, min_edge=edge, avoid=avoid, now_ms=now)
+            if target is None:
+                await log(account, "info", "arena.fight",
+                          f"Đấu trường: không có đối thủ cùng nhóm yếu hơn bạn ≥ {int(edge):,} lực chiến sau {pick} lần làm mới; không đánh.",
+                          details={"myPower": power, "minEdge": edge, "refreshes": pick})
+                await idle(15)
+                break
+            audit = {"defenderId": target["characterId"], "defenderName": target.get("name"), "myPower": power,
+                     "theirPower": _num(target.get("power")), "powerEdge": power - _num(target.get("power")),
+                     "theirRating": target.get("rating"), "refreshes": pick, "ranked": True}
+            before = state
+            state = await _best_effort(client, state, "arena.fight", {"defenderId": target["characterId"], "ranked": True},
+                                       account, f"Đấu trường (đấu hạng) vs {target.get('name') or target['characterId']} · lực chiến {int(_num(target.get('power'))):,} (bạn {int(power):,})",
+                                       audit=audit)
+            if state is before:  # failed/uncertain: _best_effort already stopped the tick
+                break
+            try:
+                if last_fight_lost(await read(0), target["characterId"]):
+                    avoid[target["characterId"]] = now
+                    await _remember_attempt(account, "arenaLostAt", avoid)
+            except Exception:
+                pass
+    except Exception as exc:
+        # Reads are harmless, but stop this tick's arena work and surface the error.
+        await log(account, "warning", "arena.fight", f"Đấu trường: không đọc được bảng đối thủ: {str(exc)[:300] or type(exc).__name__}")
+    return state
+
+
 async def _farm(client: GameClient, state: dict, config: dict, account: dict) -> dict:
     cave = state.get("cave") or {}
     if not config.get("autoFarm") or not cave.get("unlocked"):
@@ -521,6 +595,7 @@ async def _run_account_tick(account: dict) -> dict:
     state = await _craft(client, state, config, account)
     state = await _boss(client, state, config, account)
     state = await _farm(client, state, config, account)
+    state = await _arena(client, state, config, account)
     error = budget.error if budget else None
     await patch_rows(
         "game_accounts",

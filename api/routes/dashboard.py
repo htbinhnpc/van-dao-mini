@@ -43,6 +43,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "useThresholdMin": (0, 240), "craftKeepQty": (0, 9999),
         "farmReserveStones": (0, 10**18), "huntReserveRuns": (0, 12),
         "huntIntervalMin": (1, 1440), "autoSalvageTier": (0, 7),
+        "arenaMinPowerEdge": (0, 10**12), "arenaMaxRefresh": (0, 10), "arenaMaxFights": (1, 10),
     }
     for key, (minimum, maximum) in limits.items():
         try:
@@ -71,7 +72,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
     if result["autoCleanup"]:
         result["autoSalvage"] = False
     # Keep expensive/consumable actions opt-in; clients must explicitly set true.
-    for key in ("autoCraft", "autoUse", "autoUseExp", "autoBoss", "autoFarm"):
+    for key in ("autoCraft", "autoUse", "autoUseExp", "autoBoss", "autoFarm", "autoArena"):
         result[key] = bool(result[key])
     return result
 
@@ -237,6 +238,8 @@ async def sync_config(account_id: str, user: dict = Depends(current_user)) -> di
 async def send_command(account_id: str, request: CommandRequest, user: dict = Depends(current_user)) -> dict:
     if request.command == "item.dispose":
         raise HTTPException(400, "Dùng chức năng Dọn túi Mini để kiểm tra bộ lọc và bảo vệ đồ trước khi bán/phân giải.")
+    if request.command == "arena.fight":
+        raise HTTPException(400, "Đấu trường chỉ chạy qua auto để áp dụng điều kiện lực chiến và giới hạn lượt.")
     if request.command not in ALLOWED_COMMANDS:
         raise HTTPException(400, "Lệnh không nằm trong danh sách cho phép.")
     account = await owned_account(user["id"], account_id)

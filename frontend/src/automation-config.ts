@@ -6,8 +6,8 @@ export const AUTO_GROUPS: AutoGroup[] = [
   { id: "cultivation", name: "Tu luyện & hành trình", icon: "compass", description: "Giữ nhịp tu hành, chọn hoạt động và điểm săn phù hợp.", flags: [
     { key: "autoMinor", label: "Lên tiểu tầng", description: "Dùng thiết lập lên tầng tự động của game khi đủ tu vi." },
     { key: "autoMinorTrial", label: "Thử thách tiểu cảnh giới", description: "Chỉ thử khi đủ điều kiện. Cách nhau ít nhất 10 phút; không đột phá lớn." },
-    { key: "autoActivity", label: "Giữ hoạt động & điểm săn", description: "Áp dụng hoạt động đã chọn ở mỗi vòng tự động." },
-    { key: "autoFallbackHunt", label: "Lùi điểm săn khi thua", description: "Chọn bãi dễ hơn, hoặc bế quan khi không có bãi phù hợp." },
+    { key: "autoActivity", label: "Giữ hoạt động & điểm săn", description: "Áp dụng hoạt động đã chọn ở mỗi vòng tự động. Săn yêu thú sẽ chọn bãi cho nhiều tu vi nhất trong số bãi đã mở và đủ cấp tối thiểu." },
+    { key: "autoFallbackHunt", label: "Lùi điểm săn khi thua", description: "Khi game báo thua ở bãi, tạm bỏ bãi đó (30 phút, hoặc sớm hơn khi lực chiến tăng 10%) và chọn bãi nhiều tu vi kế tiếp; hết bãi thì bế quan." },
     { key: "autoBoss", label: "Đánh boss khu vực", description: "Chỉ đánh lại boss đã vượt, đủ cấp và hết hồi chiêu.", risk: true },
   ] },
   { id: "rewards", name: "Nhiệm vụ & phần thưởng", icon: "scroll", description: "Nhận những phần thưởng bạn đã hoàn thành điều kiện.", flags: [
@@ -38,6 +38,9 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoHunt", label: "Săn khế ấn", description: "Tiêu lượt săn cho đúng linh thú mục tiêu; không mua thêm lượt.", risk: true },
     { key: "autoNpcTalk", label: "Trò chuyện đạo hữu", description: "Tối đa hai đạo hữu mỗi vòng, lấy thiện cảm lần đầu ngày." },
     { key: "autoNpcRewards", label: "Quà thiện cảm", description: "Nhận mốc đã đạt, không tặng quà hay tự chọn quan hệ." },
+  ] },
+  { id: "arena", name: "Đấu trường", icon: "sword", description: "Chỉ đấu hạng với đối thủ yếu hơn bạn một khoảng lực chiến; không có đối thủ phù hợp thì làm mới danh sách.", flags: [
+    { key: "autoArena", label: "Tự đấu hạng đấu trường", description: "Chỉ đánh khi lực chiến của bạn cao hơn đối thủ cùng nhóm ít nhất mức đã đặt. Không luận bàn, không đổi điểm đấu trường.", risk: true },
   ] },
   { id: "cave", name: "Động phủ & linh điền", icon: "leaf", description: "Thu hoạch trước, gieo trồng sau; giữ lại linh thạch theo hạn mức.", flags: [
     { key: "autoFarm", label: "Quản lý linh điền", description: "Bật để chạy các tùy chọn thu hoạch / gieo trồng bên dưới.", risk: true },
