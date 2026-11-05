@@ -16,6 +16,7 @@ from api.services.automation import run_account_tick
 from api.services.game_client import ALLOWED_COMMANDS, GameAPIError, GameClient
 from api.services.game_rules import HUNT_TARGETS
 from api.services.cleanup import config_rules
+from api.services.cave import public_definitions
 from api.services.craft_profession import plan_crafting
 from api.services.session_crypto import decrypt_session
 
@@ -47,6 +48,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "arenaMinPowerEdge": (0, 10**12), "arenaMaxRefresh": (0, 10), "arenaMaxFights": (1, 10),
         "craftLevelDaily": (0, 100), "craftReserveStones": (0, 10**18), "craftMatFloor": (0, 999999),
         "craftInsuranceKeep": (10, 30), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
+        "caveReserveStones": (0, 10**18), "caveMatFloor": (0, 999999),
     }
     for key, (minimum, maximum) in limits.items():
         try:
@@ -70,6 +72,8 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         raise HTTPException(422, "Chế độ chọn giống không hợp lệ.")
     if result["craftLevelOrder"] not in ("fastest", "all-max-first"):
         raise HTTPException(422, "Thứ tự cày nghề không hợp lệ.")
+    if result["caveRoomOrder"] not in ("craft", "cultivation", "balanced"):
+        raise HTTPException(422, "Thứ tự nâng phòng động phủ không hợp lệ.")
     if result["craftBuild"] not in ("auto", "sword", "thunder", "body", "soul", "formation"):
         raise HTTPException(422, "Hệ tu chế tạo không hợp lệ.")
     from api.services.automation import META
@@ -82,7 +86,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
     if result["autoCleanup"]:
         result["autoSalvage"] = False
     # Keep expensive/consumable actions opt-in; clients must explicitly set true.
-    for key in ("autoCraft", "autoUse", "autoUseExp", "autoBoss", "autoFarm", "autoArena"):
+    for key in ("autoCraft", "autoCaveUpgrade", "autoUse", "autoUseExp", "autoBoss", "autoFarm", "autoArena"):
         result[key] = bool(result[key])
     return result
 
@@ -135,6 +139,7 @@ async def game_metadata() -> dict:
         "seeds": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("seeds", {}).items()},
         "regions": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("regions", {}).items()},
         "quests": {key: {"id": key, "name": value.get("name", key)} for key, value in META.get("quests", {}).items()},
+        "rooms": public_definitions(),
     }
 
 

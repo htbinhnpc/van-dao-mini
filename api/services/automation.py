@@ -19,6 +19,7 @@ from api.services.arena import ARENA_MIN_LEVEL, last_fight_lost, my_power, pick_
 from api.services.game_client import GameClient
 from api.services.game_rules import HUNT_TARGETS, NPC_REWARD_TIERS
 from api.services.cleanup import config_rules, plan_cleanup
+from api.services.cave import plan_cave_upgrade, validate_upgrade_response
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
 from api.services.craft_profession import plan_crafting, progress
 from api.services.session_crypto import decrypt_session
@@ -98,7 +99,7 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     budget = _tick_budget.get()
     if budget:
         budget.attempts += 1
-    details = audit if command == "craft.start" else None
+    details = audit if command in {"craft.start", "cave.upgrade"} else None
     if command == "item.dispose":
         details = {**(audit or {}), "itemIds": payload["itemIds"], "mode": payload["mode"], "source": "autoCleanup",
                    "confirmation": "not_required", "requestedCount": len(payload["itemIds"]), "stateVersionBefore": state.get("stateVersion")}
@@ -365,6 +366,35 @@ async def _activity(client: GameClient, state: dict, config: dict, account: dict
     if current.get("type") == payload["type"] and (activity_type != "farm" or current.get("targetId") == payload.get("targetId")):
         return state
     return await _best_effort(client, state, "activity.set", payload, account, "Áp dụng hoạt động")
+
+
+async def _cave(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    """Upgrade at most one cave room, never rushing and never guessing the state."""
+    if not config.get("autoCaveUpgrade") or not _can_command():
+        return state
+    plan = plan_cave_upgrade(state, config, META, now_ms=int(time.time() * 1000))
+    action = plan["action"]
+    if not action:
+        await log(account, "info", "cave.plan", plan["reason"],
+                  details={"phase": plan["phase"], "active": plan.get("active"), "blocked": plan["blocked"][:8]})
+        return state
+    label = f"{action['reason']}: {action['name']} → cấp {action['targetLevel']} (−{action['stones']} linh thạch)"
+    try:
+        await log(account, "info", "cave.upgrade", label, details={**action, "status": "started"})
+        before = state
+        state = await _command(client, before, "cave.upgrade", {"roomId": action["roomId"]}, account, label,
+                               audit={**action, "status": "responded"})
+        validate_upgrade_response(before, state, action["roomId"])
+        await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+        await log(account, "success", "cave.plan", f"Game đã xác nhận nâng {action['name']} lên cấp {action['targetLevel']}.",
+                  details={**action, "status": "succeeded"})
+    except Exception as exc:
+        budget = _tick_budget.get()
+        if budget:
+            budget.stopped, budget.error = True, f"cave.upgrade: {exc}"[:500]
+        await log(account, "warning", "cave.plan", f"Dừng nâng động phủ, không retry: {str(exc)[:300]}",
+                  details={**action, "status": "uncertain"})
+    return state
 
 
 async def _craft(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -652,6 +682,7 @@ async def _run_account_tick(account: dict) -> dict:
     state = await _pets(client, state, config, account)
     state = await _npc(client, state, config, account)
     state = await _use_pill(client, state, config, account)
+    state = await _cave(client, state, config, account)
     state = await _craft(client, state, config, account)
     state = await _boss(client, state, config, account)
     state = await _farm(client, state, config, account)

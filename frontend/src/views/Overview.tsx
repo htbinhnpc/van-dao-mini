@@ -16,6 +16,9 @@ export function Overview({ account, meta, busy, maintenance, onTick, onNavigate 
   const quests = (state.quests || []).filter((quest: any) => ["active", "open", "claimable"].includes(quest.status)).slice(0, 3);
   const fields = state.cave?.fields || [];
   const ready = fields.filter((item: any) => item.finishAt != null && Number(item.finishAt) <= Date.now()).length;
+  const rooms = Array.isArray(state.cave?.rooms) ? state.cave.rooms : [];
+  const roomDefs = meta.rooms || [];
+  const activeRoom = rooms.find((room: any) => room.upgradeFinishAt != null);
   const progress = percent(character.exp, character.expNeed);
   return <>
     {account.lastError && <div className="alert alert-error" role="alert"><Icon name="warning" /><span><b>Lượt chạy gần nhất cần kiểm tra.</b> {account.lastError}</span><button className="text-button" onClick={() => onNavigate("logs")}>Xem nhật ký</button></div>}
@@ -35,5 +38,23 @@ export function Overview({ account, meta, busy, maintenance, onTick, onNavigate 
     <div className="resource-grid"><div className="resource-card"><span className="resource-icon gold"><Icon name="coin" size={22} /></span><div><small>Linh thạch</small><strong>{number(state.wallet?.spirit_stone)}</strong></div><span className="resource-mark" aria-hidden="true">◇</span></div><div className="resource-card"><span className="resource-icon jade"><Icon name="spark" size={22} /></span><div><small>Cảm ngộ</small><strong>{number(state.wallet?.insight ?? state.materials?.insight)}</strong></div></div><div className="resource-card"><span className="resource-icon violet"><Icon name="leaf" size={22} /></span><div><small>Linh điền</small><strong>{state.cave?.unlocked ? `${ready} ô chín` : "Chưa mở"}</strong><span>{state.cave?.unlocked ? `${fields.length} / ${number(state.cave?.plots)} ô đang trồng` : "Tiếp tục hành trình để mở khóa"}</span></div></div></div>
     <div className="overview-bottom"><Panel title="Căn cơ & chỉ số" eyebrow="HIỂU RÕ BẢN THÂN" action={Object.keys(stats).length > 8 && <button className="text-button" onClick={() => setAllStats(!allStats)}>{allStats ? "Thu gọn" : "Tất cả chỉ số"}<Icon name="chevron" size={14} /></button>}>{Object.keys(stats).length ? <dl className="stat-grid">{Object.entries(stats).slice(0, allStats ? undefined : 8).map(([key, value]) => <div key={key}><dt>{meta.stats[key]?.label || statLabels[key] || key}</dt><dd>{pctStats.has(key) && Number.isFinite(Number(value)) ? `${number(Number(value) * 100)}%` : number(value)}</dd></div>)}</dl> : <EmptyState title="Chưa có chỉ số">Đồng bộ game để lấy trạng thái nhân vật mới nhất.</EmptyState>}<div className="panel-footnote"><Icon name="shield" size={14} />Dữ liệu đã lưu từ game{state.stateVersion != null ? ` · phiên bản ${number(state.stateVersion)}` : ""}</div></Panel>
       <Panel title="Bước chân tiếp theo" eyebrow="NHẬT TRÌNH TU ĐẠO" action={<Icon name="scroll" size={19} />}>{quests.length ? <ul className="quest-list">{quests.map((quest: any, index: number) => <li key={quest.id || index}><span className={`quest-seal ${quest.status === "claimable" ? "complete" : ""}`}>{quest.status === "claimable" ? <Icon name="check" size={17} /> : String(index + 1).padStart(2, "0")}</span><div><b>{meta.quests[quest.id]?.name || quest.name || "Nhiệm vụ đang thực hiện"}</b><span>{quest.status === "claimable" ? "Đã hoàn thành · có thể nhận thưởng" : quest.current != null && quest.target != null ? `${number(quest.current)} / ${number(quest.target)}` : "Đang trên hành trình"}</span></div></li>)}</ul> : <EmptyState icon="scroll" title="Đạo lộ rộng mở">Chưa có nhiệm vụ đang làm trong dữ liệu đã lưu.</EmptyState>}<button className="text-button panel-link" onClick={() => onNavigate("automation")}>Thiết lập tự nhận thưởng<Icon name="arrow" size={15} /></button></Panel></div>
+    <Panel title="Động phủ" eyebrow="PHÒNG & TIẾN ĐỘ" className="cave-panel" action={<span className={`pill ${activeRoom ? "warning" : "neutral"}`}><i />{activeRoom ? "Đang nâng" : state.cave?.unlocked ? "Sẵn sàng" : "Chưa mở"}</span>}>
+      {!state.cave?.unlocked ? <EmptyState icon="leaf" title="Chưa mở động phủ">Đạt cấp 16 rồi dùng lệnh mở động phủ trong game. Mini không tự mở.</EmptyState>
+        : !roomDefs.length ? <p className="muted">Chưa tải được metadata phòng động phủ. Thử tải lại metadata.</p>
+        : <div className="cave-room-grid">{roomDefs.map((definition) => {
+          const room = rooms.find((item: any) => item.id === definition.id);
+          const level = typeof room?.level === "number" ? room.level : null;
+          const maxLevel = Number(definition.maxLevel) || 0;
+          const busy = room?.upgradeFinishAt != null;
+          const done = level != null && maxLevel > 0 && level >= maxLevel;
+          const minutes = busy ? Math.max(0, Math.ceil((Number(room.upgradeFinishAt) - Date.now()) / 60000)) : 0;
+          return <div className={`cave-room ${busy ? "upgrading" : ""}`} key={definition.id}>
+            <div className="cave-room-head"><b>{definition.name}</b><span>{level == null ? "Chưa rõ cấp" : `Cấp ${level}/${maxLevel}`}</span></div>
+            <p>{definition.effect}</p>
+            {busy ? <span className="cave-room-state"><Icon name="clock" size={13} />Đang nâng{minutes ? ` · còn ~${minutes} phút` : " · chờ kết toán"}</span> : done ? <span className="cave-room-state cave-room-done">Đã đạt cấp tối đa</span> : null}
+          </div>;
+        })}</div>}
+      <div className="panel-footnote"><Icon name="shield" size={14} />{activeRoom ? "Mỗi lúc chỉ nâng một phòng; Mini không dùng cave.rush." : "Chỉ nâng khi đủ tài nguyên dư; không suy đoán cấp phòng còn thiếu."}</div>
+    </Panel>
   </>;
 }

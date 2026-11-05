@@ -9,6 +9,9 @@ test("overview uses real metadata shapes, top-level stats and local game art", a
   await expect(page.getByText("13.200", { exact: true })).toBeVisible();
   await expect(page.getByText("1.248.650", { exact: true })).toBeVisible();
   await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "74");
+  await expect(page.getByRole("heading", { name: "Động phủ", exact: true })).toBeVisible();
+  await expect(page.locator(".cave-room")).toHaveCount(7);
+  await expect(page.locator(".cave-room").filter({ hasText: "Đan Phòng" })).toContainText("Cấp 2/6");
   await expect(page.locator(".cultivator-art")).toHaveJSProperty("naturalWidth", 512);
   expect(mock.mutations).toEqual([]); expect(mock.external).toEqual([]); expect(mock.pageErrors).toEqual([]);
   await page.screenshot({ path: info.outputPath("overview.png"), fullPage: true, animations: "disabled" });
@@ -35,6 +38,19 @@ test("safe config save is scoped, single-flight, and updates dirty state", async
   expect(mock.mutations).toHaveLength(1); expect(mock.mutations[0].path).toBe("/api/v1/accounts/account-1/config");
   expect(mock.mutations[0].body.config.autoQuests).toBe(false);
   expect(mock.mutations.some((request) => request.path.endsWith("/tick"))).toBe(false);
+});
+
+test("cave auto saves room order and reserves only after confirmation", async ({ page }) => {
+  const mock = await mockApi(page); await openDashboard(page); await nav(page, "Tự động").click();
+  await page.getByRole("switch", { name: "Tự nâng phòng động phủ", exact: true }).check();
+  await page.getByLabel("Thứ tự nâng phòng", { exact: false }).selectOption("balanced");
+  await page.getByLabel("Động phủ: linh thạch dự trữ", { exact: false }).fill("2500");
+  await page.getByRole("button", { name: "Lưu cấu hình", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("Tự nâng phòng động phủ");
+  await page.getByRole("button", { name: "Xác nhận & lưu", exact: true }).click();
+  await expect(page.getByText("Đã lưu cấu hình tu hành.", { exact: true })).toBeVisible();
+  expect(mock.mutations).toHaveLength(1);
+  expect(mock.mutations[0].body.config).toMatchObject({ autoCaveUpgrade: true, caveRoomOrder: "balanced", caveReserveStones: 2500 });
 });
 
 test("risky auto needs a target and explicit confirmation before saving", async ({ page }, info) => {
@@ -92,7 +108,7 @@ test("manual game tick requires confirmation and sends exactly once", async ({ p
   await page.getByRole("dialog").getByRole("button", { name: "Chạy một vòng", exact: true }).click();
   await expect(page.getByText(/Đã xử lý một vòng/)).toBeVisible();
   expect(mock.mutations.filter((request) => request.path.endsWith("/tick"))).toHaveLength(1);
-  await expect(page.locator(".panel-footnote")).toContainText("128");
+  await expect(page.locator(".panel-footnote").filter({ hasText: "Dữ liệu đã lưu từ game" })).toContainText("128");
 });
 
 test("deleting an account is confirmed and never deletes the game character", async ({ page }) => {

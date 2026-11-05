@@ -46,7 +46,8 @@ export const AUTO_GROUPS: AutoGroup[] = [
   { id: "arena", name: "Đấu trường", icon: "sword", description: "Chỉ đấu hạng với đối thủ yếu hơn bạn một khoảng lực chiến; không có đối thủ phù hợp thì làm mới danh sách.", flags: [
     { key: "autoArena", label: "Tự đấu hạng đấu trường", description: "Chỉ đánh khi lực chiến của bạn cao hơn đối thủ cùng nhóm ít nhất mức đã đặt. Không luận bàn, không đổi điểm đấu trường.", risk: true },
   ] },
-  { id: "cave", name: "Động phủ & linh điền", icon: "leaf", description: "Thu hoạch trước, gieo trồng sau; giữ lại linh thạch theo hạn mức.", flags: [
+  { id: "cave", name: "Động phủ & linh điền", icon: "leaf", description: "Nâng phòng theo tài nguyên dư, thu hoạch trước rồi gieo trồng; giữ lại linh thạch theo hạn mức.", flags: [
+    { key: "autoCaveUpgrade", label: "Tự nâng phòng động phủ", description: "Ưu tiên phòng mà nhiệm vụ đang làm cần, rồi theo thứ tự đã chọn. Mỗi lúc một phòng, không dùng rush và không vượt sàn dự trữ.", risk: true },
     { key: "autoFarm", label: "Quản lý linh điền", description: "Bật để chạy các tùy chọn thu hoạch / gieo trồng bên dưới.", risk: true },
     { key: "farmHarvest", label: "Thu hoạch ô chín", description: "Chỉ có tác dụng khi đã bật Quản lý linh điền." },
     { key: "farmPlant", label: "Gieo ô trống", description: "Tiêu linh thạch mua giống theo điều kiện game.", risk: true },

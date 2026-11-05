@@ -14,6 +14,7 @@ export const defaultConfig = {
   autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 10,
   craftMastery: true, craftLevelOrder: "fastest", craftLevelDaily: 20, craftProduce: true, craftReserveStones: 1000,
   craftMatFloor: 20, craftInsuranceKeep: 30, craftQiTarget: 10, craftCharmTarget: 2, craftBuild: "auto",
+  autoCaveUpgrade: false, caveRoomOrder: "craft", caveReserveStones: 1000, caveMatFloor: 20,
   autoUse: false, autoUseBuffs: true, autoUseExp: false, autoUseOnlyBest: true, useThresholdMin: 15,
   autoBoss: false, bossIntervalMin: 10, bossRegionId: "", autoFarm: false, farmHarvest: true,
   farmPlant: true, farmIncludeHabitats: true, farmSeedMode: "best", farmSeedId: "", farmReserveStones: 0,
@@ -30,7 +31,12 @@ export const sampleState = {
   wallet: { spirit_stone: "1248650", insight: "3420", sect_contribution: "850" },
   materials: { item_spirit_herb: 126, item_qi_pill: 8 },
   equipment: [{ id: "equip-1", defId: "equip_t1_weapon", slot: "weapon", location: "equipped", rarity: "pham", locked: true }],
-  cave: { unlocked: true, plots: 4, fields: [{ plot: 1, finishAt: 100 }, { plot: 2, finishAt: 100 }, { plot: 3, finishAt: 9999999999999 }] },
+  cave: { unlocked: true, plots: 4, rooms: [
+    { id: "tu_linh", level: 1, upgradeFinishAt: null }, { id: "tinh_that", level: 0, upgradeFinishAt: null },
+    { id: "dan_phong", level: 2, upgradeFinishAt: null }, { id: "khi_phong", level: 0, upgradeFinishAt: null },
+    { id: "linh_dien", level: 1, upgradeFinishAt: null }, { id: "kho", level: 0, upgradeFinishAt: null },
+    { id: "tang_bao", level: 0, upgradeFinishAt: Date.now() + 600000 },
+  ], fields: [{ plot: 1, finishAt: 100 }, { plot: 2, finishAt: 100 }, { plot: 3, finishAt: 9999999999999 }] },
   quests: [{ id: Object.keys(bundledMeta.quests)[4], status: "active", current: 2, target: 5 }, { id: Object.keys(bundledMeta.quests)[5], status: "claimable", current: 1, target: 1 }],
 };
 export const meta = {
@@ -40,6 +46,15 @@ export const meta = {
   seeds: bundledMeta.seeds, regions: bundledMeta.regions, quests: bundledMeta.quests,
   recipes: Object.fromEntries(Object.entries(bundledMeta.recipes).map(([id, recipe]: any) => [id, { id, name: recipe.name, reqLevel: recipe.reqLevel }])),
   huntTargets: { x2_pet_001: { id: "x2_pet_001", name: "Bích Nhĩ Linh Thỏ", reqLevel: 16, contractSeals: 20 }, x2_pet_033: { id: "x2_pet_033", name: "Thiên Cấm Huyền Xà", reqLevel: 62, contractSeals: 360 } },
+  rooms: [
+    { id: "tu_linh", name: "Tụ Linh Trận", maxLevel: 10, effect: "+4% tốc độ tu vi mỗi cấp." },
+    { id: "tinh_that", name: "Tĩnh Thất", maxLevel: 12, effect: "+1 giờ tích lũy khi vắng mặt mỗi cấp." },
+    { id: "dan_phong", name: "Đan Phòng", maxLevel: 6, effect: "Cứ hai cấp thêm một lò chế tạo chạy song song." },
+    { id: "khi_phong", name: "Khí Phòng", maxLevel: 5, effect: "−6% thời gian chế tạo mỗi cấp." },
+    { id: "linh_dien", name: "Linh Điền", maxLevel: 4, effect: "Mỗi cấp mở một ô trồng và một loại giống mới." },
+    { id: "kho", name: "Kho", maxLevel: 8, effect: "+5 ô túi đồ mỗi cấp." },
+    { id: "tang_bao", name: "Tàng Bảo Khố", maxLevel: 5, effect: "+10 ô trang bị cho Kho đồ dùng chung mỗi cấp." },
+  ],
 };
 type Options = { authenticated?: boolean; empty?: boolean; maintenance?: boolean; saveFailures?: number; authFailure?: boolean; bootFailures?: number; metaFailures?: number; itemFailure?: boolean; itemHtml?: boolean; holdItems?: Promise<void>; cleanup?: boolean; cleanupConflict?: boolean; cleanupFailure?: boolean; cleanupEmpty?: boolean; holdCleanup?: Promise<void>; craftMax?: boolean; craftFailure?: boolean; craftUnknown?: boolean; holdCraft?: Promise<void> };
 export async function mockApi(page: Page, options: Options = {}) {

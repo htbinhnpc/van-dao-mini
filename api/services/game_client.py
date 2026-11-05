@@ -28,6 +28,7 @@ ALLOWED_COMMANDS = frozenset(
         "mail.claimAll",
         "x2.daily.claim",
         "craft.start",
+        "cave.upgrade",
         "item.use",
         "boss.fight",
         "field.plant",

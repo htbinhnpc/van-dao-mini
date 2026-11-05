@@ -19,10 +19,11 @@ export type GameMeta = {
   seeds: Record<string, Definition>;
   regions: Record<string, Definition>;
   quests: Record<string, Definition>;
+  rooms: Definition[];
 };
 export const EMPTY_META: GameMeta = {
   realms: {}, activities: {}, spots: {}, huntTargets: {}, stats: {}, equipment: {},
-  slots: {}, rarities: {}, recipes: {}, seeds: {}, regions: {}, quests: {},
+  slots: {}, rarities: {}, recipes: {}, seeds: {}, regions: {}, quests: {}, rooms: [],
 };
 export type ServerStatus = {
   status: "active" | "maintenance" | "unknown";

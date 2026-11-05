@@ -91,7 +91,9 @@ def owned_output(state: dict, recipe: dict) -> int:
         owned = integer((state.get("materials") or {}).get(output["itemId"]))
     else:
         owned = sum(isinstance(e, dict) and e.get("defId") == output["defId"] for e in state.get("equipment", []))
-    return owned + sum(job.get("recipeId") == recipe["id"] for job in state["crafting"]["jobs"]) * output_qty(recipe, state)
+    crafting = state.get("crafting") or {}
+    jobs = crafting.get("jobs") if isinstance(crafting.get("jobs"), list) else []
+    return owned + sum(job.get("recipeId") == recipe["id"] for job in jobs if isinstance(job, dict)) * output_qty(recipe, state)
 
 
 def daily_budget(state: dict, config: dict, data: dict, now_ms: int) -> dict:
@@ -136,7 +138,9 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
         counter = objective.get("counter", "")
         recipe_id = counter.removeprefix("craft:") if counter.startswith("craft:") else "recipe_qi_pill" if counter == "crafts_done" else ""
         if recipe_id:
-            pending = sum(job.get("recipeId") == recipe_id for job in state["crafting"]["jobs"])
+            jobs = (state.get("crafting") or {}).get("jobs")
+            jobs = jobs if isinstance(jobs, list) else []
+            pending = sum(isinstance(job, dict) and job.get("recipeId") == recipe_id for job in jobs)
             add(recipe_id, max(0, integer(quest.get("target", objective.get("target"))) - integer(quest.get("current")) - pending), "Nhiệm vụ đang làm", True)
     character = state.get("character") or {}
     realm = character.get("realm") or {}

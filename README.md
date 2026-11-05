@@ -48,6 +48,7 @@ achievement.claim
 mail.claimAll
 x2.daily.claim
 craft.start
+cave.upgrade
 item.use
 boss.fight
 field.plant
@@ -105,6 +106,7 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 | `autoHunt` | Bắt buộc chọn `huntPetId` trong 40 linh thú khế ấn; đủ cấp, còn lượt trên `huntReserveRuns`, chưa đủ khế ấn và chưa thu nhận. Tối đa 1 lượt/vòng, chờ `huntIntervalMin` (mặc định 10 phút) kể cả thua. Không mua thêm lượt. |
 | `autoEncounter` | Kỳ ngộ ở trang Bí cảnh (xuất hiện khoảng mỗi 400 chu kỳ săn, chờ tối đa 3): `encounter.resolve` `{encounterId, choice}` cho từng mục trong `state.encounters`. **Ưu tiên phương án cho cảm ngộ**: Bia đá cũ (+12), Động phủ bỏ hoang (+20), Kiếm ảnh dưới trăng (+30), Tu sĩ hấp hối (+35, tốn 1 Tụ Linh Đan), Hạc bị thương (+8, tốn 5 Linh thảo). Thương nhân lạc đường không có phương án cảm ngộ nên chọn 300 linh thạch (không tốn gì). `encounterAllowCost=false` chỉ cho phép phương án không tốn vật phẩm. Thiếu vật phẩm trả phí thì chọn phương án miễn phí; kỳ ngộ lạ (chưa có trong bảng) bị bỏ qua, không đoán. Tối đa 3 lệnh/vòng, không gửi lại cùng một `encounterId`. Bảng lấy từ client game (`api/services/encounters.py`). |
 | `autoArena` | Đấu hạng đấu trường (`arena.fight` với `ranked:true`), cấp ≥ 10, còn `rankedLeft`. Đọc bảng bằng `GET /api/arena?pick=N`; chỉ chọn đối thủ **cùng nhóm cảnh giới** có `power` thấp hơn `state.power` của bạn ít nhất `arenaMinPowerEdge` (mặc định 5.000), ưu tiên chênh lệch lớn nhất (rồi điểm hạng cao hơn). Không có ai phù hợp thì "làm mới" bằng cách tăng `pick`, tối đa `arenaMaxRefresh` lần (mặc định 3); vẫn không có thì không đánh và nghỉ 15 phút. Tối đa `arenaMaxFights` trận/vòng (mặc định 3); không luận bàn, không mua đồ bằng điểm. Không biết `state.power` thì không đánh. Thua thì tránh đánh lại người đó 1 giờ. Lực chiến chỉ là chỉ báo ước tính của server; `arena.fight` bị chặn ở endpoint gửi lệnh tùy ý. |
+| `autoCaveUpgrade` | Tối đa **một** `cave.upgrade {roomId}`/vòng; không gọi `cave.rush`. Ưu tiên tuyệt đối phòng mà nhiệm vụ `active` có objective `cave_room` cần; phòng đó thiếu tài nguyên dư thì chờ, không tiêu sang phòng khác. Sau đó theo `caveRoomOrder` (`craft` mặc định: Đan Phòng → Khí Phòng → Linh Điền → Kho → Tụ Linh → Tàng Bảo → Tĩnh Thất; `cultivation`; `balanced` theo tỷ lệ cấp thấp nhất). Không gửi khi đã có phòng `upgradeFinishAt`; giữ `caveReserveStones`/`caveMatFloor`, và khi `autoCraft` bật thì cộng thêm linh thạch/nguyên liệu cho nhiệm vụ chế tạo cùng đan đột phá đại cảnh kế tiếp. Phản hồi phải tăng `stateVersion`, đúng phòng, cấp giữ nguyên hoặc +1, `upgradeFinishAt` dương và chỉ một phòng active; sai/timeout thì dừng, không retry. |
 
 Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng **tối đa 12 lệnh**, chỉ bắt đầu lệnh trong cửa sổ 40 giây. Phần chưa chạy để vòng sau. Nếu lệnh lỗi, timeout, xung đột version hoặc phản hồi thiếu state, dừng phần còn lại và lưu lỗi; không retry lệnh có tác dụng phụ với key mới. Lịch sử khoảng nghỉ lưu trong `automation_data`, không chỉ giữ trong RAM. Các kiểm thử dùng mock, chưa bật/thử auto mới trên tài khoản game thật.
 
@@ -124,6 +126,21 @@ Triển khai đặc tả `craft-professions.md` vào `api/services/craft_profess
 - **Tab Chế tạo:** đọc `GET /api/v1/accounts/{id}/crafting` từ snapshot; **Đồng bộ lò** thêm `refresh=true` để GET state game mới. Không gửi `craft.start`. Ngân sách/focus/lý do từng job lưu trong `automation_data`, không cần migration. Worker dùng lease hiện có, tối đa 8 lượt bắt đầu chế tạo và vẫn nằm trong trần 12 lệnh/40 giây toàn vòng; lỗi/thiếu state/mẻ chưa được xác nhận thì dừng, không retry.
 
 Kiểm thử dùng mock và fixtures, **chưa thực hiện thử chế tạo 1 giờ trên tài khoản thật** như bước thử nghiệm trong bản đề xuất.
+
+### Nâng phòng động phủ (`cave_rooms`)
+
+Planner thuần ở `api/services/cave.py`; worker `_cave` trong `api/services/automation.py` chỉ gửi lệnh sau khi planner xác định phòng đủ điều kiện. Không thêm tab mới: cấu hình nằm trong nhóm **Động phủ & linh điền**, tiến độ 7 phòng nằm trong panel **Động phủ** ở Tổng quan.
+
+- Bật **Tự động → Động phủ & linh điền → Tự nâng phòng động phủ** (`autoCaveUpgrade`, mặc định **false**). Chỉ dùng `cave.upgrade {roomId}`; `cave.rush` không nằm trong allowlist.
+- **Mỗi lúc một phòng:** nếu bất kỳ phòng nào có `upgradeFinishAt` thì không gửi lệnh. Chỉ đọc `state.cave.unlocked` và đủ 7 record `{id, level, upgradeFinishAt}`; thiếu/sai kiểu/dư phòng thì báo `unknown`, không suy đoán cấp.
+- **Ưu tiên nhiệm vụ:** objective `cave_room {roomId, level}` của nhiệm vụ `active` được xét trước mọi thứ tự cấu hình. Nếu phòng đó chưa đủ tài nguyên dư, Mini chờ chứ không nâng phòng khác.
+- **Thứ tự:** `caveRoomOrder=craft` (mặc định) ưu tiên Đan Phòng, Khí Phòng, Linh Điền, Kho rồi Tụ Linh, Tàng Bảo, Tĩnh Thất; `cultivation` ưu tiên Tụ Linh/Tĩnh Thất; `balanced` chọn phòng có tỷ lệ `level/maxLevel` thấp nhất.
+- **Chi phí** lấy từ client công khai: `round(baseStones × 1.7^level)` linh thạch, `baseQty × (level+1)` nguyên liệu và `baseMinutes × (level+1)` phút. Bảy phòng: Tụ Linh (10 cấp, 300, Hàn Tinh ×4, 10 phút), Tĩnh Thất (12, 250, Thiết khoáng ×10, 8), Đan Phòng (6, 500, Linh thảo ×20, 15), Khí Phòng (5, 500, Thiết khoáng ×20, 15), Linh Điền (4, 800, Linh thảo ×30, 20), Kho (8, 200, Thú bì ×10, 5), Tàng Bảo Khố (5, 2.000, Thiết khoáng ×30, 30).
+- **Dự trữ:** luôn giữ `caveReserveStones` (mặc định 1.000) và `caveMatFloor` (mặc định 20 mỗi loại). Khi `autoCraft` bật, cộng thêm linh thạch/nguyên liệu mà các ưu tiên **Nhiệm vụ đang làm** và **Đan đột phá đại cảnh kế tiếp** cần, cùng `craftReserveStones`/`craftMatFloor`; thiếu dữ liệu chế tạo thì tạm dừng nâng phòng.
+- **Xác nhận:** response phải tăng `stateVersion`, đúng `roomId`, cấp giữ nguyên hoặc tăng 1, `upgradeFinishAt` dương, không phòng khác đổi cấp và chỉ đúng một phòng active. Lỗi/timeout/response không xác nhận: ghi nhật ký `uncertain`, dừng vòng, không gửi lại.
+- `GET /api/v1/meta` trả `rooms` (id, tên, cấp tối đa, hiệu ứng) để UI hiển thị; state tài khoản vẫn là nguồn duy nhất cho cấp hiện tại.
+
+Kiểm thử bằng mock/fixtures; **chưa nâng phòng trên tài khoản thật**.
 
 ### Cơ chế dùng đan
 

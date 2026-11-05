@@ -140,6 +140,14 @@ Audit: lưu intent trước lệnh hủy đồ, rồi kết quả có ID đã d�
 - Lưu `craftLevelBudget` (ngày UTC/base/limit/spent), `craftLevelFocus` và `craftJobs` trong `automation_data`. Debit cày trước lệnh, không refund timeout; log intent trước lệnh, kiểm tra version và đủ ID job mới sau phản hồi. Chưa xác nhận đủ mẻ thì dừng, không tự gửi lại. Các handler khác vẫn dùng ngân sách chung 12 lệnh/40 giây; không nới trần game.
 - Chưa có economy/gear-opt/market-price trong repo này: dùng sàn tài nguyên, dự trữ đầu vào nhiệm vụ/đột phá và tiêu chí vũ khí cùng hệ/tier đã biết. Không tự bán sản phẩm hoặc chấm sức mạnh chéo chỉ số. Chưa chạy lệnh chế tạo trên tài khoản thật.
 
+## Nâng phòng động phủ Mini (2026-11-05)
+
+- Chỉ GET và phân tích tĩnh `/assets/main-BNARi4Kn.js` và `/assets/i18n-B6UHPwZV.js`; không đọc `.env`, cookie hay state tài khoản thật. Component `fp` trong main render tab **Các phòng**, dùng `state.cave.rooms` (`{id, level, upgradeFinishAt}`) và gửi `cave.upgrade` `{roomId}` với guard version. UI game vô hiệu hóa mọi nút khi `rooms.find(room => room.upgradeFinishAt !== null)`; mô tả “Mỗi lúc chỉ nâng một phòng. Lần nâng tính theo đồng hồ máy chủ”. `cave.rush` `{roomId,maxStones}` chỉ dùng cho nút rút ngắn thời gian; Mini không gọi.
+- Định nghĩa phòng nằm trong i18n chunk: `_r` tạo bảy record bằng `gr(id,maxLevel,baseStones,material,baseQty,baseMinutes)`, tên/hiệu ứng ở `hg` (`room.<id>.name/effect`). Giá trị: `tu_linh` 10/300/Hàn Tinh×4/10; `tinh_that` 12/250/Thiết khoáng×10/8; `dan_phong` 6/500/Linh thảo×20/15; `khi_phong` 5/500/Thiết khoáng×20/15; `linh_dien` 4/800/Linh thảo×30/20; `kho` 8/200/Thú bì×10/5; `tang_bao` 5/2.000/Thiết khoáng×30/30.
+- `vr(room, level)` trả `{stones: Math.round(baseStones*1.7**level), items:[{itemId: material, qty: baseQty*(level+1)}], durationMs: baseMinutes*(level+1)*60000}`. Đây là công thức client; server vẫn là nơi quyết định chi phí/điều kiện cuối cùng.
+- Planner `api/services/cave.py` chỉ trả action khi state đủ 7 phòng hợp lệ, không phòng nào đang nâng, đủ linh thạch sau dự trữ và đủ nguyên liệu sau sàn. Objective nhiệm vụ `{type:"cave_room", roomId, level}` của quest `active` được ưu tiên tuyệt đối; thiếu tài nguyên cho phòng đó thì chờ. Thứ tự `craft`/`cultivation`/`balanced` chỉ áp dụng khi không có objective động phủ.
+- Metadata public `/meta` thêm `rooms` (id/tên/cấp tối đa/hiệu ứng), không chứa state tài khoản. Worker kiểm tra response: tăng `stateVersion`, đúng phòng, cấp +0/+1, `upgradeFinishAt` dương, không phòng khác đổi cấp, đúng một phòng active; sai/timeout thì ghi `uncertain` và dừng, không retry. Chưa nâng phòng trên tài khoản thật.
+
 ## Thông tin đăng nhập
 
 Thông tin đăng nhập đã được cung cấp trong hội thoại và dùng cho đúng một lần thử login; không ghi lại giá trị đó trong tài liệu hay log. Nếu đây là mật khẩu đang dùng thật, nên đổi mật khẩu sau khi trao đổi trong chat.
