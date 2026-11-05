@@ -13,3 +13,4 @@ venv/
 .config.json
 frontend/test-results/
 frontend/playwright-report/
+.bundle_cache/
