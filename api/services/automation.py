@@ -23,6 +23,7 @@ from api.services.cave import plan_cave_upgrade, validate_upgrade_response
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
 from api.services.craft_profession import URGENT_REASONS, plan_crafting, progress
 from api.services.craft_logging import audit as craft_audit, message as craft_message
+from api.services.pill_policy import item_band_index, pill_band
 from api.services.session_crypto import decrypt_session
 from api.services.titles import plan_title_equip, validate_equip_response
 from api.services.breakthrough import plan_breakthrough, validate_trial_response, validate_major_response
@@ -613,10 +614,20 @@ async def _use_pill(client: GameClient, state: dict, config: dict, account: dict
     if not config.get("autoUse"):
         return state
     materials = state.get("materials") or {}
+    character = state.get("character") or {}
+    band = pill_band(character, META)
+
+    def allowed(item: dict) -> bool:
+        use = item.get("use") or {}
+        if config.get("autoUseBuffs", True) and use.get("type") == "cultivation_buff":
+            rank = item_band_index(item.get("id"))
+            # Never consume a higher-tier cultivation pill before its realm band.
+            # Unknown buff items keep the previous behaviour.
+            return rank is None or rank <= band["index"]
+        return config.get("autoUseExp", False) and use.get("type") == "cultivation_exp"
+
     items = [item for item in META.get("items", {}).values()
-             if _num(materials.get(item.get("id"))) > 0
-             and ((config.get("autoUseBuffs", True) and (item.get("use") or {}).get("type") == "cultivation_buff")
-                  or (config.get("autoUseExp", False) and (item.get("use") or {}).get("type") == "cultivation_exp"))]
+             if _num(materials.get(item.get("id"))) > 0 and allowed(item)]
     items.sort(key=lambda item: _num((item.get("use") or {}).get("ratePct"), _num((item.get("use") or {}).get("exp"))), reverse=True)
     if not items:
         return state

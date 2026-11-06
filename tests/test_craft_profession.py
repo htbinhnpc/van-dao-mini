@@ -11,6 +11,7 @@ from api.routes.accounts import DEFAULT_CONFIG
 from api.services import automation as auto
 from api.services.craft_profession import (PROFESSIONS, MASTERY_RECIPES, daily_budget, output_qty,
                                            plan_crafting, profession, progress, time_to_max, time_to_next_level)
+from api.services.pill_policy import pill_band
 
 
 NOW = 1793836800000
@@ -186,7 +187,39 @@ class CraftPlannerTests(unittest.TestCase):
         s["quests"] = [{"id": "q05_first_craft", "status": "active", "current": 0, "target": 1}]
         self.assertEqual(plan(s)["action"]["reason"], "Nhiệm vụ đang làm")
         s["quests"] = []; s["materials"]["item_foundation_pill"] = 1
-        self.assertEqual(plan(s, settings(craftQiTarget=10))["action"]["reason"], "Bổ sung Dưỡng Khí Đan")
+        self.assertEqual(plan(s, settings(craftQiTarget=10))["action"]["reason"], "Bổ sung Dưỡng Khí Đan theo cảnh giới")
+
+    def test_pill_band_follows_realm_then_level_fallback(self):
+        for realm, item in (("ngung_khi", "item_qi_pill"), ("truc_co", "item_qi_pill"),
+                            ("ket_dan", "item_spirit_pill"), ("nguyen_anh", "item_spirit_pill"),
+                            ("hoa_than", "item_grand_pill"), ("van_dinh", "item_grand_pill")):
+            self.assertEqual(pill_band({"level": 1, "realm": {"realmId": realm, "stage": 1}}, auto.META)["itemId"], item)
+        for level, item in ((1, "item_qi_pill"), (16, "item_qi_pill"), (19, "item_qi_pill"),
+                            (20, "item_spirit_pill"), (27, "item_spirit_pill"), (28, "item_grand_pill")):
+            self.assertEqual(pill_band({"level": level, "realm": "unknown"}, auto.META)["itemId"], item)
+
+    def test_craft_target_uses_current_realm_pill(self):
+        s = snapshot(); s["wallet"]["spirit_stone"] = "100000000"
+        s["character"] = {"level": 16, "realm": {"realmId": "truc_co", "stage": 1}, "rateMilli": 2500}
+        result = plan(s, settings(craftQiTarget=10))
+        self.assertEqual(result["action"]["recipeId"], "recipe_qi_pill")
+        self.assertEqual(result["pillBand"]["name"], "Dưỡng Khí Đan")
+        for realm, recipe in (("ket_dan", "recipe_spirit_pill"), ("nguyen_anh", "recipe_spirit_pill")):
+            s["character"] = {"level": 20, "realm": {"realmId": realm, "stage": 1}, "rateMilli": 2500}
+            self.assertEqual(plan(s, settings(craftQiTarget=10))["action"]["recipeId"], recipe)
+        s["materials"]["item_thunder_feather"] = 1000
+        for realm in ("hoa_than", "anh_bien", "van_dinh"):
+            s["character"] = {"level": 28, "realm": {"realmId": realm, "stage": 1}, "rateMilli": 2500}
+            self.assertEqual(plan(s, settings(craftQiTarget=10))["action"]["recipeId"], "recipe_grand_pill")
+
+    def test_production_never_crafts_pills_above_current_band(self):
+        s = max_all(snapshot()); s["materials"]["item_thunder_feather"] = 1000
+        s["character"] = {"level": 16, "realm": {"realmId": "truc_co", "stage": 1}, "rateMilli": 2500}
+        result = plan(s)
+        self.assertEqual(result["action"]["recipeId"], "recipe_qi_pill")
+        self.assertEqual(result["productionSkipped"].get("pill_band_above_current"), 2)
+        s["character"] = {"level": 28, "realm": {"realmId": "hoa_than", "stage": 1}, "rateMilli": 2500}
+        self.assertNotIn("pill_band_above_current", plan(s)["productionSkipped"])
 
     def test_missing_critical_materials_do_not_get_spent_by_mastery(self):
         s = snapshot(); s["character"]["realm"] = "ngung_khi"
@@ -224,7 +257,7 @@ class CraftPlannerTests(unittest.TestCase):
         self.assertEqual(plan(s)["action"]["recipeId"], "recipe_foundation_pill")
 
     def test_production_uses_one_batch_and_different_recipe_per_running_furnace(self):
-        s = max_all(snapshot())
+        s = max_all(snapshot()); s["character"] = {"level": 20, "realm": {"realmId": "ket_dan", "stage": 1}, "rateMilli": 2500}
         result = plan(s)
         self.assertEqual(result["phase"], "production")
         self.assertEqual(result["action"]["count"], 1)
@@ -310,6 +343,7 @@ class CraftWorkerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_production_replans_materials_and_fills_distinct_recipes(self):
         self.state = max_all(self.state)
+        self.state["character"] = {"level": 20, "realm": {"realmId": "ket_dan", "stage": 1}, "rateMilli": 2500}
         result = await auto._craft(self.client, self.state, settings(), self.account)
         ids = [job["recipeId"] for job in result["crafting"]["jobs"]]
         self.assertGreater(len(ids), 1)

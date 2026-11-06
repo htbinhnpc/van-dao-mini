@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from api.services.pill_policy import pill_band
+
 
 SETTINGS = {
     "autoCraft": False, "autoMajorBreakthrough": False, "craftMastery": True, "craftProduce": True,
@@ -34,13 +36,14 @@ def diagnostics(plan: dict, state: dict, config: dict, data: dict, meta: dict, *
     resources = plan.get("resources", {})
     recipe_id = settings["craftRecipeId"]
     pinned = meta.get("recipes", {}).get(recipe_id, {}).get("name", recipe_id) if isinstance(recipe_id, str) else "chưa rõ"
+    band = pill_band(state.get("character") or {}, meta)
     setting_lines = [
         f"Tự chế tạo: {on(settings['autoCraft'])}; auto đại cảnh: {on(settings['autoMajorBreakthrough'])}; phạm vi: "
         + {"major_only": "chỉ chuẩn bị đại cảnh, không cày nghề/sản xuất", "full": "đủ luồng ưu tiên → cày nghề → sản xuất", "disabled": "không gửi lệnh"}[scope],
         f"Cày tay nghề: {on(settings['craftMastery'])}; sản xuất sau max: {on(settings['craftProduce'])}; thứ tự: "
         + ("nghề còn lâu tới max nhất (ETA ước tính)" if settings["craftLevelOrder"] == "all-max-first" else "nhanh lên cấp kế nhất"),
         f"Ngân sách cày/ngày: {settings['craftLevelDaily']}%; giữ {amount(settings['craftReserveStones'])} linh thạch; sàn nguyên liệu: {settings['craftMatFloor']}/loại",
-        f"Mục tiêu: Dưỡng Khí Đan {settings['craftQiTarget']}; trận kỳ {settings['craftCharmTarget']}; trần sản xuất {settings['craftKeepQty']}; trần bùa/trận bảo hiểm {settings['craftInsuranceKeep']}",
+        f"Mục tiêu: {band['name']} {settings['craftQiTarget']} (theo cảnh giới); trận kỳ {settings['craftCharmTarget']}; trần sản xuất {settings['craftKeepQty']}; trần bùa/trận bảo hiểm {settings['craftInsuranceKeep']}",
         f"Hệ cài đặt: {BUILD_NAMES.get(settings['craftBuild'], 'Chưa rõ')}; hệ đã nhận: {BUILD_NAMES.get(plan['build'], 'Chưa rõ')}; công thức ghim: {pinned or 'không ghim'}",
         f"Đại cảnh: yêu cầu bảo hiểm {on(settings['majorUseInsurance'])}; cho phép Bổ Khuyết Đan {on(settings['majorAllowTopUp'])}",
     ]
@@ -68,7 +71,8 @@ def diagnostics(plan: dict, state: dict, config: dict, data: dict, meta: dict, *
             next_step = "Chờ vòng tiếp theo; không tự mua nguyên liệu hoặc thay đổi cấu hình."
     return {
         "schema": "craft_diagnostics_v1", "decision": decision, "reason": plan["reason"], "nextStep": next_step,
-        "settings": settings, "scope": scope, "settingLines": setting_lines, "resourceLines": resource_lines,
+        "settings": settings, "scope": scope, "pillBand": band,
+        "settingLines": setting_lines, "resourceLines": resource_lines,
         "resources": resources, "budget": budget, "focus": focus, "stateVersion": state.get("stateVersion"),
         "professions": plan["professions"], "selection": plan.get("selection", []),
         "blocked": plan["blocked"][:40], "blockedTotal": plan.get("blockedTotal", len(plan["blocked"])),

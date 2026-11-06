@@ -9,7 +9,7 @@ type Block = { name: string; reason: string; code?: string; nextStep?: string };
 type Diagnostics = { decision?: string; nextStep?: string; scope?: string; settingLines?: string[]; resourceLines?: string[]; blockedTotal?: number };
 type CraftStatus = { stateVersion: number | null; lastTickAt?: string | null; plan: {
   phase: string; reason: string; nextStep?: string; slots: number; freeSlots: number; build: string; action: Action | null;
-  professions: Profession[]; budget: { day: string; limit: number; spent: number; remaining: number };
+  pillBand?: { name: string }; professions: Profession[]; budget: { day: string; limit: number; spent: number; remaining: number };
   jobs: { id: string; name: string; recipeId: string; finishAt?: number; reason: string }[];
   blocked: Block[]; diagnostics?: Diagnostics;
 } };
@@ -41,7 +41,7 @@ export function Crafting({ account, onSettings }: { account: Account; onSettings
       <button type="button" className="text-button" onClick={onSettings}>Cài đặt chế tạo <Icon name="arrow" size={15} /></button>
       {loading && <div role="status" className="craft-loading"><Spinner /> Đang đọc trạng thái lò…</div>}
       {error && <ErrorState message={error} onRetry={() => setReload((value) => value + 1)} />}
-      {plan && <><div className="craft-phase" role="status"><b>Giai đoạn: {phases[plan.phase] || plan.phase}</b><p>{plan.reason}</p><small>Hệ tu: {builds[plan.build] || plan.build} · {plan.freeSlots}/{plan.slots} lò trống · state v{status.stateVersion ?? "—"}</small>{plan.nextStep && <p className="craft-direction"><b>Phương hướng:</b> {plan.nextStep}</p>}</div>
+      {plan && <><div className="craft-phase" role="status"><b>Giai đoạn: {phases[plan.phase] || plan.phase}</b><p>{plan.reason}</p><small>Hệ tu: {builds[plan.build] || plan.build}{plan.pillBand?.name ? ` · Đan theo cảnh giới: ${plan.pillBand.name}` : ""} · {plan.freeSlots}/{plan.slots} lò trống · state v{status.stateVersion ?? "—"}</small>{plan.nextStep && <p className="craft-direction"><b>Phương hướng:</b> {plan.nextStep}</p>}</div>
         {plan.diagnostics && !!((plan.diagnostics.settingLines?.length || 0) + (plan.diagnostics.resourceLines?.length || 0)) && <details className="craft-diagnostics"><summary>Cấu hình đang áp dụng & vì sao chờ</summary>
           {!!plan.diagnostics.settingLines?.length && <><h4>Cấu hình</h4><ul>{plan.diagnostics.settingLines.map((line, index) => <li key={index}>{line}</li>)}</ul></>}
           {!!plan.diagnostics.resourceLines?.length && <><h4>Tài nguyên & ngân sách</h4><ul>{plan.diagnostics.resourceLines.map((line, index) => <li key={index}>{line}</li>)}</ul></>}

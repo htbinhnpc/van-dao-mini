@@ -122,6 +122,31 @@ class AutomationTests(unittest.IsolatedAsyncioTestCase):
                                            ("title.claim", {"titleId": "title_1"})])
         self.assertEqual(result["stateVersion"], 13)
 
+    async def test_use_pill_respects_realm_band_and_owned_fallback(self):
+        config = {"autoUse": True, "autoUseBuffs": True}
+        base = {"stateVersion": 10, "buffs": [],
+                "materials": {"item_qi_pill": 1, "item_spirit_pill": 1, "item_grand_pill": 1}}
+        for realm, level, item in (("truc_co", 16, "item_qi_pill"),
+                                   ("ket_dan", 20, "item_spirit_pill"),
+                                   ("hoa_than", 28, "item_grand_pill")):
+            self.state = {**copy.deepcopy(base), "character": {"level": level, "realm": {"realmId": realm, "stage": 1}}}
+            self.client.command.reset_mock()
+            await auto._use_pill(self.client, self.state, config, self.account)
+            self.assertEqual(self.commands(), [("item.use", {"itemId": item, "qty": 1})])
+        # At Kết Đan, a missing Tụ Linh Đan falls back to an owned lower tier.
+        self.state = {**copy.deepcopy(base), "character": {"level": 20, "realm": {"realmId": "ket_dan", "stage": 1}},
+                      "materials": {"item_qi_pill": 1}}
+        self.client.command.reset_mock()
+        await auto._use_pill(self.client, self.state, config, self.account)
+        self.assertEqual(self.commands(), [("item.use", {"itemId": "item_qi_pill", "qty": 1})])
+        # Never consume a higher tier before its realm band.
+        self.state = {**copy.deepcopy(base), "character": {"level": 16, "realm": {"realmId": "truc_co", "stage": 1}},
+                      "materials": {"item_grand_pill": 1}}
+        self.client.command.reset_mock()
+        result = await auto._use_pill(self.client, self.state, config, self.account)
+        self.assertIs(result, self.state)
+        self.client.command.assert_not_awaited()
+
     async def test_equip_delegates_to_game_without_selling_or_unlocking(self):
         await auto._equipment(self.client, self.state, {"autoEquipBest": True}, self.account)
         self.client.command.assert_not_awaited()

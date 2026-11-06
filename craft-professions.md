@@ -42,7 +42,7 @@ Nút thắt thật: **thú bì** (Chế phù) và **đá** (Trận pháp, Chế 
 
 1. `ctx.want.crafts` (nhiệm vụ, đột phá — critical trước)
 2. Đan đột phá đại cảnh kế tiếp
-3. Dưỡng Khí Đan bổ sung tồn kho (qiPillLow/qiPillTarget)
+3. Đan tu luyện theo dải cảnh giới bổ sung tồn kho (Dưỡng Khí/Tụ Linh/Đại Tụ Linh; `craftQiTarget`)
 4. Trận kỳ tu luyện (charms) — khi đủ cấp
 5. **Cày cấp (mới)** — mục 3.2
 6. Giai đoạn 2 (khi cả 4 nghề max) — mục 4

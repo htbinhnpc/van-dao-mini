@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from api.services.breakthrough import CHANCES, INSURANCE, TOP_UP, loss_pct, natural, next_major, roll_state
 from api.services.craft_logging import diagnostics
+from api.services.pill_policy import item_band_index, pill_band
 
 PROFESSIONS = {"alchemy": "Luyện đan", "forging": "Rèn khí", "talisman": "Chế phù", "array": "Trận pháp"}
 CRAFTED_TO_REACH = (0, 3, 8, 15, 25, 40, 60, 85, 115, 150)
@@ -181,7 +182,8 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
         return result
     if config.get("craftRecipeId"):
         add(config["craftRecipeId"], integer(config.get("craftKeepQty", 10)) or 1, "Công thức ưu tiên đã chọn")
-    add("recipe_qi_pill", integer(config.get("craftQiTarget", 10)), "Bổ sung Dưỡng Khí Đan")
+    band = pill_band(character, meta)
+    add(band["recipeId"], integer(config.get("craftQiTarget", 10)), f"Bổ sung {band['name']} theo cảnh giới")
     charms = [r for r in recipes.values() if (r.get("output") or {}).get("itemId") in CULTIVATION_CHARMS and integer(r.get("reqLevel")) <= integer(character.get("level"))]
     if charms:
         best = max(charms, key=lambda r: CULTIVATION_CHARMS[r["output"]["itemId"]])
@@ -207,8 +209,10 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
     budget = daily_budget(state, config, data, now_ms)
     ps = {key: progress(state, key) for key in PROFESSIONS}
     all_max = all(p and p["maxed"] for p in ps.values())
+    band = pill_band(state.get("character") or {}, meta)
     result = {"phase": "breakthrough" if config.get("_majorPreparationOnly") else "production" if all_max else "leveling" if all(ps.values()) else "unknown", "slots": slots, "freeSlots": free,
               "budget": budget, "build": character_build(state, config), "professions": [], "action": None,
+              "pillBand": band,
               "reason": "", "blocked": [], "jobs": [{**j, "name": recipes.get(j["recipeId"], {}).get("name", j["recipeId"]),
                "reason": (data.get("craftJobs") or {}).get(str(j.get("id")), {}).get("reason", "Lò đang chạy theo state game")} for j in jobs]}
     result["resources"] = {"stones": natural((state.get("wallet") or {}).get("spirit_stone")),
@@ -451,8 +455,12 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
         skip_reason = "unsupported_output"
         rate = integer((state.get("character") or {}).get("rateMilli")) / 1000
         if use.get("type") == "cultivation_buff":
-            value = rate * integer(use.get("ratePct")) / 100 * integer(use.get("durationMs")) / 1000
-            skip_reason = "cultivation_rate_unknown_or_zero"
+            rank = item_band_index(output.get("itemId"))
+            if rank is not None and rank > band["index"]:
+                skip_reason = "pill_band_above_current"
+            else:
+                value = rate * integer(use.get("ratePct")) / 100 * integer(use.get("durationMs")) / 1000
+                skip_reason = "cultivation_rate_unknown_or_zero"
         elif use.get("type") == "cultivation_exp":
             # Only the highest unlocked pill band is appropriate for this level.
             unlocked = [r for r in recipes.values() if (meta.get("items", {}).get((r.get("output") or {}).get("itemId"), {}).get("use") or {}).get("type") == "cultivation_exp" and integer(r.get("reqLevel")) <= integer((state.get("character") or {}).get("level"))]
