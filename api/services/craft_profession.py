@@ -367,7 +367,7 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
                 return block("output_unknown", "Chưa biết thành phẩm", "Cập nhật/đồng bộ metadata thành phẩm; chưa chế tạo.")
             cap = integer(item.get("stackCap"))
             if recipe["id"] in ("recipe_aid_thunder_ward", "recipe_aid_guard_array"):
-                cap = min(cap, integer(config.get("craftInsuranceKeep", 30)))
+                cap = min(cap, integer(config.get("craftInsuranceKeep", 999)))
             if target is not None:
                 cap = min(cap, target)
             count = min(count, max(0, cap - owned_output(state, recipe)) // each)

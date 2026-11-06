@@ -65,7 +65,7 @@ DEFAULT_CONFIG = {
     "craftProduce": True,
     "craftReserveStones": 1000,
     "craftMatFloor": 20,
-    "craftInsuranceKeep": 30,
+    "craftInsuranceKeep": 999,
     "craftQiTarget": 10,
     "craftCharmTarget": 2,
     "craftBuild": "auto",

@@ -48,7 +48,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "huntIntervalMin": (1, 1440), "autoSalvageTier": (0, 7),
         "arenaMinPowerEdge": (0, 10**12), "arenaMaxRefresh": (0, 10), "arenaMaxFights": (1, 10),
         "craftLevelDaily": (0, 100), "craftReserveStones": (0, 10**18), "craftMatFloor": (0, 999999),
-        "craftInsuranceKeep": (10, 30), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
+        "craftInsuranceKeep": (10, 999), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
         "caveReserveStones": (0, 10**18), "caveMatFloor": (0, 999999),
         "majorMinChance": (30, 100), "majorRetryMinutes": (10, 1440),
     }

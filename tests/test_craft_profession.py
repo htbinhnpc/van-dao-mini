@@ -167,9 +167,9 @@ class CraftPlannerTests(unittest.TestCase):
         s = max_all(snapshot()); s["professions"]["talisman"] = {"level": 5, "crafted": 25, "next": 40}
         s["materials"]["item_aid_thunder_ward"] = 29
         # All talisman recipes except insurance require absent paper/ink.
-        self.assertIsNone(plan(s)["action"])
+        self.assertIsNone(plan(s, settings(craftInsuranceKeep=30))["action"])
         s["materials"]["item_aid_thunder_ward"] = 28
-        self.assertEqual(plan(s)["action"]["count"], 1)
+        self.assertEqual(plan(s, settings(craftInsuranceKeep=30))["action"]["count"], 1)
 
     def test_unknown_professions_never_trigger_production_or_guessed_max(self):
         for changes in ({"level": 10, "crafted": 150}, {"level": 10, "crafted": 150, "next": 200}, None):

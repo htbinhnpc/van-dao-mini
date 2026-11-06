@@ -48,6 +48,11 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config["huntReserveRuns"], 12)
         self.assertEqual(config["huntIntervalMin"], 1)
 
+    def test_insurance_stock_cap_reaches_999(self):
+        self.assertEqual(DEFAULT_CONFIG["craftInsuranceKeep"], 999)
+        self.assertEqual(_config_for_update({}, {"craftInsuranceKeep": 1000})["craftInsuranceKeep"], 999)
+        self.assertEqual(_config_for_update({}, {"craftInsuranceKeep": 0})["craftInsuranceKeep"], 10)
+
     def test_public_metadata_contains_all_reviewed_hunt_targets(self):
         response = TestClient(app).get("/api/v1/meta")
         self.assertEqual(response.status_code, 200)
