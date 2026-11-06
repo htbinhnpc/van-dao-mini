@@ -58,7 +58,7 @@ DEFAULT_CONFIG = {
     "autoFallbackHunt": True,
     "autoCraft": False,
     "craftRecipeId": "",
-    "craftKeepQty": 10,
+    "craftKeepQty": 999,
     "craftMastery": True,
     "craftLevelOrder": "fastest",
     "craftLevelDaily": 20,

@@ -10,7 +10,7 @@ from api.services.pill_policy import pill_band
 SETTINGS = {
     "autoCraft": False, "autoMajorBreakthrough": False, "craftMastery": True, "craftProduce": True,
     "craftLevelOrder": "fastest", "craftLevelDaily": 20, "craftReserveStones": 1000, "craftMatFloor": 20,
-    "craftInsuranceKeep": 30, "craftQiTarget": 10, "craftCharmTarget": 2, "craftKeepQty": 10,
+    "craftInsuranceKeep": 30, "craftQiTarget": 10, "craftCharmTarget": 2, "craftKeepQty": 999,
     "craftRecipeId": "", "craftBuild": "auto", "majorUseInsurance": True, "majorAllowTopUp": False,
 }
 PROFESSIONS = {"alchemy": "Luyện đan", "forging": "Rèn khí", "talisman": "Chế phù", "array": "Trận pháp"}

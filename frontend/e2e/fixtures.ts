@@ -11,7 +11,7 @@ export const defaultConfig = {
   cleanupKeepPerDefinition: 0, cleanupMaxItems: 20, cleanupSlots: [],
   autoSalvageMode: "salvage", autoActivity: false, activityType: "farm", huntSpotId: "",
   autoQuests: true, autoDaily: true, autoWeekly: false, autoAchievements: false, autoMail: true,
-  autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 10,
+  autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 999,
   craftMastery: true, craftLevelOrder: "fastest", craftLevelDaily: 20, craftProduce: true, craftReserveStones: 1000,
   craftMatFloor: 20, craftInsuranceKeep: 30, craftQiTarget: 10, craftCharmTarget: 2, craftBuild: "auto",
   autoCaveUpgrade: false, caveRoomOrder: "craft", caveReserveStones: 1000, caveMatFloor: 20,

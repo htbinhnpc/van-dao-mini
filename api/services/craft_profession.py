@@ -181,7 +181,7 @@ def priorities(state: dict, config: dict, meta: dict) -> list[dict]:
     if config.get("_majorPreparationOnly"):
         return result
     if config.get("craftRecipeId"):
-        add(config["craftRecipeId"], integer(config.get("craftKeepQty", 10)) or 1, "Công thức ưu tiên đã chọn")
+        add(config["craftRecipeId"], integer(config.get("craftKeepQty", 999)) or 1, "Công thức ưu tiên đã chọn")
     band = pill_band(character, meta)
     add(band["recipeId"], integer(config.get("craftQiTarget", 10)), f"Bổ sung {band['name']} theo cảnh giới")
     charms = [r for r in recipes.values() if (r.get("output") or {}).get("itemId") in CULTIVATION_CHARMS and integer(r.get("reqLevel")) <= integer(character.get("level"))]
@@ -485,7 +485,7 @@ def plan_crafting(state: dict, config: dict, meta: dict, data: dict | None = Non
         if not value:
             skipped(skip_reason)
         if value:
-            count, reason = available(recipe, filler=True, target=integer(config.get("craftKeepQty", 10)))
+            count, reason = available(recipe, filler=True, target=integer(config.get("craftKeepQty", 999)))
             if count:
                 production.append((value / batch_ms(recipe, ps[profession(recipe)]["level"]), recipe))
             else:
