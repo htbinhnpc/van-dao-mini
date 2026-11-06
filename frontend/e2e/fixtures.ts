@@ -110,13 +110,17 @@ export async function mockApi(page: Page, options: Options = {}) {
       return reply({ stateVersion: account.state.stateVersion, lastTickAt: account.lastTickAt, plan: {
         phase: options.craftUnknown ? "unknown" : options.craftMax ? "production" : "leveling", slots: 4, freeSlots: 3, build: "sword",
         reason: options.craftMax ? "Sản xuất: mỗi lò một công thức khác nhau, hợp cấp/hệ tu" : "Dồn lò cày Rèn khí cấp 4 → cấp kế",
+        nextStep: options.craftMax ? "Chờ mẻ hoàn tất rồi tính lại món sản xuất theo tồn kho." : "Chờ mẻ Rèn khí hoàn tất và game kết toán lên cấp; không xếp thêm quá mốc.",
+        diagnostics: { decision: options.craftUnknown ? "unknown" : "ready", scope: "full", blockedTotal: 1,
+          settingLines: ["Tự chế tạo: bật; auto đại cảnh: tắt; phạm vi: đủ luồng ưu tiên → cày nghề → sản xuất", "Ngân sách cày/ngày: 20%; giữ 1.000 linh thạch"],
+          resourceLines: ["Lò: 3/4 trống; 1 mẻ đang chạy", "Ngân sách cày UTC 2026-11-05: còn 19.955"] },
         budget: { day: "2026-11-05", limit: 20000, spent: 45, remaining: 19955 },
         action: options.craftUnknown ? null : { recipeId: "recipe_iron_sword", name: "Rèn Thanh Khê Thiết Kiếm", count: options.craftMax ? 1 : 3, profession: "forging", reason: "Nguyên liệu dư, túi còn chỗ", stones: 45, durationMs: 40950, phase: "mastery" },
         professions: Object.entries({ alchemy: "Luyện đan", forging: "Rèn khí", talisman: "Chế phù", array: "Trận pháp" }).map(([id, name]) => ({ id, name,
           known: !options.craftUnknown, level: options.craftMax ? 10 : 4, crafted: options.craftMax ? 150 : 20, next: options.craftMax ? null : 25,
           maxed: !!options.craftMax, pending: id === "forging" ? 1 : 0, nextEtaMs: options.craftMax ? 0 : 45000, maxEtaMs: options.craftMax ? 0 : 3600000 })),
         jobs: [{ id: "forge-1", recipeId: "recipe_iron_sword", name: "Rèn Thanh Khê Thiết Kiếm", finishAt: Date.now() + 60000, reason: "Dồn lò cày Rèn khí" }],
-        blocked: [{ name: "Chế phù", reason: "Thiếu nguyên liệu dư trên sàn dự trữ" }],
+        blocked: [{ name: "Chế phù", reason: "Thiếu nguyên liệu dư trên sàn dự trữ", code: "materials", nextStep: "Tích lũy thêm nguyên liệu; không tự mua hoặc hạ mức giữ." }],
       } });
     }
     if (path.endsWith("/cleanup/preview")) { cleanupRules[accountId] = body.rules; return reply({
@@ -160,6 +164,13 @@ export async function mockApi(page: Page, options: Options = {}) {
       { id: 1, level: "success", action: "settle", message: "Kết toán tu vi: +2400", created_at: "2026-11-04T09:30:00Z" },
       { id: 2, level: "warning", action: "boss.fight", message: "Boss chưa hết hồi chiêu", created_at: "2026-11-04T09:25:00Z" },
       { id: 3, level: "error", action: "automation.tick", message: "Dừng vòng vì state thay đổi", created_at: "2026-11-04T09:20:00Z" },
+      { id: 4, level: "info", action: "craft.plan", message: "Chờ lò Chế phù hoàn tất. Phạm vi đầy đủ; cày bật, sản xuất bật. Tiếp: Tích lũy thêm nguyên liệu.", created_at: "2026-11-04T09:15:00Z", details: {
+        schema: "craft_diagnostics_v1", status: "blocked", decision: "blocked", scope: "full", stateVersion: 10,
+        reason: "Các nghề chưa max đều bị chặn bởi tài nguyên.", nextStep: "Tích lũy thêm nguyên liệu; không tự mua hoặc hạ mức giữ.",
+        settingLines: ["Tự chế tạo: bật; auto đại cảnh: tắt; phạm vi: đủ luồng ưu tiên → cày nghề → sản xuất"],
+        resourceLines: ["Lò: 3/4 trống; 1 mẻ đang chạy", "Ngân sách cày UTC 2026-11-05: còn 19.955"],
+        blocked: [{ name: "Chế phù", reason: "Thiếu nguyên liệu dư trên sàn dự trữ", code: "materials", nextStep: "Tích lũy thêm nguyên liệu." }],
+      } },
     ] });
     return reply({ detail: `Unmocked API: ${method} ${path}` }, 404);
   });

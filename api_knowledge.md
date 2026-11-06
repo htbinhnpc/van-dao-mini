@@ -141,6 +141,7 @@ Audit: lưu intent trước lệnh hủy đồ, rồi kết quả có ID đã d�
 - Bộ chọn Mini không giả định cấp 10 đã max: cần đủ 4 record hợp lệ, mỗi record có `next:null`. Thiếu thông tin thì chỉ xét các ưu tiên nhiệm vụ/bổ sung đã biết, không chạy filler/sản xuất. Tất cả ETA tới max có ghi ước tính; ngưỡng suy ra 115/150 không quyết định chi tiêu.
 - Lưu `craftLevelBudget` (ngày UTC/base/limit/spent), `craftLevelFocus` và `craftJobs` trong `automation_data`. Debit cày trước lệnh, không refund timeout; log intent trước lệnh, kiểm tra version và đủ ID job mới sau phản hồi. Chưa xác nhận đủ mẻ thì dừng, không tự gửi lại. Các handler khác vẫn dùng ngân sách chung 12 lệnh/40 giây; không nới trần game.
 - Chưa có economy/gear-opt/market-price trong repo này: dùng sàn tài nguyên, dự trữ đầu vào nhiệm vụ/đột phá và tiêu chí vũ khí cùng hệ/tier đã biết. Không tự bán sản phẩm hoặc chấm sức mạnh chéo chỉ số. Chưa chạy lệnh chế tạo trên tài khoản thật.
+- Bổ sung 2026-11-06: planner trả `diagnostics` (`craft_diagnostics_v1`) và `nextStep` cho mọi nhánh, kể cả tắt/chờ/lỗi. Chỉ whitelist setting chế tạo, không chép config thô; lý do chặn có mã, số liệu lò/ví/ngân sách, nguyên liệu thiếu từng loại và mức giữ chỗ ưu tiên/đột phá. Worker log intent `craft.start` và kết quả `craft.plan` với cùng snapshot; UI Chế tạo và chi tiết Nhật ký đọc lại các dòng này. Không thay đổi payload/lệnh game.
 
 ## Nâng phòng động phủ Mini (2026-11-05)
 

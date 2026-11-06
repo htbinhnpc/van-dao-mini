@@ -11,8 +11,14 @@ test("profession dashboard shows four tracks, ETA, budget and furnace reasons wi
   await expect(page.locator(".craft-budget")).toContainText("20.000");
   await expect(page.locator(".craft-furnaces li")).toHaveCount(4);
   await expect(page.locator(".craft-furnaces")).toContainText("Dồn lò cày Rèn khí");
+  await expect(page.locator(".craft-phase")).toContainText("Phương hướng:");
+  await expect(page.locator(".craft-phase")).toContainText("Chờ mẻ Rèn khí hoàn tất");
+  await page.getByText("Cấu hình đang áp dụng & vì sao chờ", { exact: true }).click();
+  await expect(page.locator(".craft-diagnostics")).toContainText("Tự chế tạo: bật");
+  await expect(page.locator(".craft-diagnostics")).toContainText("Ngân sách cày UTC");
   await page.getByText("Công thức/nghề bị chặn (1)", { exact: true }).click();
   await expect(page.locator(".craft-blocked")).toContainText("Thiếu nguyên liệu dư");
+  await expect(page.locator(".craft-blocked")).toContainText("Tiếp: Tích lũy thêm nguyên liệu");
   await page.getByRole("button", { name: "Đồng bộ lò", exact: true }).click();
   await expect(page.locator(".craft-profession")).toHaveCount(4);
   expect(mock.mutations).toEqual([]);

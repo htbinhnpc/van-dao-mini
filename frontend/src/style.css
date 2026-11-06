@@ -673,6 +673,12 @@ input[aria-invalid=true], select[aria-invalid=true] { border-color: #c69568; }
 .craft-next { padding: 16px; border-left: 3px solid var(--jade); background: #72bea40a; }
 .craft-next h3 { margin: 0; font-size: 14px; }
 .craft-blocked { margin-top: 20px; }.craft-blocked li { margin: 10px 0; overflow-wrap: anywhere; }
+.craft-blocked li small { display: block; margin-top: 5px; color: var(--jade); }
+.craft-direction { padding-top: 10px; border-top: 1px dashed var(--line); }
+.craft-diagnostics { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.craft-diagnostics summary { cursor: pointer; color: var(--jade); }
+.craft-diagnostics h4 { margin: 13px 0 5px; font-size: 12px; color: var(--muted); }
+.craft-diagnostics ul { margin: 0; padding-left: 18px; color: #c9d4ca; font-size: 12px; line-height: 1.75; }
 .craft-furnaces { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
 .craft-furnaces li { display: flex; align-items: flex-start; gap: 15px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .craft-furnaces li > div { min-width: 0; overflow-wrap: anywhere; }.craft-furnaces li > span { flex-shrink: 0; }

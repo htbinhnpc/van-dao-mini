@@ -84,6 +84,48 @@ class CraftPlannerTests(unittest.TestCase):
         self.assertEqual(result["action"]["profession"], "forging")
         self.assertTrue(any(entry["name"] == "Luyện đan" for entry in result["blocked"]))
 
+    def test_diagnostics_show_settings_block_reason_and_next_action(self):
+        s = snapshot(); s["materials"]["item_spirit_herb"] = 20
+        result = plan(s)
+        diagnostics = result["diagnostics"]
+        self.assertEqual(diagnostics["schema"], "craft_diagnostics_v1")
+        self.assertTrue(diagnostics["settings"]["autoCraft"])
+        self.assertIn("Tự chế tạo: bật", "\n".join(diagnostics["settingLines"]))
+        self.assertIn("Ngân sách cày UTC", "\n".join(diagnostics["resourceLines"]))
+        entry = next(entry for entry in result["blocked"] if entry["name"] == "Luyện đan")
+        self.assertEqual(entry["code"], "materials")
+        self.assertIn("thiếu", entry["reason"])
+        self.assertIn("Tích lũy thêm nguyên liệu", entry["nextStep"])
+        self.assertIn("Dự kiến", diagnostics["nextStep"])
+        self.assertIn("Tự chế tạo: bật", diagnostics["settingLines"][0])
+
+    def test_blocked_without_action_keeps_per_profession_next_step(self):
+        s = snapshot(); s["materials"] = {}
+        result = plan(s)
+        self.assertIsNone(result["action"])
+        self.assertEqual(result["diagnostics"]["decision"], "blocked")
+        self.assertIn("Xử lý chốt chặn", result["nextStep"])
+        self.assertGreaterEqual(result["blockedTotal"], 4)
+        self.assertTrue(result["blocked"])
+        self.assertTrue(all(entry.get("nextStep") for entry in result["blocked"]))
+        self.assertTrue(all(entry.get("recipeName") for entry in result["blocked"]))
+
+    def test_disabled_diagnostics_explain_enablement_without_sending_commands(self):
+        result = plan(config=settings(autoCraft=False))
+        self.assertIsNone(result["action"])
+        self.assertEqual(result["diagnostics"]["scope"], "disabled")
+        self.assertEqual(result["decision"], "disabled")
+        self.assertIn("Bật Tự chế tạo", result["nextStep"])
+
+    def test_diagnostics_whitelist_settings_and_mark_major_only_scope(self):
+        secret = settings(sessionToken="must-not-leak", autoCraft=False, autoMajorBreakthrough=True)
+        result = plan(config=secret)
+        diagnostics = result["diagnostics"]
+        self.assertEqual(diagnostics["scope"], "major_only")
+        self.assertFalse(diagnostics["settings"]["autoCraft"])
+        self.assertNotIn("sessionToken", diagnostics["settings"])
+        self.assertNotIn("must-not-leak", str(diagnostics))
+
     def test_level_daily_and_material_floor_are_enforced(self):
         s = snapshot(); s["materials"] = {"item_spirit_herb": 23}
         self.assertIsNone(plan(s)["action"])
@@ -238,6 +280,33 @@ class CraftWorkerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.account["automation_data"]["other"], "preserved")
         self.assertEqual(self.account["automation_data"]["craftLevelFocus"]["profession"], "alchemy")
         self.assertEqual(len(self.account["automation_data"]["craftJobs"]), 3)
+
+    async def test_blocked_craft_logs_settings_reason_and_next_action(self):
+        self.state["materials"] = {}
+        await auto._craft(self.client, self.state, settings(), self.account)
+        self.client.command.assert_not_awaited()
+        self.logs.assert_awaited_once()
+        call = self.logs.await_args_list[0]
+        self.assertEqual((call.args[1], call.args[2]), ("info", "craft.plan"))
+        details = call.kwargs["details"]
+        self.assertEqual(details["status"], "blocked")
+        self.assertEqual(details["schema"], "craft_diagnostics_v1")
+        self.assertTrue(details["settings"]["autoCraft"])
+        self.assertTrue(details["settingLines"])
+        self.assertTrue(details["resourceLines"])
+        self.assertTrue(details["blocked"])
+        self.assertIn("Xử lý chốt chặn", details["nextStep"])
+
+    async def test_disabled_craft_does_not_plan_or_write_logs(self):
+        await auto._craft(self.client, self.state, settings(autoCraft=False, autoMajorBreakthrough=False), self.account)
+        self.client.command.assert_not_awaited()
+        self.logs.assert_not_awaited()
+
+    async def test_pending_major_breakthrough_stays_silent_and_sends_nothing(self):
+        self.account["automation_data"]["majorBreakthroughPending"] = {"command": "craft.start"}
+        await auto._craft(self.client, self.state, settings(autoMajorBreakthrough=True), self.account)
+        self.client.command.assert_not_awaited()
+        self.logs.assert_not_awaited()
 
     async def test_production_replans_materials_and_fills_distinct_recipes(self):
         self.state = max_all(self.state)

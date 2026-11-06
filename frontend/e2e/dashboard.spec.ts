@@ -191,6 +191,20 @@ test("log filters use friendly labels and retain error messages", async ({ page 
   await expect(page.getByRole("heading", { name: "Không có nhật ký phù hợp", exact: true })).toBeVisible();
 });
 
+test("craft log explains settings, block reason and next action", async ({ page }) => {
+  await mockApi(page); await openDashboard(page); await nav(page, "Nhật ký").click();
+  await page.getByText("Chi tiết chế tạo", { exact: true }).click();
+  const details = page.locator(".craft-log-details");
+  await expect(details).toContainText("Đã chặn trước khi gửi lệnh");
+  await expect(details).toContainText("Tự chế tạo: bật");
+  await expect(details).toContainText("Ngân sách cày UTC");
+  await expect(details).toContainText("Chế phù");
+  await expect(details).toContainText("Phương hướng");
+  await expect(details).toContainText("Tích lũy thêm nguyên liệu");
+  await page.getByLabel("Tìm nhật ký", { exact: true }).fill("che phu");
+  await expect(page.locator(".timeline > li")).toHaveCount(1);
+});
+
 test("boot outage has retry instead of incorrectly signing the user out", async ({ page }) => {
   await mockApi(page, { bootFailures: 1 }); await page.goto("/");
   await expect(page.getByRole("alert")).toContainText("Dịch vụ tạm thời gián đoạn");

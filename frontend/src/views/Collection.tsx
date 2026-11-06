@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { CleanupPanel } from "./Cleanup";
 import { CleanupLogDetails, cleanupLogSearch } from "./CleanupLogDetails";
+import { CraftLogDetails, craftLogSearch } from "./CraftLogDetails";
 import { EmptyState, ErrorState, Icon, Panel, Skeleton, trapDialogFocus } from "../components";
 import { api, dateTime, display, errorMessage, isAbort, normalize, number } from "../lib";
 import type { Account, Config, Definition, GameMeta, LogEntry } from "../types";
@@ -59,11 +60,11 @@ export function Logs({ accountId }: { accountId: string }) {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [accountId, revision]);
-  const filtered = logs.filter((log) => (!level || log.level === level) && (!query.trim() || normalize(`${log.message} ${log.action} ${actionLabels[log.action] || ""} ${cleanupLogSearch(log)}`).includes(normalize(query.trim()))));
+  const filtered = logs.filter((log) => (!level || log.level === level) && (!query.trim() || normalize(`${log.message} ${log.action} ${actionLabels[log.action] || ""} ${cleanupLogSearch(log)} ${craftLogSearch(log)}`).includes(normalize(query.trim()))));
   return <Panel title="Nhật ký tu hành" eyebrow="THAO TÁC GẦN NHẤT" action={<button className="button ghost compact" onClick={() => setRevision((value) => value + 1)} disabled={loading}><Icon name="refresh" size={16} />Tải lại</button>}>
     <div className="collection-toolbar"><div className="search-input"><Icon name="search" size={18} /><input aria-label="Tìm nhật ký" placeholder="Tìm thao tác, nội dung hoặc ID món…" value={query} onChange={(event) => setQuery(event.target.value)} /></div><label className="sr-only" htmlFor="level-filter">Mức nhật ký</label><select id="level-filter" value={level} onChange={(event) => setLevel(event.target.value)}><option value="">Mọi trạng thái</option>{Object.entries(logLevels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div>
     {error && <ErrorState message={error} onRetry={() => setRevision((value) => value + 1)} />}
-    {loading ? <Skeleton lines={5} /> : filtered.length ? <ol className="timeline">{filtered.map((log) => <li key={log.id} className={`timeline-${log.level}`}><span className="timeline-symbol"><Icon name={log.level === "success" ? "check" : log.level === "warning" || log.level === "error" ? "warning" : "scroll"} size={17} /></span><div className="timeline-content"><div className="timeline-title"><b>{actionLabels[log.action] || log.action}</b><span className={`pill ${log.level === "success" ? "jade" : log.level === "error" ? "error" : log.level === "warning" ? "warning" : "neutral"}`}>{logLevels[log.level] || log.level}</span></div><p>{log.message}</p><time dateTime={log.created_at}>{dateTime(log.created_at)}</time><CleanupLogDetails log={log} /></div></li>)}</ol> : !error && <EmptyState icon="scroll" title={query || level ? "Không có nhật ký phù hợp" : "Chưa có dấu chân tu hành"}>{query || level ? "Thử bỏ bộ lọc để xem các thao tác khác." : "Sau khi chạy một vòng, các thao tác và kết quả sẽ xuất hiện ở đây."}</EmptyState>}
+    {loading ? <Skeleton lines={5} /> : filtered.length ? <ol className="timeline">{filtered.map((log) => <li key={log.id} className={`timeline-${log.level}`}><span className="timeline-symbol"><Icon name={log.level === "success" ? "check" : log.level === "warning" || log.level === "error" ? "warning" : "scroll"} size={17} /></span><div className="timeline-content"><div className="timeline-title"><b>{actionLabels[log.action] || log.action}</b><span className={`pill ${log.level === "success" ? "jade" : log.level === "error" ? "error" : log.level === "warning" ? "warning" : "neutral"}`}>{logLevels[log.level] || log.level}</span></div><p>{log.message}</p><time dateTime={log.created_at}>{dateTime(log.created_at)}</time><CleanupLogDetails log={log} /><CraftLogDetails log={log} /></div></li>)}</ol> : !error && <EmptyState icon="scroll" title={query || level ? "Không có nhật ký phù hợp" : "Chưa có dấu chân tu hành"}>{query || level ? "Thử bỏ bộ lọc để xem các thao tác khác." : "Sau khi chạy một vòng, các thao tác và kết quả sẽ xuất hiện ở đây."}</EmptyState>}
   </Panel>;
 }
 

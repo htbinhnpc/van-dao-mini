@@ -22,6 +22,7 @@ from api.services.cleanup import config_rules, plan_cleanup
 from api.services.cave import plan_cave_upgrade, validate_upgrade_response
 from api.services.equipment import PreparationError, prepare_equipment, validate_equipment_response
 from api.services.craft_profession import URGENT_REASONS, plan_crafting, progress
+from api.services.craft_logging import audit as craft_audit, message as craft_message
 from api.services.session_crypto import decrypt_session
 from api.services.titles import plan_title_equip, validate_equip_response
 from api.services.breakthrough import plan_breakthrough, validate_trial_response, validate_major_response
@@ -158,7 +159,10 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     if command == "item.dispose" and details is not None:
         details = {**details, "status": "succeeded", "removedIds": payload["itemIds"], "remainingIds": [], "stateVersionAfter": next_state["stateVersion"]}
         label += " (tự động, không hỏi xác nhận) · Game đã xác nhận dọn đủ danh sách"
-    await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label, details=details)
+    if command == "craft.start" and not lost:
+        await log(account, "info", command, f"{label} · Đã nhận phản hồi; chờ kiểm tra đủ mẻ.", details=details)
+    else:
+        await log(account, "warning" if lost else "success", command, f"{label} · chưa vượt qua" if lost else label, details=details)
     return next_state
 
 
@@ -518,7 +522,7 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
     if config.get("autoMajorBreakthrough") and (account.get("automation_data") or {}).get("majorBreakthroughPending"):
         return state
     if not config.get("autoCraft"):
-        config = {**config, "autoCraft": True, "_majorPreparationOnly": True}
+        config = {**config, "autoCraft": True, "_majorPreparationOnly": True, "_autoCraftSetting": False}
 
     async def store(values: dict) -> None:
         data = {**(account.get("automation_data") or {}), **values}
@@ -532,14 +536,24 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
         account["automation_data"] = data
 
     # At most eight starts, and still inside the global 12-command/time budget.
+    def runtime() -> dict:
+        budget = _tick_budget.get()
+        return {"attempts": budget.attempts if budget else 0, "maxCommands": 12, "maxCraftStarts": 8,
+                "stopped": budget.stopped if budget else False, "timeLeftMs": max(0, int((budget.deadline - time.monotonic()) * 1000)) if budget else None}
+
     for _ in range(8):
-        if not _can_command():
-            break
         plan = plan_crafting(state, config, META, account.get("automation_data") or {})
         action = plan["action"]
-        if not action:
-            await log(account, "info", "craft.plan", plan["reason"], details={"phase": plan["phase"], "blocked": plan["blocked"][:12]})
+        if not _can_command():
+            await log(account, "info", "craft.plan", "Hoãn chế tạo: vòng đã dừng, hết thời gian hoặc hết ngân sách lệnh.",
+                      details=craft_audit(plan, "deferred", runtime=runtime(), next_step="Để vòng sau đọc state và lập lại kế hoạch; không gửi thêm lệnh trong vòng này."))
             break
+        if not action:
+            decision = plan["diagnostics"]["decision"]
+            await log(account, "warning" if decision == "uncertain" else "info", "craft.plan", craft_message(plan),
+                      details=craft_audit(plan, decision, runtime=runtime()))
+            break
+        stage = "reserve"
         try:
             major_preparation = config.get("autoMajorBreakthrough") and action["reason"] in URGENT_REASONS
             if major_preparation:
@@ -550,10 +564,14 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
                 budget = {**plan["budget"], "spent": plan["budget"]["spent"] + action["stones"]}
                 budget["remaining"] = max(0, budget["limit"] - budget["spent"])
                 await store({"craftLevelBudget": budget, "craftLevelFocus": {"profession": action["profession"], "level": progress(state, action["profession"])["level"]}})
-            await log(account, "info", "craft.start", f"{action['reason']}: {action['name']} ×{action['count']} (−{action['stones']} linh thạch)", details={**action, "status": "started"})
+            stage = "intent"
+            context = craft_audit(plan, "started", runtime=runtime())
+            await log(account, "info", "craft.start", craft_message(plan), details={**context, **action, "status": "started"})
             before = state
+            stage = "game"
             next_state = await _command(client, state, "craft.start", {"recipeId": action["recipeId"], "count": action["count"]}, account,
-                                        f"{action['reason']}: {action['name']} ×{action['count']}", audit={**action, "status": "responded"})
+                                        f"{action['reason']}: {action['name']} ×{action['count']}", audit={**context, **action, "status": "responded"})
+            stage = "verify"
             new_jobs = (next_state.get("crafting") or {}).get("jobs")
             if (type(next_state.get("stateVersion")) is not int or next_state["stateVersion"] <= before.get("stateVersion", 0)
                     or not isinstance(new_jobs, list) or any(not isinstance(job, dict) or not isinstance(job.get("id"), str) for job in new_jobs)):
@@ -566,19 +584,28 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
             reasons = {str(job["id"]): ((account.get("automation_data") or {}).get("craftJobs") or {}).get(str(job["id"]), {}) for job in new_jobs}
             for job in added:
                 reasons[job["id"]] = {"recipeId": action["recipeId"], "reason": action["reason"], "phase": action["phase"]}
+            stage = "persist"
             await store({"craftJobs": reasons})
             saved = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
             if major_preparation:
                 if not saved:
                     raise ValueError("Chưa lưu được snapshot chuẩn bị đột phá; giữ khóa để kiểm tra.")
                 await store({"majorBreakthroughPending": None})
-            await log(account, "success", "craft.plan", f"Đã xác nhận {len(added)} mẻ: {action['name']}", details={**action, "status": "succeeded", "jobIds": [j["id"] for j in added]})
+            await log(account, "success", "craft.plan", f"Đã xác nhận {len(added)} mẻ: {action['name']}. Chờ game hoàn tất/kết toán, sau đó lập lại kế hoạch.",
+                      details={**craft_audit(plan, "succeeded", runtime=runtime(), next_step="Chờ các mẻ đã xác nhận hoàn tất/kết toán; tính lại nghề và nguồn lực từ state mới, không xếp trùng mù."),
+                               **action, "status": "succeeded", "jobIds": [j["id"] for j in added], "stateVersionAfter": state["stateVersion"]})
         except Exception as exc:
             budget = _tick_budget.get()
             if budget:
                 budget.stopped, budget.error = True, f"craft.start: {exc}"[:500]
-            await log(account, "warning", "craft.plan", f"Dừng chế tạo, không retry: {str(exc)[:300]}", details={**action, "status": "uncertain"})
+            await log(account, "warning", "craft.plan", f"Dừng chế tạo ở bước {stage}, không retry: {str(exc)[:300]}",
+                      details={**craft_audit(plan, "uncertain", runtime=runtime(), next_step="Dừng vòng. Đồng bộ lò/game và kiểm tra mẻ đã chạy trước khi thử tiếp; không gửi lại hay hoàn ngân sách giữ chỗ khi kết quả chưa rõ."),
+                               **action, "status": "uncertain", "failureStage": stage, "error": str(exc)[:300]})
             break
+    else:
+        plan = plan_crafting(state, config, META, account.get("automation_data") or {})
+        await log(account, "info", "craft.plan", "Đã đạt giới hạn 8 lượt bắt đầu chế tạo trong vòng; phần còn lại để vòng sau.",
+                  details=craft_audit(plan, "deferred", runtime=runtime(), next_step="Để vòng sau đọc state và kiểm tra lại lò/tài nguyên; không gửi thêm mẻ trong vòng này."))
     return state
 
 
