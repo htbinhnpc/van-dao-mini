@@ -35,6 +35,7 @@ ALLOWED_COMMANDS = frozenset(
         "field.harvest",
         "field.rush",
         "equip.best",
+        "equip",
         "item.transfer",
         "minor.trial",
         "breakthrough.trial",

@@ -100,7 +100,7 @@ async def preview_cleanup(account_id: str, request: PreviewRequest, user: dict =
     if plan["items"]:
         run = await insert_one("automation_runs", {
             "account_id": account_id, "status": "queued",
-            "cursor": {"type": "cleanup_v2", "stateVersion": state["stateVersion"],
+            "cursor": {"type": "cleanup_v3", "stateVersion": state["stateVersion"],
                        "rules": request.rules.model_dump(), "itemIds": [item["id"] for item in plan["items"]],
                        "expiresAt": expires},
         })
@@ -122,7 +122,7 @@ async def execute_cleanup(account_id: str, request: ExecuteRequest, user: dict =
     run_filter = f"id=eq.{filter_value(run_id)}&account_id=eq.{filter_value(account_id)}"
     run = await select_one("automation_runs", f"{run_filter}&select=*")
     cursor = (run or {}).get("cursor") or {}
-    if (not run or run.get("status") != "queued" or cursor.get("type") != "cleanup_v2"
+    if (not run or run.get("status") != "queued" or cursor.get("type") != "cleanup_v3"
             or type(cursor.get("expiresAt")) is not int or cursor["expiresAt"] <= time.time()):
         raise HTTPException(409, "Bản xem trước đã hết hạn hoặc đã dùng. Hãy xem trước lại; không gửi lại lệnh cũ.")
     approved = cursor.get("itemIds")

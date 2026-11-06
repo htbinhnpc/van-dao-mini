@@ -28,7 +28,7 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoEquipTitle", label: "Tự đeo danh hiệu tốt nhất", description: "Chỉ đeo danh hiệu đã sở hữu có sát thương cao nhất cho hệ đang chơi. Hệ vật lý dùng Công, hệ pháp thuật dùng Pháp công; danh hiệu bạo kích chỉ được chấm khi biết crit/critDmg. Thiếu dữ liệu thì không đổi.", risk: true },
   ] },
   { id: "equipment", name: "Trang bị & túi đồ", icon: "bag", description: "Trang bị theo game, dọn túi bằng bộ lọc Mini có kiểm soát.", flags: [
-    { key: "autoEquipBest", label: "Tự trang bị", description: "Dùng bộ chọn của game. Khóa món bạn muốn giữ trước khi bật.", risk: true },
+    { key: "autoEquipBest", label: "Tự trang bị", description: "Dùng bộ chọn game rồi so lại ở cùng mức cường hóa có thể chuyển. Chỉ đổi thêm khi không giảm dòng chỉ số/bonus bộ; có thể tiêu phí chuyển cường hóa. Khóa món muốn giữ trước khi bật.", risk: true },
     { key: "autoCleanup", label: "Dọn túi Mini", description: "Mặc đồ mạnh nhất theo game, chuyển cường hóa cao nhất cùng ô (có phí), rồi dọn đồ không mặc trong bộ lọc; không giữ 1 bản/mẫu. Bảo vệ đồ khóa/yêu thích và cường hóa chưa chuyển được.", risk: true },
     { key: "autoSalvage", label: "Dọn đồ rơi gốc (cũ)", description: "Chỉ để tương thích thiết lập cũ. Tự tắt khi bật Dọn túi Mini; không bật cả hai bộ dọn.", risk: true },
   ] },

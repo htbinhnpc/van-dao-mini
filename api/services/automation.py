@@ -121,7 +121,7 @@ async def _command(client: GameClient, state: dict, command: str, payload: dict,
     next_state = result.get("state")
     if not isinstance(next_state, dict) or not next_state.get("stateVersion"):
         raise ValueError("Game command response thiếu state/stateVersion; dừng vòng để tránh dùng state cũ.")
-    if command == "item.transfer":
+    if command in {"item.transfer", "equip"}:
         validate_equipment_response(state, next_state, command, payload)
     if command == "item.dispose":
         remaining = next_state.get("equipment")
@@ -269,9 +269,35 @@ async def _remember_attempt(account: dict, key: str, now: Any) -> None:
 
 
 async def _equipment(client: GameClient, state: dict, config: dict, account: dict) -> dict:
-    if config.get("autoEquipBest") and any(e.get("location") == "bag" for e in (state.get("equipment") or [])):
-        return await _best_effort(client, state, "equip.best", {}, account, "Tự trang bị theo bộ chọn của game")
+    if config.get("autoEquipBest") and _can_command() and any(isinstance(e, dict) and e.get("location") == "bag" for e in (state.get("equipment") or [])):
+        try:
+            return await prepare_equipment(state, META,
+                lambda current, name, payload, label: _prepare_gear_command(client, current, name, payload, account, label),
+                ensure_budget=_ensure_equipment_budget)
+        except PreparationError as exc:
+            budget = _tick_budget.get()
+            if budget:
+                budget.stopped = True
+                if not isinstance(exc.__cause__, PreparationDeferred):
+                    budget.error = f"equipment.prepare: {exc}"[:500]
+            await log(account, "warning", "equipment.prepare", f"Dừng thay đồ/chuyển cường hóa, không retry: {exc}")
+            return exc.state
     return state
+
+
+def _ensure_equipment_budget(commands: int) -> None:
+    budget = _tick_budget.get()
+    if not _can_command() or (budget is not None and budget.attempts + commands > 12):
+        raise PreparationDeferred("Chưa đủ ngân sách để mặc và chuyển cường hóa; để vòng sau, chưa dọn.")
+
+
+async def _prepare_gear_command(client: GameClient, current: dict, name: str, payload: dict, account: dict, label: str) -> dict:
+    _ensure_equipment_budget(1)
+    await log(account, "info", name, f"{label}: bắt đầu chuẩn bị trang bị.", details={"status": "started", "source": "equipment.prepare", **payload})
+    next_state = await _command(client, current, name, payload, account, label)
+    validate_equipment_response(current, next_state, name, payload)
+    await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": next_state})
+    return next_state
 
 
 async def _minor_trial(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -402,7 +428,7 @@ async def _cleanup(client: GameClient, state: dict, config: dict, account: dict)
         return next_state
 
     try:
-        state = await prepare_equipment(state, META, send)
+        state = await prepare_equipment(state, META, send, ensure_budget=_ensure_equipment_budget)
     except PreparationError as exc:
         budget = _tick_budget.get()
         if budget:

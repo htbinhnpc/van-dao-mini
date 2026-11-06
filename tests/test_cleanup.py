@@ -286,9 +286,10 @@ class CleanupRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(error.exception.status_code, 422)
         self.client.command.assert_not_awaited()
         await self.preview()
-        self.run["cursor"]["type"] = "cleanup_v1"
-        with self.assertRaises(HTTPException):
-            await routes.execute_cleanup("account-1", self.execution(), self.user)
+        for old_type in ("cleanup_v1", "cleanup_v2"):
+            self.run["cursor"]["type"] = old_type
+            with self.assertRaises(HTTPException):
+                await routes.execute_cleanup("account-1", self.execution(), self.user)
         self.client.command.assert_not_awaited()
 
     async def test_preparation_is_leased_and_preview_uses_confirmed_new_loadout(self):
