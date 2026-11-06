@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from api.database import filter_value, insert_one, patch_rows
+from api.http_pool import connection_scope
+from api.services.automation_schedule import feature_order
 from api.routes.accounts import DEFAULT_CONFIG
 from api.services.encounters import ENCOUNTERS, plan as plan_encounters
 from api.services.farming import rank_spots, update_losses
@@ -27,6 +29,8 @@ from api.services.pill_policy import item_band_index, pill_band
 from api.services.session_crypto import decrypt_session
 from api.services.titles import plan_title_equip, validate_equip_response
 from api.services.breakthrough import plan_breakthrough, validate_trial_response, validate_major_response
+from api.services.community import (boss_ready, membership_id, plan_donation,
+                                    validate_boss, validate_donation, validate_state)
 
 META_PATH = Path(__file__).resolve().parents[2] / "data" / "meta.json"
 with META_PATH.open(encoding="utf-8") as meta_file:
@@ -39,6 +43,9 @@ class TickBudget:
     attempts: int = 0
     stopped: bool = False
     error: str | None = None
+    feature_quota: int | None = None
+    feature_id: str | None = None
+    started: float = field(default_factory=time.monotonic)
 
 
 _tick_budget: ContextVar[TickBudget | None] = ContextVar("tick_budget", default=None)
@@ -65,6 +72,16 @@ def _can_command() -> bool:
     return budget is None or (
         not budget.stopped and budget.attempts < 12 and time.monotonic() < budget.deadline
     )
+
+
+def _work_limit(default: int) -> int:
+    budget = _tick_budget.get()
+    return min(default, budget.feature_quota) if budget and budget.feature_quota is not None else default
+
+
+def _feature_exhausted(start: int) -> bool:
+    budget = _tick_budget.get()
+    return bool(budget and budget.feature_quota is not None and budget.attempts - start >= budget.feature_quota)
 
 
 def _ready(task: dict) -> bool:
@@ -192,6 +209,8 @@ async def _best_effort(client: GameClient, state: dict, command: str, payload: d
 
 
 async def _claim_ready(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    budget = _tick_budget.get()
+    start = budget.attempts if budget else 0
     periodic = state.get("periodic") or {}
     tasks: list[tuple[str, dict, str]] = []
     if config.get("autoQuests", True):
@@ -210,11 +229,15 @@ async def _claim_ready(client: GameClient, state: dict, config: dict, account: d
         tasks += [("achievement.claim", {"achievementId": t["id"]}, "Nhận thành tựu")
                   for t in (periodic.get("achievements") or [])
                    if _ready(t)][:6]
-    for command, payload, label in tasks[:3]:
+    for command, payload, label in tasks[:_work_limit(3)]:
         state = await _best_effort(client, state, command, payload, account, label)
     x2 = state.get("x2") or {}
+    if not _can_command() or _feature_exhausted(start):
+        return state
     if config.get("autoX2Daily", False) and x2 and not x2.get("dailyClaimed"):
         state = await _best_effort(client, state, "x2.daily.claim", {}, account, "Nhận thưởng mở rộng ngày")
+    if not _can_command() or _feature_exhausted(start):
+        return state
     if config.get("autoMail", True) and _num(state.get("unreadMail", (state.get("mail") or {}).get("unreadCount"))) > 0:
         state = await _best_effort(client, state, "mail.claimAll", {}, account, "Nhận thư có quà")
     return state
@@ -232,7 +255,7 @@ async def _extra_rewards(client: GameClient, state: dict, config: dict, account:
         tasks += [("title.claim", {"titleId": t["id"]}, "Nhận danh hiệu (không tự mang)")
                   for t in ((state.get("ascend") or {}).get("titles") or [])
                   if t.get("id") and t.get("earned") is True and t.get("owned") is False]
-    for command, payload, label in tasks[:3]:
+    for command, payload, label in tasks[:_work_limit(3)]:
         state = await _best_effort(client, state, command, payload, account, label)
     return state
 
@@ -271,6 +294,127 @@ async def _remember_attempt(account: dict, key: str, now: Any) -> None:
     data = {**(account.get("automation_data") or {}), key: now}
     await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"automation_data": data})
     account["automation_data"] = data
+
+
+async def _community_read(request):
+    budget = _tick_budget.get()
+    return await asyncio.wait_for(request, max(0.01, budget.deadline - time.monotonic()) if budget else 25)
+
+
+async def _community_locked(account: dict, key: str) -> bool:
+    if key not in ((account.get("automation_data") or {}).get("communityPending") or {}):
+        return False
+    await log(account, "warning", "community.plan", f"Thao tác {key} lần trước chưa xác nhận. Kiểm tra game, tắt và lưu đúng auto để mở khóa; không retry.",
+              details={"key": key, "status": "uncertain"})
+    return True
+
+
+async def _community_action(client: GameClient, state: dict, account: dict, key: str,
+                            command: str, payload: dict, label: str, verify) -> dict:
+    """Persist an uncertainty lock before spending. Clear only after verification."""
+    if not _can_command() or type(state.get("stateVersion")) is not int or state["stateVersion"] < 1:
+        return state
+    pending = dict((account.get("automation_data") or {}).get("communityPending") or {})
+    if key in pending:
+        await log(account, "warning", "community.plan", f"{label}: lần trước chưa xác nhận. Kiểm tra game, tắt và lưu auto tương ứng để mở khóa; không retry.")
+        return state
+    async def store_pending(value, snapshot=None):
+        data = {**(account.get("automation_data") or {}), "communityPending": dict(value)}
+        body = {"automation_data": data}
+        if snapshot is not None:
+            body["state_snapshot"] = snapshot
+        saved = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", body)
+        if not saved:
+            raise ValueError("Chưa xác nhận lưu khóa thao tác cộng đồng.")
+        account["automation_data"] = data
+    try:
+        pending[key] = {"command": command, "payload": payload, "stateVersion": state["stateVersion"]}
+        await store_pending(pending)
+        if not _can_command():
+            pending.pop(key)
+            await store_pending(pending)
+            return state
+        before = state
+        state = await _command(client, state, command, payload, account, label)
+        validate_state(before, state)
+        await verify(before, state)
+        pending.pop(key)
+        # Snapshot and unlock are committed together, after post-command checks.
+        await store_pending(pending, snapshot=state)
+        await log(account, "success", "community.plan", f"Đã xác nhận: {label}", details={"command": command, "payload": payload, "status": "confirmed"})
+    except Exception as exc:
+        budget = _tick_budget.get()
+        if budget:
+            budget.stopped, budget.error = True, f"{command}: {exc}"[:500]
+        await log(account, "warning", "community.plan", f"{label}: {str(exc)[:250]}. Dừng, giữ khóa nếu đã lưu; không retry.",
+                  details={"command": command, "status": "uncertain"})
+    return state
+
+
+async def _guild_checkin(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if not config.get("autoGuildCheckin") or not membership_id(state.get("guild")) or not _can_command():
+        return state
+    if await _community_locked(account, "checkin"):
+        return state
+    try:
+        guild = await _community_read(client.get_guild())
+    except Exception as exc:
+        await log(account, "warning", "guild.plan", f"Chưa đọc được điểm danh bang hội: {str(exc)[:250]}; không gửi lệnh.")
+        return state
+    if (not isinstance(guild, dict) or membership_id(guild) != membership_id(state.get("guild"))
+            or guild.get("checkedInToday") is not False):
+        return state
+    async def verify(before, after):
+        current = await _community_read(client.get_guild())
+        if (not isinstance(current, dict) or membership_id(current) != membership_id(guild)
+                or membership_id(after.get("guild")) != membership_id(guild) or current.get("checkedInToday") is not True):
+            raise ValueError("Game chưa xác nhận điểm danh đúng bang hội.")
+    return await _community_action(client, state, account, "checkin", "guild.checkin", {}, "Điểm danh bang hội", verify)
+
+
+async def _sect_donation(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    if not config.get("autoSectTasks") or not config.get("autoSectDonate") or not _can_command():
+        return state
+    if await _community_locked(account, "donate"):
+        return state
+    plan = plan_donation(state, config, META)
+    action = plan["action"]
+    if not action:
+        await log(account, "info", "sect.plan", plan["reason"])
+        return state
+    async def verify(before, after):
+        validate_donation(before, after, action)
+    item_id = action["itemId"]
+    name = META.get("items", {}).get(item_id, {}).get("name", item_id)
+    return await _community_action(client, state, account, "donate", "sect.donate", {"itemId": item_id, "qty": action["qty"]},
+                                   f"Quyên góp {name} ×{action['qty']} (+{action['gain']} cống hiến); giữ {action['keep']}", verify)
+
+
+async def _shared_bosses(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    for scope, flag in (("world", "autoWorldBoss"), ("guild", "autoGuildBoss")):
+        if (not config.get(flag) or not _can_command()
+                or (scope == "guild" and not membership_id(state.get("guild")))):
+            continue
+        if await _community_locked(account, scope):
+            continue
+        character = state.get("character")
+        if not isinstance(character, dict) or _num(character.get("level")) < 10:
+            continue
+        try:
+            boss = await _community_read(client.get_worldboss(scope))
+        except Exception as exc:
+            await log(account, "warning", "worldboss.plan", f"Chưa đọc được boss {scope}: {str(exc)[:250]}; không đánh.")
+            continue
+        now = int(time.time() * 1000)
+        if not boss_ready(state, boss, now_ms=now):
+            continue
+        async def verify(before, after):
+            if scope == "guild" and membership_id(before.get("guild")) != membership_id(after.get("guild")):
+                raise ValueError("Bang hội đã đổi khi đánh boss.")
+            validate_boss(boss, await _community_read(client.get_worldboss(scope)))
+        state = await _community_action(client, state, account, scope, "worldboss.attack", {"scope": scope},
+                                        "Đánh boss thế giới" if scope == "world" else "Đánh boss bang hội", verify)
+    return state
 
 
 async def _equipment(client: GameClient, state: dict, config: dict, account: dict) -> dict:
@@ -359,29 +503,35 @@ async def _major_breakthrough(client: GameClient, state: dict, config: dict, acc
 
 
 async def _npc(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    budget = _tick_budget.get()
+    start = budget.attempts if budget else 0
     if config.get("autoNpcTalk"):
         ready = [n for n in (state.get("npcs") or [])
                  if n.get("id") and n.get("met") is True and n.get("talked") is False
                  and n.get("affinity") is not None and _num(n["affinity"]) < 1000]
-        for npc in ready[:2]:
+        for npc in ready[:_work_limit(2)]:
             state = await _best_effort(client, state, "npc.talk", {"npcId": npc["id"]}, account, "Trò chuyện đạo hữu (+thiện cảm ngày)")
+    if not _can_command() or _feature_exhausted(start):
+        return state
     if config.get("autoNpcRewards"):
         ready = [(n["id"], tier) for n in (state.get("npcs") or [])
                  if n.get("id") and n.get("met") is True and isinstance(n.get("claimed"), list)
                  for tier, need in NPC_REWARD_TIERS
                  if tier not in n["claimed"] and _num(n.get("affinity")) >= need]
-        for npc_id, tier_id in ready[:2]:
+        for npc_id, tier_id in ready[:_work_limit(2)]:
             state = await _best_effort(client, state, "npc.claim", {"npcId": npc_id, "tierId": tier_id}, account, "Nhận quà thiện cảm đạo hữu")
     return state
 
 
 async def _pets(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    budget = _tick_budget.get()
+    start = budget.attempts if budget else 0
     if config.get("autoPetAdopt"):
         pet = next((p for p in (state.get("pets") or [])
                     if p.get("id") and p.get("canAdopt") is True and p.get("owned") is False), None)
         if pet:
             state = await _best_effort(client, state, "pet.adopt", {"petId": pet["id"]}, account, "Thu nhận linh thú đã đủ điều kiện")
-    if not config.get("autoHunt") or not _can_command():
+    if not config.get("autoHunt") or not _can_command() or _feature_exhausted(start):
         return state
     target = HUNT_TARGETS.get(config.get("huntPetId"))
     pet = next((p for p in (state.get("pets") or []) if target and p.get("id") == target["id"]), None)
@@ -525,13 +675,16 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
     if not config.get("autoCraft"):
         config = {**config, "autoCraft": True, "_majorPreparationOnly": True, "_autoCraftSetting": False}
 
-    async def store(values: dict) -> None:
+    async def store(values: dict, snapshot=None) -> None:
         data = {**(account.get("automation_data") or {}), **values}
         query = f"id=eq.{filter_value(account['id'])}"
         if config.get("autoMajorBreakthrough"):
             old_data = json.dumps(account.get("automation_data") or {}, separators=(",", ":"), ensure_ascii=False)
             query += f"&automation_data=eq.{filter_value(old_data)}"
-        rows = await patch_rows("game_accounts", query, {"automation_data": data})
+        body = {"automation_data": data}
+        if snapshot is not None:
+            body["state_snapshot"] = snapshot
+        rows = await patch_rows("game_accounts", query, body)
         if not rows:
             raise ValueError("Chưa lưu được ngân sách/trạng thái chế tạo; không gửi thêm lệnh.")
         account["automation_data"] = data
@@ -539,10 +692,10 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
     # At most eight starts, and still inside the global 12-command/time budget.
     def runtime() -> dict:
         budget = _tick_budget.get()
-        return {"attempts": budget.attempts if budget else 0, "maxCommands": 12, "maxCraftStarts": 8,
+        return {"attempts": budget.attempts if budget else 0, "maxCommands": 12, "maxCraftStarts": _work_limit(8),
                 "stopped": budget.stopped if budget else False, "timeLeftMs": max(0, int((budget.deadline - time.monotonic()) * 1000)) if budget else None}
 
-    for _ in range(8):
+    for _ in range(_work_limit(8)):
         plan = plan_crafting(state, config, META, account.get("automation_data") or {})
         action = plan["action"]
         if not _can_command():
@@ -586,12 +739,10 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
             for job in added:
                 reasons[job["id"]] = {"recipeId": action["recipeId"], "reason": action["reason"], "phase": action["phase"]}
             stage = "persist"
-            await store({"craftJobs": reasons})
-            saved = await patch_rows("game_accounts", f"id=eq.{filter_value(account['id'])}", {"state_snapshot": state})
+            confirmed = {"craftJobs": reasons}
             if major_preparation:
-                if not saved:
-                    raise ValueError("Chưa lưu được snapshot chuẩn bị đột phá; giữ khóa để kiểm tra.")
-                await store({"majorBreakthroughPending": None})
+                confirmed["majorBreakthroughPending"] = None
+            await store(confirmed, snapshot=state)
             await log(account, "success", "craft.plan", f"Đã xác nhận {len(added)} mẻ: {action['name']}. Chờ game hoàn tất/kết toán, sau đó lập lại kế hoạch.",
                       details={**craft_audit(plan, "succeeded", runtime=runtime(), next_step="Chờ các mẻ đã xác nhận hoàn tất/kết toán; tính lại nghề và nguồn lực từ state mới, không xếp trùng mù."),
                                **action, "status": "succeeded", "jobIds": [j["id"] for j in added], "stateVersionAfter": state["stateVersion"]})
@@ -605,7 +756,7 @@ async def _craft(client: GameClient, state: dict, config: dict, account: dict) -
             break
     else:
         plan = plan_crafting(state, config, META, account.get("automation_data") or {})
-        await log(account, "info", "craft.plan", "Đã đạt giới hạn 8 lượt bắt đầu chế tạo trong vòng; phần còn lại để vòng sau.",
+        await log(account, "info", "craft.plan", f"Đã đạt giới hạn {_work_limit(8)} lượt bắt đầu chế tạo trong lượt xử lý; nhường tính năng khác.",
                   details=craft_audit(plan, "deferred", runtime=runtime(), next_step="Để vòng sau đọc state và kiểm tra lại lò/tài nguyên; không gửi thêm mẻ trong vòng này."))
     return state
 
@@ -684,7 +835,7 @@ async def _encounters(client: GameClient, state: dict, config: dict, account: di
         return state
     allow_cost = bool(config.get("encounterAllowCost", True))
     tried: set[str] = set()
-    for _ in range(3):
+    for _ in range(_work_limit(3)):
         if not _can_command():
             break
         # Re-plan each time (a paid choice changes what we own); never re-send an id this tick.
@@ -724,7 +875,7 @@ async def _arena(client: GameClient, state: dict, config: dict, account: dict) -
 
     edge = max(0, _num(config.get("arenaMinPowerEdge"), 5000))
     max_refresh = max(0, int(_num(config.get("arenaMaxRefresh"), 3)))
-    fights = max(1, int(_num(config.get("arenaMaxFights"), 3)))
+    fights = _work_limit(max(1, int(_num(config.get("arenaMaxFights"), 3))))
     avoid = {k: v for k, v in (data.get("arenaLostAt") or {}).items() if now - _num(v) < 3_600_000}
     try:
         for _ in range(fights):
@@ -772,13 +923,17 @@ async def _arena(client: GameClient, state: dict, config: dict, account: dict) -
 
 
 async def _farm(client: GameClient, state: dict, config: dict, account: dict) -> dict:
+    budget = _tick_budget.get()
+    start = budget.attempts if budget else 0
     cave = state.get("cave") or {}
     if not config.get("autoFarm") or not cave.get("unlocked"):
         return state
     fields = cave.get("fields") or []
     if config.get("farmHarvest", True):
-        for field in [f for f in fields if _num(f.get("finishAt")) <= time.time() * 1000][:4]:
+        for field in [f for f in fields if _num(f.get("finishAt")) <= time.time() * 1000][:_work_limit(4)]:
             state = await _best_effort(client, state, "field.harvest", {"plot": field.get("plot")}, account, f"Thu hoạch ô {field.get('plot')}")
+    if not _can_command() or _feature_exhausted(start):
+        return state
     if not config.get("farmPlant", True):
         return state
     targets = [{"plot": p, "habitatId": None} for p in range(1, int(_num(cave.get("plots"))) + 1)]
@@ -820,9 +975,58 @@ async def run_account_tick(account: dict, *, manual: bool = False, time_budget: 
         return {"skipped": True, "state": account.get("state_snapshot")}
     token = _tick_budget.set(TickBudget(deadline=time.monotonic() + max(0, min(40, time_budget))))
     try:
-        return await _run_account_tick(account)
+        async with connection_scope():
+            return await _run_account_tick(account)
     finally:
         _tick_budget.reset(token)
+
+
+async def _scheduled_features(client: GameClient, state: dict, config: dict, account: dict) -> tuple[dict, dict]:
+    budget = _tick_budget.get()
+    assert budget is not None
+    stored = (account.get("automation_data") or {}).get("automationSchedule") or {}
+    stored = stored if isinstance(stored, dict) else {}
+    order = feature_order(config, stored.get("nextFeature"))
+    handlers = {
+        "claims": _claim_ready, "extra_rewards": _extra_rewards, "guild_checkin": _guild_checkin,
+        "world_boss": _shared_bosses, "guild_boss": _shared_bosses,
+        "titles": _titles, "encounters": _encounters,
+        "equipment": _cleanup if config.get("autoCleanup") else _equipment,
+        "major": _major_breakthrough, "minor": _minor_trial, "pets": _pets, "npc": _npc,
+        "pill": _use_pill, "cave": _cave, "craft": _craft, "donate": _sect_donation,
+        "boss": _boss, "farm": _farm, "arena": _arena,
+    }
+    # Soft limits only apply to independent repeated jobs, never to atomic
+    # equip/transfer/cleanup chains or safety locks/verification.
+    budget.feature_quota = 1 if len(order) > 4 else None
+    summary = {"eligible": len(order), "features": [], "nextFeature": order[0] if order else None,
+               "setupCommands": budget.attempts, "maxCommands": 12}
+    try:
+        for index, key in enumerate(order):
+            if not _can_command():
+                break
+            started, attempts = time.monotonic(), budget.attempts
+            next_key = order[(index + 1) % len(order)]
+            summary["nextFeature"] = next_key
+            # Keep the cursor local until the final checkpoint: mutating account
+            # data here would invalidate major/craft CAS filters against the DB.
+            budget.feature_id = key
+            active = config
+            if key in {"world_boss", "guild_boss"}:
+                active = {**config, "autoWorldBoss": key == "world_boss", "autoGuildBoss": key == "guild_boss"}
+            try:
+                state = await handlers[key](client, state, active, account)
+            except Exception as exc:
+                # Do not advance on to another mutation after an unhandled error.
+                budget.stopped, budget.error = True, f"{key}: {str(exc) or type(exc).__name__}"[:500]
+            summary["features"].append({"id": key, "commands": budget.attempts - attempts,
+                                        "elapsedMs": max(0, int((time.monotonic() - started) * 1000))})
+    finally:
+        budget.feature_quota = None
+        budget.feature_id = None
+    summary["deferred"] = not budget.error and (len(summary["features"]) < len(order) or not _can_command())
+    summary["commandsUsed"] = budget.attempts
+    return state, summary
 
 
 async def _run_account_tick(account: dict) -> dict:
@@ -838,33 +1042,24 @@ async def _run_account_tick(account: dict) -> dict:
     if config.get("autoCleanup"):
         state = await _settings(client, state, config, account)
     state = await _best_effort(client, state, "settle", {}, account, "Kết toán tu vi")
-    state = await _settings(client, state, config, account)
-    state = await _claim_ready(client, state, config, account)
-    state = await _extra_rewards(client, state, config, account)
-    state = await _titles(client, state, config, account)
-    state = await _encounters(client, state, config, account)
     if not config.get("autoCleanup"):
-        state = await _equipment(client, state, config, account)
-    state = await _cleanup(client, state, config, account)
-    state = await _major_breakthrough(client, state, config, account)
-    state = await _minor_trial(client, state, config, account)
-    state = await _activity(client, state, config, account)
-    state = await _pets(client, state, config, account)
-    state = await _npc(client, state, config, account)
-    state = await _use_pill(client, state, config, account)
-    state = await _cave(client, state, config, account)
-    state = await _craft(client, state, config, account)
-    state = await _boss(client, state, config, account)
-    state = await _farm(client, state, config, account)
-    state = await _arena(client, state, config, account)
+        state = await _settings(client, state, config, account)
+    if _can_command():
+        state = await _activity(client, state, config, account)
+    state, schedule = await _scheduled_features(client, state, config, account)
+    schedule["elapsedMs"] = max(0, int((time.monotonic() - budget.started) * 1000))
+    data = {**(account.get("automation_data") or {}),
+            "automationSchedule": {"nextFeature": schedule["nextFeature"], "lastRun": schedule}}
     error = budget.error if budget else None
     await patch_rows(
         "game_accounts",
         f"id=eq.{filter_value(account['id'])}",
-        {"state_snapshot": state, "last_tick_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "last_error": error},
+        {"state_snapshot": state, "automation_data": data,
+         "last_tick_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "last_error": error},
     )
+    account["automation_data"] = data
     return {
         "state": state, "completed": not error, "error": error,
         "commandsAttempted": budget.attempts if budget else 0,
-        "deferred": not error and not _can_command(),
+        "deferred": schedule["deferred"], "schedule": schedule,
     }

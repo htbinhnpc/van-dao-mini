@@ -313,6 +313,8 @@ class CraftWorkerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.account["automation_data"]["other"], "preserved")
         self.assertEqual(self.account["automation_data"]["craftLevelFocus"]["profession"], "alchemy")
         self.assertEqual(len(self.account["automation_data"]["craftJobs"]), 3)
+        self.assertEqual(self.db.await_count, 2)  # budget first, confirmed jobs + snapshot together
+        self.assertIn("state_snapshot", self.db.await_args.args[2])
 
     async def test_blocked_craft_logs_settings_reason_and_next_action(self):
         self.state["materials"] = {}
@@ -349,6 +351,17 @@ class CraftWorkerTests(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(len(ids), 1)
         self.assertEqual(len(ids), len(set(ids)))
         self.assertTrue(all(call.args[1]["count"] == 1 for call in self.client.command.await_args_list))
+
+    async def test_production_yields_after_soft_quota_without_stopping_other_features(self):
+        self.state = max_all(self.state)
+        self.state["character"] = {"level": 20, "realm": {"realmId": "ket_dan", "stage": 1}, "rateMilli": 2500}
+        budget = auto.TickBudget(feature_quota=1); token = auto._tick_budget.set(budget)
+        try:
+            await auto._craft(self.client, self.state, settings(), self.account)
+        finally:
+            auto._tick_budget.reset(token)
+        self.assertEqual(self.client.command.await_count, 1)
+        self.assertFalse(budget.stopped)
 
     async def test_budget_debited_before_paid_attempt_and_no_retry_after_timeout(self):
         self.state["professions"]["alchemy"] = {"level": 10, "crafted": 150, "next": None}

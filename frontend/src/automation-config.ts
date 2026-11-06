@@ -12,6 +12,8 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoActivity", label: "Giữ hoạt động & điểm săn", description: "Áp dụng hoạt động đã chọn ở mỗi vòng tự động. Săn yêu thú sẽ chọn bãi cho nhiều tu vi nhất trong số bãi đã mở và đủ cấp tối thiểu." },
     { key: "autoFallbackHunt", label: "Lùi điểm săn khi thua", description: "Khi game báo thua ở bãi, tạm bỏ bãi đó (30 phút, hoặc sớm hơn khi lực chiến tăng 10%) và chọn bãi nhiều tu vi kế tiếp; hết bãi thì bế quan." },
     { key: "autoBoss", label: "Đánh boss khu vực", description: "Chỉ đánh lại boss đã vượt, đủ cấp và hết hồi chiêu.", risk: true },
+    { key: "autoWorldBoss", label: "Đánh boss thế giới", description: "Cấp 10 trở lên; tối đa một lượt/vòng khi boss đang sống, còn hạn và còn lượt (3/ngày theo game). Không mua lượt, không tự chọn phần thưởng.", risk: true },
+    { key: "autoGuildBoss", label: "Đánh boss bang hội", description: "Cần ở trong bang; tối đa một lượt/vòng, chỉ khi boss đang sống và còn lượt. Không đánh chiến bang hay PvP.", risk: true },
   ] },
   { id: "rewards", name: "Nhiệm vụ & phần thưởng", icon: "scroll", description: "Nhận những phần thưởng bạn đã hoàn thành điều kiện.", flags: [
     { key: "autoQuests", label: "Nhiệm vụ chính", description: "Nhận các nhiệm vụ ở trạng thái có thể nhận thưởng." },
@@ -20,7 +22,9 @@ export const AUTO_GROUPS: AutoGroup[] = [
     { key: "autoAchievements", label: "Thành tựu", description: "Nhận các thành tựu đã đạt mốc." },
     { key: "autoMail", label: "Thư có quà", description: "Nhận quà trong thư khi có thư chưa nhận." },
     { key: "autoX2Daily", label: "Quà mở rộng ngày", description: "Nhận phần thưởng ngày của bản mở rộng." },
-    { key: "autoSectTasks", label: "Nhiệm vụ tông môn", description: "Chỉ nhận thưởng; không quyên góp hay tiêu vật tư làm nhiệm vụ." },
+    { key: "autoSectTasks", label: "Nhiệm vụ tông môn", description: "Nhận thưởng nhiệm vụ đã xong; quyên góp chỉ khi bật riêng bên dưới. Điểm danh thuộc bang hội, có công tắc riêng." },
+    { key: "autoSectDonate", label: "Quyên góp vật phẩm dư", description: "Cần bật Nhiệm vụ tông môn. Chọn loại quyên góp có lượng dư nhiều nhất, tối đa 100 vật phẩm/vòng; giữ sàn và dự trữ nhiệm vụ/đột phá, không vượt hạn mức cống hiến ngày.", risk: true },
+    { key: "autoGuildCheckin", label: "Điểm danh bang hội", description: "Chỉ khi đã ở trong bang và game xác nhận chưa điểm danh hôm nay. Không quyên góp linh thạch hay quản lý bang." },
     { key: "autoSeasonTasks", label: "Nhiệm vụ lễ hội", description: "Chỉ nhận mốc đã xong; không tự đổi lễ phù." },
     { key: "autoEncounter", label: "Kỳ ngộ bí cảnh", description: "Tự chọn thưởng kỳ ngộ (khoảng 400 chu kỳ săn một lần, chờ tối đa 3), ưu tiên cảm ngộ; kỳ ngộ không có cảm ngộ thì chọn phần thưởng không tốn vật phẩm.", risk: true },
     { key: "encounterAllowCost", label: "Cho phép tiêu vật phẩm để lấy cảm ngộ", description: "Hạc bị thương tốn 5 Linh thảo, Tu sĩ hấp hối tốn 1 Tụ Linh Đan. Tắt thì chỉ chọn phương án không tốn gì. Chỉ có tác dụng khi đã bật Kỳ ngộ." },
@@ -59,6 +63,6 @@ export const AUTO_GROUPS: AutoGroup[] = [
   ] },
 ];
 export const FLAGS = AUTO_GROUPS.flatMap((group) => group.flags);
-const subordinate = new Set(["majorUseInsurance", "majorAllowTopUp", "craftMastery", "craftProduce", "encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
+const subordinate = new Set(["autoSectDonate", "majorUseInsurance", "majorAllowTopUp", "craftMastery", "craftProduce", "encounterAllowCost", "autoFallbackHunt", "autoUseBuffs", "autoUseOnlyBest", "autoUseExp", "farmHarvest", "farmPlant", "farmIncludeHabitats"]);
 export const activeAutos = (config: Config) => FLAGS.filter((flag) => !subordinate.has(flag.key) && config[flag.key]);
 export const configEqual = (left: Config, right: Config) => JSON.stringify(Object.keys(left).sort().map((key) => [key, left[key]])) === JSON.stringify(Object.keys(right).sort().map((key) => [key, right[key]]));

@@ -14,6 +14,8 @@ export const defaultConfig = {
   autoX2Daily: false, autoFallbackHunt: true, autoCraft: false, craftRecipeId: "", craftKeepQty: 999,
   craftMastery: true, craftLevelOrder: "fastest", craftLevelDaily: 20, craftProduce: true, craftReserveStones: 1000,
   craftMatFloor: 20, craftInsuranceKeep: 999, craftQiTarget: 10, craftCharmTarget: 2, craftBuild: "auto",
+  autoSectDonate: false, sectDonateMatFloor: 100, sectDonateDaily: 400,
+  autoGuildCheckin: false, autoWorldBoss: false, autoGuildBoss: false,
   autoCaveUpgrade: false, caveRoomOrder: "craft", caveReserveStones: 1000, caveMatFloor: 20,
   autoUse: false, autoUseBuffs: true, autoUseExp: false, autoUseOnlyBest: true, useThresholdMin: 15,
   autoBoss: false, bossIntervalMin: 10, bossRegionId: "", autoFarm: false, farmHarvest: true,

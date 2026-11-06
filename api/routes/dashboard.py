@@ -19,6 +19,7 @@ from api.services.game_rules import HUNT_TARGETS
 from api.services.cleanup import config_rules
 from api.services.cave import public_definitions
 from api.services.craft_profession import plan_crafting
+from api.services.community import PENDING_FLAGS
 from api.services.session_crypto import decrypt_session
 
 router = APIRouter()
@@ -51,6 +52,7 @@ def _config_for_update(current: dict, patch: dict) -> dict:
         "craftInsuranceKeep": (10, 999), "craftQiTarget": (0, 9999), "craftCharmTarget": (0, 999),
         "caveReserveStones": (0, 10**18), "caveMatFloor": (0, 999999),
         "majorMinChance": (30, 100), "majorRetryMinutes": (10, 1440),
+        "sectDonateMatFloor": (0, 999999), "sectDonateDaily": (0, 400),
     }
     for key, (minimum, maximum) in limits.items():
         try:
@@ -234,22 +236,32 @@ async def save_config(account_id: str, update: ConfigUpdate, user: dict = Depend
             "updated_at": datetime.now(timezone.utc).isoformat(),
         },
     )
-    if update.config.get("autoMajorBreakthrough") is False:
+    if update.config.get("autoMajorBreakthrough") is False or any(update.config.get(flag) is False for flag in PENDING_FLAGS.values()):
         # Only acknowledge AFTER the disabled config is stored, and never while
         # a leased worker may still be awaiting the game. CAS protects new data.
         data = dict(account.get("automation_data") or {})
-        if data.pop("majorBreakthroughPending", None):
+        acknowledged = []
+        if update.config.get("autoMajorBreakthrough") is False and data.pop("majorBreakthroughPending", None):
+            acknowledged.append("major")
+        pending = dict(data.get("communityPending") or {})
+        for key, flag in PENDING_FLAGS.items():
+            if update.config.get(flag) is False and key in pending:
+                pending.pop(key)
+                acknowledged.append(key)
+        if "communityPending" in data:
+            data["communityPending"] = pending
+        if acknowledged:
             if not saved:
-                raise HTTPException(502, "Chưa xác nhận lưu cấu hình tắt; giữ khóa đột phá.")
+                raise HTTPException(502, "Chưa xác nhận lưu cấu hình tắt; giữ khóa thao tác.")
             now = filter_value(datetime.now(timezone.utc).isoformat())
             old_data = filter_value(json.dumps(account["automation_data"], separators=(",", ":"), ensure_ascii=False))
             cleared = await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&automation_data=eq.{old_data}&or=(lease_until.is.null,lease_until.lt.{now})", {"automation_data": data})
             if not cleared:
                 raise HTTPException(409, "Đã lưu tắt auto nhưng vòng đang xử lý/trạng thái đã đổi. Giữ khóa; chờ rồi lưu tắt lại trước khi bật.")
             await insert_one("activity_logs", {
-                "account_id": account_id, "level": "warning", "action": "breakthrough.config",
-                "message": "Đã tắt auto và mở khóa lần đột phá chưa xác nhận. Kiểm tra game trước khi bật lại.",
-                "details": {"status": "acknowledged"},
+                "account_id": account_id, "level": "warning", "action": "breakthrough.config" if acknowledged == ["major"] else "community.config",
+                "message": "Đã tắt auto và mở khóa thao tác chưa xác nhận. Kiểm tra game trước khi bật lại.",
+                "details": {"status": "acknowledged", "keys": acknowledged},
             })
     if any(previous.get(key, False) != config[key] for key in ("cleanupSkipConfirmation", "autoCleanup")):
         await insert_one("activity_logs", {
@@ -278,6 +290,8 @@ async def sync_config(account_id: str, user: dict = Depends(current_user)) -> di
 
 @router.post("/accounts/{account_id}/command")
 async def send_command(account_id: str, request: CommandRequest, user: dict = Depends(current_user)) -> dict:
+    if request.command in {"sect.donate", "guild.checkin", "worldboss.attack"}:
+        raise HTTPException(400, "Dùng auto tông môn/bang hội/boss chung để kiểm tra sàn tài nguyên và giới hạn lượt.")
     if request.command in {"item.dispose", "item.transfer"}:
         raise HTTPException(400, "Dùng chức năng Dọn túi Mini để kiểm tra bộ lọc và bảo vệ đồ trước khi bán/phân giải.")
     if request.command == "arena.fight":
@@ -311,20 +325,18 @@ async def send_command(account_id: str, request: CommandRequest, user: dict = De
 async def manual_tick(account_id: str, user: dict = Depends(current_user)) -> dict:
     account = await owned_account(user["id"], account_id)
     account["config"] = await account_config(account_id)
-    major = account["config"].get("autoMajorBreakthrough")
-    if major:
-        now = datetime.now(timezone.utc)
-        lease_until = (now + timedelta(seconds=55)).isoformat()
-        leased = await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&or=(lease_until.is.null,lease_until.lt.{filter_value(now.isoformat())})",
-                                  {"lease_until": lease_until})
-        if not leased:
-            raise HTTPException(409, "Tài khoản đang có vòng xử lý; chưa chạy thêm đột phá.")
-        account = {**account, **leased[0], "config": account["config"]}
+    # All manual ticks share the cron lease, including reward-only schedules.
+    now = datetime.now(timezone.utc)
+    lease_until = (now + timedelta(seconds=55)).isoformat()
+    leased = await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&or=(lease_until.is.null,lease_until.lt.{filter_value(now.isoformat())})",
+                              {"lease_until": lease_until})
+    if not leased:
+        raise HTTPException(409, "Tài khoản đang có vòng xử lý; chưa chạy thêm thao tác.")
+    account = {**account, **leased[0], "config": account["config"]}
     try:
         result = await run_account_tick(account, manual=True)
     finally:
-        if major:
-            await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&lease_until=eq.{filter_value(lease_until)}", {"lease_until": None})
+        await patch_rows("game_accounts", f"id=eq.{filter_value(account_id)}&lease_until=eq.{filter_value(lease_until)}", {"lease_until": None})
     if result.get("error"):
         raise HTTPException(502, f"Đã dừng auto an toàn: {result['error']}")
     return {"ok": True, **result}

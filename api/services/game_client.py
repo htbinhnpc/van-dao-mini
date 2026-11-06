@@ -11,6 +11,7 @@ from typing import Any
 from uuid import uuid4
 
 import httpx
+from api.http_pool import request as http_request
 
 GAME_ORIGIN = os.getenv(
     "GAME_ORIGIN", "https://vandaonghichmenh.hongvan.net:60010"
@@ -41,6 +42,9 @@ ALLOWED_COMMANDS = frozenset(
         "breakthrough.trial",
         "breakthrough.major",
         "sect.task.claim",
+        "sect.donate",
+        "guild.checkin",
+        "worldboss.attack",
         "season.task.claim",
         "title.claim",
         "title.equip",
@@ -127,6 +131,20 @@ class GameClient:
             raise GameAPIError("Game API response is missing arena.", status_code=502)
         return arena
 
+    async def get_guild(self) -> dict[str, Any] | None:
+        data = await self._request("GET", "/api/guild")
+        if "guild" not in data or (data["guild"] is not None and not isinstance(data["guild"], dict)):
+            raise GameAPIError("Game API response is missing guild.", status_code=502)
+        return data["guild"]
+
+    async def get_worldboss(self, scope: str) -> dict[str, Any] | None:
+        if scope not in {"world", "guild"}:
+            raise ValueError("Invalid worldboss scope.")
+        data = await self._request("GET", f"/api/worldboss?scope={scope}")
+        if "boss" not in data or (data["boss"] is not None and not isinstance(data["boss"], dict)):
+            raise GameAPIError("Game API response is missing boss.", status_code=502)
+        return data["boss"]
+
     async def command(
         self,
         command: str,
@@ -149,10 +167,7 @@ class GameClient:
         if not self.cookie:
             raise ValueError("A game session cookie is required.")
         headers = {**self._headers(), **kwargs.pop("headers", {})}
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.request(
-                method, f"{GAME_ORIGIN}{path}", headers=headers, **kwargs
-            )
+        response = await http_request("game", method, f"{GAME_ORIGIN}{path}", timeout=self.timeout, headers=headers, **kwargs)
         data = self._json(response)
         if not response.is_success or data.get("ok") is False:
             self._raise(response, data)

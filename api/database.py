@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException
+from api.http_pool import request as http_request
 
 
 def _settings() -> tuple[str, str]:
@@ -38,8 +39,7 @@ async def rest(
         headers["Prefer"] = prefer
     target = f"{url}/rest/v1/{table}" + (f"?{query}" if query else "")
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
-            response = await client.request(method, target, headers=headers, json=body)
+        response = await http_request("database", method, target, timeout=20, headers=headers, json=body)
     except httpx.HTTPError as exc:
         raise HTTPException(503, "Không kết nối được Supabase.") from exc
     if not response.is_success:

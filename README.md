@@ -61,6 +61,9 @@ minor.trial
 breakthrough.trial
 breakthrough.major
 sect.task.claim
+sect.donate
+guild.checkin
+worldboss.attack
 season.task.claim
 title.claim
 title.equip
@@ -113,7 +116,10 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 | `autoEquipBest` | Khi có đồ trong túi: `equip.best`, so lại ở cùng mức cường hóa rồi `equip`/`item.transfer` nếu tốt hơn. Có thể tiêu phí chuyển cường hóa; không tự cường hóa mới, bán, phân giải, mở khóa hay đổi hệ vũ khí. Dùng chung policy với chuẩn bị dọn túi. |
 | `autoMinorTrial` | Chỉ `character.next=minor`, đủ tu vi, `minorGate.kind=trial` chưa đạt; tối đa 1 lần/10 phút, kể cả thua/lỗi. Không tự đột phá lớn; auto lên tầng của game áp dụng ở lần settle sau. |
 | `autoMajorBreakthrough` | **Mặc định tắt.** Chuẩn bị đan/phù đúng đại cảnh, nhận nhiệm vụ bắt buộc đã xong, rồi thử thách → đột phá ở các vòng riêng. Giữ khoảng nghỉ và khóa khi kết quả chưa chắc chắn. Xem rủi ro/giới hạn bên dưới. |
-| `autoSectTasks`, `autoSeasonTasks` | Nhận nhiệm vụ tông môn/lễ hội có `claimed=false`, đủ `current/target`; không đóng góp, mua hàng hay làm nhiệm vụ tốn vật phẩm. |
+| `autoSectTasks`, `autoSeasonTasks` | Nhận nhiệm vụ tông môn/lễ hội có `claimed=false`, đủ `current/target`. Tông môn có tùy chọn quyên góp vật phẩm riêng; không tự mua hàng. |
+| `autoSectDonate` | Chỉ hoạt động khi bật `autoSectTasks`; mặc định tắt. `sect.donate {itemId,qty}` tối đa 100 vật phẩm/vòng, chọn loại có **lượng dư nhiều nhất** trong 7 loại game cho phép (linh thảo, khoáng, thú bì, hàn tinh, viêm sa, cổ mộc nhựa, nguyệt thạch). Giữ `sectDonateMatFloor=100`, không thấp hơn `craftMatFloor`/`caveMatFloor` đang dùng, cộng đầu vào nhiệm vụ chế tạo/đan đột phá và vật liệu đại cảnh kế tiếp. Không tiêu đan, vật phẩm lạ, linh thạch hoặc tự mua. Tổng cống hiến góp ngày không vượt `sectDonateDaily=400` (0–400); đọc `sect.donatedToday` nên tính cả góp thủ công. Không đoán kho/bộ đếm thiếu. |
+| `autoGuildCheckin` | Điểm danh **bang hội** bằng `guild.checkin {}` (game không có điểm danh tông môn riêng). GET `/api/guild` phải xác nhận đúng bang và `checkedInToday=false`; đọc lại sau lệnh để xác nhận `true`. Không quyên góp linh thạch hay quản lý bang. Mặc định tắt. |
+| `autoWorldBoss`, `autoGuildBoss` | Công tắc riêng, mặc định tắt. GET `/api/worldboss?scope=world\|guild` trước và sau mỗi trận; `worldboss.attack {scope}` tối đa **một lượt mỗi loại/vòng**. Cấp ≥10, boss `active`, HP >0, chưa hết `endsAt`, `attemptsLeft` rõ ràng 1–3; boss bang cần thành viên bang. Xác nhận cùng boss/kỳ và giảm đúng 1 lượt. Không mua lượt, không PvP/chiến bang, không tự chọn nhánh thưởng mốc/bản nguyên. |
 | `autoTitles` | Chỉ nhận danh hiệu `earned=true`, `owned=false`; không tự mang/thay danh hiệu. Ba nhóm thưởng này tổng cộng tối đa 3 lệnh/vòng. Việc đeo do `autoEquipTitle` riêng. |
 | `autoEquipTitle` | Chỉ đeo danh hiệu `owned=true`, tối đa **một** `title.equip {titleId}`/vòng. Hệ lấy từ `craftBuild` nếu đã chọn, nếu không từ tông môn/vũ khí đang mặc: kiếm/thân thể dùng Công, lôi/hồn/trận dùng Pháp công. Chấm thêm crit/critDmg khi có trong `state.stats`; danh hiệu chỉ có hp/def không được coi là tăng sát thương. Không đổi nếu danh hiệu hiện tại đã tốt hơn hoặc bằng, không có dữ liệu hệ/crit/titles thì không gửi lệnh. Phản hồi phải tăng `stateVersion`, mục tiêu còn `owned` và là danh hiệu duy nhất `equipped`; sai/timeout thì dừng, không retry. |
 | `autoPetAdopt` | Tối đa 1 linh thú/vòng khi `canAdopt=true`, `owned=false`; có thể tiêu khế ấn hợp khế. Không tự xuất chiến, nuôi hay tiến hóa. |
@@ -125,6 +131,16 @@ Khi `autoActivity` bật với `activityType=farm` (và không ghim `huntSpotId`
 | `autoCaveUpgrade` | Tối đa **một** `cave.upgrade {roomId}`/vòng; không gọi `cave.rush`. Ưu tiên tuyệt đối phòng mà nhiệm vụ `active` có objective `cave_room` cần; phòng đó thiếu tài nguyên dư thì chờ, không tiêu sang phòng khác. Sau đó theo `caveRoomOrder` (`craft` mặc định: Đan Phòng → Khí Phòng → Linh Điền → Kho → Tụ Linh → Tàng Bảo → Tĩnh Thất; `cultivation`; `balanced` theo tỷ lệ cấp thấp nhất). Không gửi khi đã có phòng `upgradeFinishAt`; giữ `caveReserveStones`/`caveMatFloor`, và khi `autoCraft` bật thì cộng thêm linh thạch/nguyên liệu cho nhiệm vụ chế tạo cùng đan đột phá đại cảnh kế tiếp. Phản hồi phải tăng `stateVersion`, đúng phòng, cấp giữ nguyên hoặc +1, `upgradeFinishAt` dương và chỉ một phòng active; sai/timeout thì dừng, không retry. |
 
 Mỗi vòng dùng state/version mới từ phản hồi trước, tổng cộng **tối đa 12 lệnh**, chỉ bắt đầu lệnh trong cửa sổ 40 giây. Phần chưa chạy để vòng sau. Nếu lệnh lỗi, timeout, xung đột version hoặc phản hồi thiếu state, dừng phần còn lại và lưu lỗi; không retry lệnh có tác dụng phụ với key mới. Lịch sử khoảng nghỉ lưu trong `automation_data`, không chỉ giữ trong RAM. Các kiểm thử dùng mock, chưa bật/thử auto mới trên tài khoản game thật.
+
+Điểm danh/quyên góp/boss chung lưu khóa `automation_data.communityPending` **trước** khi gửi; chỉ xóa sau khi xác nhận và lưu snapshot. Kết quả chưa rõ thì giữ khóa qua các vòng (kể cả timeout/lỗi đọc lại). Kiểm tra game rồi tắt và lưu đúng công tắc để xác nhận mở khóa; CAS không cho mở khi worker còn lease. Lệnh tùy ý không được bypass các kiểm tra này. Chạy thủ công các auto mới cũng dùng lease để không chồng vòng cron.
+
+### Tối ưu luồng nhiều tính năng
+
+- Thiết lập an toàn/kết toán và hoạt động chính chạy trước. Sau đó chỉ xét **nhóm đang bật**, luân phiên từ `automation_data.automationSchedule.nextFeature`; hết ngân sách thì vòng sau bắt đầu ở nhóm chưa tới lượt, không luôn quay lại đầu danh sách. Boss thế giới/bang là hai lượt riêng.
+- Khi bật hơn 4 nhóm, nhận thưởng/NPC/kỳ ngộ/chế tạo/linh điền/đấu trường nhường lượt sau tối đa một lệnh độc lập mỗi nhóm. Một lệnh chế tạo vẫn có thể xếp nhiều mẻ nếu planner cho phép. Ít nhóm thì giữ khả năng xử lý nhiều việc như trước. Đổi đồ → chuyển cường hóa → dọn vẫn là một chuỗi kiểm tra, không cắt quota giữa chừng để dọn đồ chưa chuẩn bị xong.
+- **Không gửi song song lệnh game**: mỗi lệnh dùng stateVersion mới. Giữ trần 12 lệnh/40 giây và dừng khi lỗi/kết quả không chắc chắn. Không chạy tiếp các planner/GET của nhóm sau khi hết ngân sách. Mọi vòng thủ công đều dùng chung cơ chế lease với cron.
+- Tái dùng kết nối HTTP trong từng vòng, tách pool game và Supabase; đóng khi xong/lỗi, không chia sẻ cookie giữa tài khoản/vòng. Gộp lưu thành phẩm chế tạo và snapshot; gộp snapshot cộng đồng với mở khóa **sau xác nhận**, không bỏ bước giữ ngân sách/khóa trước lệnh hoặc nhật ký an toàn.
+- Kết quả chạy trả `schedule` và lưu `automationSchedule.lastRun`: số lệnh thiết lập/tổng, nhóm đã xử lý, thời gian từng nhóm, nhóm tiếp theo và trạng thái hoãn. Số đo thời gian được chốt trước lần lưu cuối. Kiểm thử bằng mock; chưa đo độ trễ thực tế hoặc chạy trên tài khoản thật.
 
 Chọn các auto trong tab **Tự động**, lưu cấu hình riêng cho từng tài khoản, rồi dùng **Chạy ngay** để chạy một vòng theo cấu hình đã lưu. Cron chỉ chạy khi tài khoản bật trợ lý; nhịp thực tế còn phụ thuộc lịch Cron của môi trường triển khai (cấu hình Vercel hiện tại là mỗi ngày một lần).
 
